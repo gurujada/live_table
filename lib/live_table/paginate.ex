@@ -14,9 +14,10 @@ defmodule LiveTable.Paginate do
     per_page = per_page |> String.to_integer()
 
     offset = max((page - 1) * per_page, 0)
+    limit = per_page + 1
 
     query
-    |> limit(^per_page + 1)
+    |> limit(^limit)
     |> offset(^offset)
   end
 end
