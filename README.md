@@ -224,6 +224,18 @@ LiveTable is perfect for:
 - **CRM Systems** - Customer and lead management with custom views
 - **Inventory Management** - Track stock with complex filtering and reporting
 
+## 🤖 AI/LLM Integration
+
+LiveTable includes comprehensive usage guidelines for AI assistants and LLMs to provide accurate code suggestions:
+
+- **[LLM Usage Rules](usage_rules.md)** - Complete patterns and examples for accurate code generation
+
+These guidelines ensure AI tools understand:
+- Critical field key mapping requirements
+- The two distinct usage patterns (simple vs. custom queries)
+- Required dependencies and configuration
+- Common anti-patterns to avoid
+
 ## 📄 License
 
 MIT License. See LICENSE for details.
@@ -241,6 +253,7 @@ MIT License. See LICENSE for details.
 - **Issues**: [GitHub Issues](https://github.com/gurujada/live_table/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/gurujada/live_table/discussions)
 - **Documentation**: [API Docs](https://hexdocs.pm/live_table)
+- **AI Guidelines**: [LLM Usage Rules](usage_rules.md)
 
 ---
 

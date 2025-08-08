@@ -67,6 +67,7 @@ defmodule LiveTable.MixProject do
       source_ref: "v#{@version}",
       extras: [
         "README.md",
+        "usage_rules.md",
         "docs/overview.md",
         "docs/installation.md",
         "docs/quick-start.md",
