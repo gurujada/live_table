@@ -31,7 +31,7 @@ Add to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_table, "~> 0.3.0"},
+    {:live_table, "~> 0.3.1"},
     {:oban, "~> 2.19"}  # Required for exports
   ]
 end
