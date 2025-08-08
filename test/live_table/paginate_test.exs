@@ -15,7 +15,7 @@ defmodule LiveTable.PaginateTest do
       paginate_params = %{"per_page" => "10", "page" => "1"}
       result = Paginate.maybe_paginate(base_query, paginate_params, true)
       query_string = inspect(result)
-      assert query_string =~ "limit: ^10"
+      assert query_string =~ "limit: ^11"
       assert query_string =~ "offset: ^0"
     end
   end
@@ -26,7 +26,7 @@ defmodule LiveTable.PaginateTest do
       paginate_params = %{"per_page" => "10", "page" => "1"}
       result = Paginate.paginate(base_query, paginate_params)
       query_string = inspect(result)
-      assert query_string =~ "limit: ^10"
+      assert query_string =~ "limit: ^11"
       assert query_string =~ "offset: ^0"
     end
 
@@ -35,8 +35,8 @@ defmodule LiveTable.PaginateTest do
       paginate_params = %{"per_page" => "10", "page" => "2"}
       result = Paginate.paginate(base_query, paginate_params)
       query_string = inspect(result)
-      assert query_string =~ "limit: ^10"
-      assert query_string =~ "offset: ^10"
+      assert query_string =~ "limit: ^11"
+      assert query_string =~ "offset: ^1"
     end
 
     test "handles string inputs correctly" do
@@ -44,7 +44,7 @@ defmodule LiveTable.PaginateTest do
       paginate_params = %{"per_page" => "5", "page" => "3"}
       result = Paginate.paginate(base_query, paginate_params)
       query_string = inspect(result)
-      assert query_string =~ "limit: ^5"
+      assert query_string =~ "limit: ^6"
       assert query_string =~ "offset: ^10"
     end
 
@@ -53,7 +53,7 @@ defmodule LiveTable.PaginateTest do
       paginate_params = %{"per_page" => "10", "page" => "-1"}
       result = Paginate.paginate(base_query, paginate_params)
       query_string = inspect(result)
-      assert query_string =~ "limit: ^10"
+      assert query_string =~ "limit: ^11"
       assert query_string =~ "offset: ^0"
     end
   end

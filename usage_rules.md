@@ -2,7 +2,7 @@
 
 This document provides clear rules and patterns for AI assistants to help developers use the LiveTable library correctly. Follow these guidelines when generating code suggestions or helping with LiveTable implementation.
 
-## 🎯 Core Principles
+## Core Principles
 
 ### 1. Field Key Mapping is Critical
 **RULE**: Field keys in `fields()` function MUST match exactly with:
@@ -29,10 +29,10 @@ use LiveTable.LiveResource
 - Field keys must match select clause keys exactly
 - Requires custom data provider assignment
 
-## 🚫 Critical Don'ts
+## Critical Don'ts
 
 ### DON'T Mix Patterns
-❌ **NEVER** use `schema:` parameter with custom queries:
+**NEVER** use `schema:` parameter with custom queries:
 ```elixir
 # WRONG - Don't do this
 use LiveTable.LiveResource, schema: User  # Remove this line
@@ -43,7 +43,7 @@ end
 ```
 
 ### DON'T Misalign Field Keys
-❌ **NEVER** use field keys that don't match your data source:
+**NEVER** use field keys that don't match your data source:
 ```elixir
 # WRONG - Field key doesn't match schema field
 def fields do
@@ -54,7 +54,7 @@ end
 ```
 
 ### DON'T Forget Required Dependencies
-❌ **NEVER** generate LiveTable code without the core dependency:
+**NEVER** generate LiveTable code without the core dependency:
 ```elixir
 # REQUIRED in mix.exs
 {:live_table, "~> 0.3.0"}
@@ -62,9 +62,9 @@ end
 ```
 
 ### DON'T Skip Asset Setup
-❌ **NEVER** implement LiveTable without proper asset configuration
+**NEVER** implement LiveTable without proper asset configuration
 
-## ✅ Required Setup Checklist
+## Required Setup Checklist
 
 When implementing with LiveTable, ALWAYS ensure:
 
@@ -106,7 +106,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
 @import "../../deps/live_table/priv/static/live-table.css";
 ```
 
-## 📋 Implementation Templates
+## Implementation Templates
 
 ### Template A: Simple Table (Single Schema)
 ```elixir
@@ -173,7 +173,7 @@ defmodule YourApp.Orders do
 end
 ```
 
-## 🔍 Field Configuration Rules
+## Field Configuration Rules
 
 ### Basic Field Options
 ```elixir
@@ -195,7 +195,7 @@ product_name: %{
 }
 ```
 
-## 🔧 Filter Types
+## Filter Types
 
 ### Boolean Filter
 ```elixir
@@ -226,7 +226,7 @@ Select.new({:table_alias, :field_name}, "param_name", %{
 })
 ```
 
-## 🎨 Template Usage
+## Template Usage
 
 ### Required Template Structure
 ```elixir
@@ -239,18 +239,18 @@ Select.new({:table_alias, :field_name}, "param_name", %{
 />
 ```
 
-## 🚨 Common Error Patterns to Avoid
+## Common Error Patterns to Avoid
 
 ### 1. Field Key Mismatch
 ```elixir
 # Schema has 'email' field, but using wrong key
-email_address: %{label: "Email"}  # ❌ Wrong
-email: %{label: "Email"}          # ✅ Correct
+email_address: %{label: "Email"}  # Wrong
+email: %{label: "Email"}          # Correct
 ```
 
 ### 2. Missing Data Provider for Custom Queries
 ```elixir
-# ❌ Wrong - Custom query without data provider
+# Wrong - Custom query without data provider
 use LiveTable.LiveResource
 def fields do
   [complex_field: %{label: "Complex"}]
@@ -260,14 +260,14 @@ end
 
 ### 3. Schema with Custom Query
 ```elixir
-# ❌ Wrong - Using both schema and custom query
+# Wrong - Using both schema and custom query
 use LiveTable.LiveResource, schema: User
 def mount(_params, _session, socket) do
   socket = assign(socket, :data_provider, {App.Users, :custom_query, []})
 end
 ```
 
-## 🎯 Decision Tree for LLMs
+## Decision Tree for LLMs
 
 When helping with LiveTable implementation:
 
@@ -289,7 +289,7 @@ When helping with LiveTable implementation:
 5. **Is the template structure correct?**
    - Verify `fields()`, `filters()`, `@options`, `@streams`
 
-## 📚 Quick Reference
+## Quick Reference
 
 ### Must-Have Functions
 - `fields()` - Always required

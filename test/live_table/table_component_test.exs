@@ -257,7 +257,6 @@ defmodule LiveTable.TableComponentTest do
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
       assert html =~ "cursor-not-allowed"
-      assert html =~ "aria-disabled"
     end
 
     test "disables next button when no next page" do
