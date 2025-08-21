@@ -111,7 +111,7 @@ defmodule LiveTable.Range do
   defstruct [:field, :key, :options]
 
   @today Date.utc_today()
-  @now DateTime.utc_now()
+  @now NaiveDateTime.utc_now()
   @type_defaults %{
     number: %{
       min: 0,
@@ -141,10 +141,10 @@ defmodule LiveTable.Range do
       pips_values: [Date.add(@today, -7), Date.add(@today, 0), Date.add(@today, 7)]
     },
     datetime: %{
-      min: DateTime.add(@now, -24 * 3600),
-      max: DateTime.add(@now, 24 * 3600),
-      default_min: DateTime.add(@now, -24 * 3600),
-      default_max: DateTime.add(@now, 24 * 3600),
+      min: NaiveDateTime.add(@now, -24 * 3600),
+      max: NaiveDateTime.add(@now, 24 * 3600),
+      default_min: NaiveDateTime.add(@now, -24 * 3600),
+      default_max: NaiveDateTime.add(@now, 24 * 3600),
       current_min: nil,
       current_max: nil,
       step: 3600,
@@ -152,7 +152,11 @@ defmodule LiveTable.Range do
       # hourly markers
       pips_density: 2,
       pips_stepped: true,
-      pips_values: [DateTime.add(@now, -3600), DateTime.add(@now, 0), DateTime.add(@now, 3600)]
+      pips_values: [
+        NaiveDateTime.add(@now, -3600),
+        NaiveDateTime.add(@now, 0),
+        NaiveDateTime.add(@now, 3600)
+      ]
     }
   }
 
