@@ -174,7 +174,8 @@ defmodule LiveTable.LiveViewHelpers do
         end
       end
 
-      defp validate_per_page(nil), do: get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
+      defp validate_per_page(nil),
+        do: get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
 
       defp validate_per_page(n) when is_binary(n) do
         try do
@@ -185,7 +186,8 @@ defmodule LiveTable.LiveViewHelpers do
             true -> "50"
           end
         rescue
-          ArgumentError -> get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
+          ArgumentError ->
+            get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
         end
       end
 
