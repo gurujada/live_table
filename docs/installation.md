@@ -19,7 +19,10 @@ Add LiveTable to your `mix.exs` dependencies:
 def deps do
   [
     {:live_table, "~> 0.3.1"},
-    {:oban, "~> 2.19"}           # Required for background exports
+    
+    # Optional: Oban is required only if you want CSV/PDF exports.
+    # The installer can add Oban for you if you opt in during the prompt.
+    {:oban, "~> 2.19"}
   ]
 end
 ```
@@ -30,7 +33,36 @@ Run the dependency installation:
 mix deps.get
 ```
 
-## Step 2: Application Configuration
+## Step 2: Automatic Installation (Recommended)
+
+Use the built-in installer to automatically configure LiveTable:
+
+```bash
+mix live_table.install
+```
+
+What the installer does:
+- Adds LiveTable configuration to `config/config.exs` (quiet on success)
+- Updates `assets/js/app.js` with `TableHooks` (quiet on success)
+- Updates `assets/css/app.css` with LiveTable styles (quiet on success)
+- Does not modify your web module; instead it reminds you to add `exports` to static paths
+
+Oban integration (for exports):
+- The installer will ask: “Configure Oban for exports now?”  
+  - If you answer “Yes”, it will:
+    - Add `{:oban, "~> 2.19"}` to your `mix.exs`
+    - Fetch and compile dependencies
+    - Add Oban configuration to `config/config.exs` (repo, plugins, and `queues: [exports: 10]`)
+    - Print a next step showing how to start Oban in your supervision tree
+  - If you answer “No”, you can configure Oban later manually.
+
+After running the installer, restart your Phoenix server.
+
+## Step 3: Manual Configuration (Alternative)
+
+If you prefer manual setup or need to customize the installation, follow these steps:
+
+### Application Configuration
 
 Configure LiveTable in your `config/config.exs`:
 
@@ -42,19 +74,18 @@ config :live_table,
 
 ### Oban Configuration (Required for Exports)
 
-Add Oban configuration for background job processing:
+If you opted in during installation, the installer already added this for you.  
+To add manually:
 
 ```elixir
 # config/config.exs
 config :your_app, Oban,
   repo: YourApp.Repo,
-  engine: Oban.Engines.Basic,
-  notifier: Oban.Notifiers.Postgres,
   plugins: [Oban.Plugins.Pruner],
   queues: [exports: 10]
 ```
 
-Add Oban to your supervision tree in `lib/your_app/application.ex`:
+Start Oban in your supervision tree (`lib/your_app/application.ex`):
 
 ```elixir
 def start(_type, _args) do
@@ -68,32 +99,9 @@ def start(_type, _args) do
 end
 ```
 
-## Step 3: Asset Setup
+### Asset Setup
 
-### Configure Tailwind CSS
-
-Update your `assets/tailwind.config.js`:
-
-```javascript
-module.exports = {
-  content: [
-    "./js/**/*.js",
-    "../lib/*_web.ex",
-    "../lib/*_web/**/*.*ex",
-    // Add these LiveTable paths
-    "../deps/live_table/priv/static/*.js",
-    "../deps/live_table/**/*.*ex"
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [
-    require("@tailwindcss/forms")
-  ]
-}
-```
-
-### Add JavaScript Hooks
+#### Add JavaScript Hooks
 
 Add LiveTable hooks to your `assets/js/app.js`:
 
@@ -126,7 +134,7 @@ window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 window.liveSocket = liveSocket
 ```
 
-### Add CSS Styles
+#### Add CSS Styles
 
 Add LiveTable styles to your `assets/css/app.css`:
 
@@ -141,7 +149,7 @@ Add LiveTable styles to your `assets/css/app.css`:
 /* Your existing styles */
 ```
 
-## Step 4: Database Setup
+### Database Setup
 
 Run migrations to set up Oban tables:
 
@@ -156,7 +164,7 @@ mix oban.install
 mix ecto.migrate
 ```
 
-## Step 5: Static File Configuration
+### Static File Configuration
 
 Add `exports` to your allowed static paths in `lib/your_app_web.ex`:
 
@@ -164,9 +172,9 @@ Add `exports` to your allowed static paths in `lib/your_app_web.ex`:
 def static_paths, do: ~w(assets fonts images favicon.ico robots.txt exports)
 ```
 
-This allows LiveTable to serve generated export files.
+The installer does not modify this for you. This allows LiveTable to serve generated export files.
 
-## Step 6: PDF Export Setup (Optional)
+## Step 4: PDF Export Setup (Optional)
 
 For PDF exports, install Typst on your system:
 
@@ -191,7 +199,7 @@ Download from [Typst Releases](https://github.com/typst/typst/releases) and add 
 typst --version
 ```
 
-## Step 7: Verification
+## Step 5: Verification
 
 Create a simple test to verify everything is working:
 

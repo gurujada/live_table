@@ -37,6 +37,7 @@ defmodule LiveTable.MixProject do
       {:live_select, "~> 1.5.4"},
       {:oban_web, "~> 2.11"},
       {:postgrex, ">= 0.0.0"},
+      {:igniter, "~> 0.6.28"},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.10"},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev}

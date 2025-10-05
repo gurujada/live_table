@@ -32,7 +32,7 @@ Add to your `mix.exs`:
 def deps do
   [
     {:live_table, "~> 0.3.1"},
-    {:oban, "~> 2.19"}  # Required for exports
+    {:oban, "~> 2.19"}  # Optional: required for exports (installer can add if you opt in)
   ]
 end
 ```
@@ -46,7 +46,7 @@ config :live_table,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub
 
-# Configure Oban for exports
+# Optional: Oban for exports (installer can configure this if you opt in)
 config :your_app, Oban,
   repo: YourApp.Repo,
   queues: [exports: 10]
@@ -57,19 +57,18 @@ config :your_app, Oban,
 Add to `assets/js/app.js`:
 
 ```javascript
-import hooks_default from "../../deps/live_table/priv/static/live-table.js";
+import { TableHooks } from "../../deps/live_table/priv/static/live-table.js";
 
 const liveSocket = new LiveSocket("/live", Socket, {
-  longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
-  hooks: hooks_default,
+  hooks: TableHooks
 });
 ```
 
 Add to `assets/css/app.css`:
 
 ```css
-@source "../../deps/live_table/lib";
+
 
 @import "../../deps/live_table/priv/static/live-table.css";
 ```

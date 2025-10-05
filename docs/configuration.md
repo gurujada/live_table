@@ -468,6 +468,18 @@ config :live_table,
 
 ## Oban Configuration
 
+LiveTable uses Oban to process CSV/PDF export jobs in the background.
+
+Installer behavior:
+- When you run mix live_table.install, you will be prompted: "Configure Oban for exports now?"
+- If you choose Yes:
+  - Adds {:oban, "~> 2.19"} to your mix.exs
+  - Fetches and compiles dependencies
+  - Adds a minimal Oban configuration to config/config.exs (repo, plugins, queues: [exports: 10])
+  - Prints a next step showing how to start Oban in your supervision tree
+- If you choose No:
+  - You can add Oban later manually using the configuration shown below.
+
 Configure background job processing for exports:
 
 ```elixir
