@@ -28,7 +28,7 @@ defmodule YourAppWeb.ProductLive.Index do
         label: "Active Products Only",
         condition: dynamic([p], p.active == true)
       }),
-      
+
       price_range: Range.new(:price, "price_range", %{
         type: :number,
         label: "Price Range",
@@ -56,7 +56,7 @@ end
 # lib/your_app_web/live/product_live/index.html.heex
 <div class="p-6">
   <h1 class="text-2xl font-bold mb-6">Products</h1>
-  
+
   <.live_table
     fields={fields()}
     filters={filters()}
@@ -93,7 +93,7 @@ defmodule YourAppWeb.UserLive.Index do
         label: "Active Users Only",
         condition: dynamic([u], u.active == true)
       }),
-      
+
       role: Select.new(:role, "role", %{
         label: "User Role",
         options: [
@@ -102,7 +102,7 @@ defmodule YourAppWeb.UserLive.Index do
           %{label: "User", value: ["user"]}
         ]
       }),
-      
+
       signup_date: Range.new(:inserted_at, "signup_range", %{
         type: :date,
         label: "Registration Date",
@@ -172,7 +172,6 @@ defmodule YourAppWeb.OrderLive.Index do
       total_amount: %{label: "Total", sortable: true, renderer: &render_currency/1},
       status: %{label: "Status", sortable: true, renderer: &render_order_status/1},
       inserted_at: %{label: "Order Date", sortable: true, renderer: &render_date/1},
-      actions: %{label: "Actions", sortable: false, renderer: &render_actions/2}
     ]
   end
 
@@ -188,14 +187,14 @@ defmodule YourAppWeb.OrderLive.Index do
           %{label: "Cancelled", value: ["cancelled"]}
         ]
       }),
-      
+
       order_total: Range.new(:total_amount, "total_range", %{
         type: :number,
         label: "Order Total",
         min: 0,
         max: 5000
       }),
-      
+
       recent_orders: Boolean.new(:inserted_at, "recent", %{
         label: "Last 30 Days",
         condition: dynamic([o], o.inserted_at >= ago(30, "day"))
@@ -257,27 +256,38 @@ defmodule YourAppWeb.OrderLive.Index do
     """
   end
 
-  defp render_actions(_value, record) do
-    assigns = %{record: record}
+  # Actions are provided via the component assign, not as a field.
+  def actions do
+    %{
+      label: "Actions",
+      items: [
+        view: &order_view_action/1,
+        cancel: &order_cancel_action/1
+      ]
+    }
+  end
+
+  defp order_view_action(assigns) do
     ~H"""
-    <div class="flex gap-2">
-      <.link 
-        navigate={~p"/orders/#{@record.id}"} 
-        class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+    <.link
+      navigate={~p"/orders/#{@record.id}"}>
+      View
+    </.link>
+    """
+  end
+
+  defp order_cancel_action(assigns) do
+    ~H"""
+    <%= if @record.status in ["pending", "processing"] do %>
+      <button
+        phx-click="cancel_order"
+        phx-value-id={@record.id}
+        class="text-red-600 hover:text-red-800 text-sm font-medium"
+        data-confirm="Are you sure you want to cancel this order?"
       >
-        View
-      </.link>
-      <%= if @record.status in ["pending", "processing"] do %>
-        <button 
-          phx-click="cancel_order" 
-          phx-value-id={@record.id}
-          class="text-red-600 hover:text-red-800 text-sm font-medium"
-          data-confirm="Are you sure you want to cancel this order?"
-        >
-          Cancel
-        </button>
-      <% end %>
-    </div>
+        Cancel
+      </button>
+    <% end %>
     """
   end
 
@@ -291,6 +301,20 @@ defmodule YourAppWeb.OrderLive.Index do
     end
   end
 end
+```
+
+```elixir
+# lib/your_app_web/live/order_live/index.html.heex
+<div class="p-6">
+  <h1 class="text-2xl font-bold mb-6">Orders</h1>
+  <.live_table
+    fields={fields()}
+    filters={filters()}
+    actions={actions()}
+    options={@options}
+    streams={@streams}
+  />
+</div>
 ```
 
 ## Inventory Management Table
@@ -311,7 +335,6 @@ defmodule YourAppWeb.InventoryLive.Index do
       reorder_point: %{label: "Reorder Point", sortable: true},
       last_restocked: %{label: "Last Restocked", sortable: true, renderer: &render_date/1},
       supplier_name: %{label: "Supplier", sortable: true, searchable: true},
-      actions: %{label: "Actions", sortable: false, renderer: &render_inventory_actions/2}
     ]
   end
 
@@ -321,19 +344,19 @@ defmodule YourAppWeb.InventoryLive.Index do
         label: "Low Stock Alert",
         condition: dynamic([p], p.stock_quantity <= p.reorder_point)
       }),
-      
+
       out_of_stock: Boolean.new(:stock_quantity, "out_of_stock", %{
         label: "Out of Stock",
         condition: dynamic([p], p.stock_quantity == 0)
       }),
-      
+
       stock_range: Range.new(:stock_quantity, "stock_range", %{
         type: :number,
         label: "Stock Quantity",
         min: 0,
         max: 1000
       }),
-      
+
       needs_reorder: Boolean.new(:stock_quantity, "needs_reorder", %{
         label: "Needs Reorder",
         condition: dynamic([p], p.stock_quantity <= p.reorder_point and p.stock_quantity > 0)
@@ -373,7 +396,7 @@ defmodule YourAppWeb.InventoryLive.Index do
       ]}>
         <%= @stock %>
       </span>
-      
+
       <%= cond do %>
         <% @stock == 0 -> %>
           <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded">OUT</span>
@@ -404,35 +427,52 @@ defmodule YourAppWeb.InventoryLive.Index do
     """
   end
 
-  defp render_inventory_actions(_value, record) do
-    assigns = %{record: record}
+  # Inventory actions via component assign
+  def actions do
+    %{
+      label: "Actions",
+      items: [
+        restock: &restock_action/1,
+        auto_reorder: &auto_reorder_action/1,
+        adjust: &adjust_action/1
+      ]
+    }
+  end
+
+  defp restock_action(assigns) do
     ~H"""
-    <div class="flex gap-2">
-      <button 
-        phx-click="restock" 
+    <button
+      phx-click="restock"
+      phx-value-id={@record.id}
+      class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+    >
+      Restock
+    </button>
+    """
+  end
+
+  defp auto_reorder_action(assigns) do
+    ~H"""
+    <%= if @record.stock_quantity <= @record.reorder_point do %>
+      <button
+        phx-click="auto_reorder"
         phx-value-id={@record.id}
-        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+        class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
       >
-        Restock
+        Auto Reorder
       </button>
-      
-      <%= if @record.stock_quantity <= @record.reorder_point do %>
-        <button 
-          phx-click="auto_reorder" 
-          phx-value-id={@record.id}
-          class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-        >
-          Auto Reorder
-        </button>
-      <% end %>
-      
-      <.link 
-        navigate={~p"/inventory/#{@record.id}/adjust"} 
-        class="text-gray-600 hover:text-gray-800 text-sm"
-      >
-        Adjust
-      </.link>
-    </div>
+    <% end %>
+    """
+  end
+
+  defp adjust_action(assigns) do
+    ~H"""
+    <.link
+      navigate={~p"/inventory/#{@record.id}/adjust"}
+      class="text-gray-600 hover:text-gray-800 text-sm"
+    >
+      Adjust
+    </.link>
     """
   end
 
@@ -451,6 +491,20 @@ defmodule YourAppWeb.InventoryLive.Index do
     end
   end
 end
+```
+
+```elixir
+# lib/your_app_web/live/inventory_live/index.html.heex
+<div class="p-6">
+  <h1 class="text-2xl font-bold mb-6">Inventory</h1>
+  <.live_table
+    fields={fields()}
+    filters={filters()}
+    actions={actions()}
+    options={@options}
+    streams={@streams}
+  />
+</div>
 ```
 
 ## Simple Read-Only Table
@@ -537,9 +591,11 @@ end
 - Set reasonable default sort orders
 - Configure exports based on user needs
 
-### 5. Action Columns
-- Use `sortable: false` for action columns
-- Implement event handlers for interactive actions
-- Provide clear user feedback for actions
+### 5. Row Actions
+- Provide row actions via the component assign, not as a field.
+- Accept either a list of `{key, component}` tuples or a map `%{label: binary, items: list}`.
+- Each action component is a 1-arity function and receives assigns with `:record`.
+- In your HEEx template, pass the actions assign: `<.live_table fields={fields()} filters={filters()} actions={actions()} options={@options} streams={@streams} />`.
+- If you need interactive UI inside a data cell, use a field renderer or component for that cell — actions are specifically for the dedicated actions column.
 
-These examples demonstrate how LiveTable can handle common table requirements with minimal code while providing rich functionality for users.
+These examples demonstrate how LiveTable handles common table requirements with minimal code while providing a clear pattern for row-level actions.

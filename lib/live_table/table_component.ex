@@ -7,7 +7,10 @@ defmodule LiveTable.TableComponent do
       alias Phoenix.LiveView.JS
 
       def live_table(var!(assigns)) do
-        var!(assigns) = assign(var!(assigns), :table_options, unquote(opts)[:table_options])
+        var!(assigns) =
+          var!(assigns)
+          |> assign(:table_options, unquote(opts)[:table_options])
+          |> assign_new(:actions, fn -> [] end)
 
         ~H"""
         <div class="w-full" id="live-table" phx-hook="Download">
@@ -206,11 +209,21 @@ defmodule LiveTable.TableComponent do
                           sortable={field.sortable}
                         />
                       </th>
+                      <th
+                        :if={has_actions(@actions)}
+                        scope="col"
+                        class="px-3 py-3.5 text-start text-sm font-semibold text-gray-900 dark:text-gray-100"
+                      >
+                        {actions_label(@actions)}
+                      </th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                     <tr id="empty-placeholder" class="only:table-row hidden">
-                      <td colspan={length(@fields)} class="py-10 text-center">
+                      <td
+                        colspan={length(@fields) + if(has_actions(@actions), do: 1, else: 0)}
+                        class="py-10 text-center"
+                      >
                         <svg
                           class="mx-auto h-12 w-12 text-gray-400"
                           fill="none"
@@ -233,7 +246,12 @@ defmodule LiveTable.TableComponent do
                         </p>
                       </td>
                     </tr>
-                    <.render_row streams={@streams} fields={@fields} table_options={@table_options} />
+                    <.render_row
+                      streams={@streams}
+                      fields={@fields}
+                      table_options={@table_options}
+                      actions={@actions}
+                    />
                   </tbody>
                 </table>
               </div>
@@ -275,6 +293,9 @@ defmodule LiveTable.TableComponent do
           >
             {render_cell(Map.get(resource, key), field, resource)}
           </td>
+          <td :if={has_actions(@actions)}>
+            <.render_actions actions={@actions} record={resource} />
+          </td>
         </tr>
         """
       end
@@ -291,6 +312,9 @@ defmodule LiveTable.TableComponent do
             class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-100"
           >
             {render_cell(Map.get(resource, key), field, resource)}
+          </td>
+          <td :if={has_actions(@actions)}>
+            <.render_actions actions={@actions} record={resource} />
           </td>
         </tr>
         """
@@ -492,6 +516,28 @@ defmodule LiveTable.TableComponent do
                      render_header: 1,
                      render_content: 1,
                      render_footer: 1
+
+      def render_actions(var!(assigns)) do
+        ~H"""
+        <div class="flex">
+          <%= for {_key, component} <- actions_items(@actions) do %>
+            {component.(%{record: @record})}
+          <% end %>
+        </div>
+        """
+      end
+
+      defp actions_items(actions) when is_list(actions), do: actions
+      defp actions_items(%{items: items}) when is_list(items), do: items
+      defp actions_items(_), do: []
+
+      def has_actions([]), do: false
+      def has_actions(actions) when is_list(actions), do: true
+      def has_actions(%{items: items}) when is_list(items), do: length(items) > 0
+      def has_actions(_), do: false
+
+      def actions_label(%{label: label}), do: label
+      def actions_label(_), do: "Actions"
     end
   end
 end

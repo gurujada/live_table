@@ -198,7 +198,7 @@ LiveTable is designed to handle real-world application demands:
 ### E-commerce Product Catalog
 ```elixir
 # Feature-rich product listing with category filtering,
-# price ranges, stock status, and bulk actions
+# price ranges, and stock status
 def fields do
   [
     image: %{label: "Image", renderer: &product_image/1},
@@ -210,6 +210,14 @@ def fields do
   ]
 end
 ```
+
+Actions are configured as an optional component assign rather than a field:
+
+```elixir
+<.live_table ... actions={%{label: "Actions", items: [view: &view_action/1]}} />
+```
+
+See Quick Start for details on accepted shapes and examples.
 
 ### Customer Analytics Dashboard
 ```elixir

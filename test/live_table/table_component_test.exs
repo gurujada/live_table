@@ -895,4 +895,179 @@ defmodule LiveTable.TableComponentTest do
       assert html =~ "1"
     end
   end
+
+  describe "actions" do
+    test "renders Actions header and action content when actions provided (use_streams: false)" do
+      actions = [
+        show: fn %{record: record} ->
+          assigns = %{record: record}
+
+          ~H"""
+          <span class="action">Show {@record.name}</span>
+          """
+        end
+      ]
+
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [
+          %{name: "Alpha"},
+          %{name: "Beta"}
+        ],
+        actions: actions
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ ~r/>\s*Actions\s*</
+      assert html =~ "Show Alpha"
+      assert html =~ "Show Beta"
+    end
+
+    test "does not render Actions header when no actions provided" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [
+          %{name: "Alpha"}
+        ],
+        actions: []
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      refute html =~ ">Actions<"
+    end
+
+    test "renders multiple actions per row and passes record" do
+      actions = [
+        edit: fn %{record: record} ->
+          assigns = %{record: record}
+
+          ~H"""
+          <span>Edit {@record.name}</span>
+          """
+        end,
+        delete: fn %{record: record} ->
+          assigns = %{record: record}
+
+          ~H"""
+          <span>Delete {@record.name}</span>
+          """
+        end
+      ]
+
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [
+          %{name: "Gamma"}
+        ],
+        actions: actions
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "Edit Gamma"
+      assert html =~ "Delete Gamma"
+    end
+
+    test "renders actions when use_streams is true" do
+      actions = [
+        show: fn %{record: record} ->
+          assigns = %{record: record}
+
+          ~H"""
+          <span class="action">Show {@record.name}</span>
+          """
+        end
+      ]
+
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: %{
+          resources: [
+            {"1", %{name: "Delta"}},
+            {"2", %{name: "Epsilon"}}
+          ]
+        },
+        actions: actions
+      }
+
+      html = render_component(&StreamTableComponent.live_table/1, assigns)
+
+      assert html =~ "Show Delta"
+      assert html =~ "Show Epsilon"
+    end
+
+    test "empty state colspan includes actions column when actions provided" do
+      actions = [
+        show: fn %{record: record} ->
+          assigns = %{record: record}
+
+          ~H"""
+          <span class="action">Show {@record}</span>
+          """
+        end
+      ]
+
+      assigns_with_actions = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:email, %{label: "Email", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [],
+        actions: actions
+      }
+
+      assigns_without_actions = Map.put(assigns_with_actions, :actions, [])
+
+      html_with_actions = render_component(&TestTableComponent.live_table/1, assigns_with_actions)
+
+      html_without_actions =
+        render_component(&TestTableComponent.live_table/1, assigns_without_actions)
+
+      assert html_with_actions =~ ~s(id=\"empty-placeholder\")
+      assert html_with_actions =~ ~s(colspan=\"3\")
+
+      assert html_without_actions =~ ~s(id=\"empty-placeholder\")
+      assert html_without_actions =~ ~s(colspan=\"2\")
+    end
+  end
 end

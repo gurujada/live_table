@@ -318,42 +318,31 @@ end
 ```elixir
 def fields do
   [
-    actions: %{
-      label: "Actions",
+    primary_action: %{
+      label: "Action",
       sortable: false,
-      renderer: &render_actions/2  # function/2 to access full record
+      renderer: &render_primary_action/2  # function/2 to access full record
     }
   ]
 end
 
-defp render_actions(_value, record) do
+defp render_primary_action(_value, record) do
   assigns = %{record: record}
   ~H"""
-  <div class="flex gap-2">
-    <.link 
-      navigate={~p"/products/#{@record.id}"} 
-      class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-    >
-      Edit
-    </.link>
-    <button 
-      phx-click="toggle_active" 
-      phx-value-id={@record.id}
-      class="text-amber-600 hover:text-amber-800 text-sm font-medium"
-    >
-      <%= if @record.active, do: "Deactivate", else: "Activate" %>
-    </button>
-    <button 
-      phx-click="delete" 
-      phx-value-id={@record.id}
-      data-confirm="Are you sure?"
-      class="text-red-600 hover:text-red-800 text-sm font-medium"
-    >
-      Delete
-    </button>
-  </div>
+  <.link 
+    navigate={~p"/products/#{@record.id}"} 
+    class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+  >
+    View
+  </.link>
   """
 end
+```
+
+Note: For row actions like edit/delete, use the component's `actions` assign instead of defining an `actions` field. Example:
+
+```elixir
+<.live_table ... actions={%{label: "Actions", items: [edit: &edit_action/1, delete: &delete_action/1]}} />
 ```
 
 ### Conditional Rendering with Context (function/2)

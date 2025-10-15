@@ -146,6 +146,7 @@ Create the template file:
     filters={filters()}
     options={@options}
     streams={@streams}
+    actions={actions()} # optional
   />
 </div>
 ```
@@ -342,35 +343,60 @@ end
 **Note:** Default sort only works with simple schema fields for single table queries. For custom queries with joins, LiveTable doesn't currently support default sorting on joined fields.
 
 ### Add Custom Actions
-```elixir
-# In your fields definition
-actions: %{
-  label: "Actions",
-  sortable: false,
-  renderer: &render_actions/1
-}
 
-defp render_actions(product) do
-  assigns = %{product: product}
+Define actions as component assign items and pass them to `<.live_table>`.
+
+```elixir
+# In your LiveView module
+
+def actions do
+  %{
+    label: "Actions",
+    items: [
+      edit: &edit_action/1,
+      delete: &delete_action/1
+    ]
+  }
+end
+
+# Each action is a 1-arity function component
+# It receives assigns with `:record`
+
+defp edit_action(assigns) do
   ~H"""
-  <div class="flex gap-2">
-    <.link 
-      navigate={~p"/products/#{@product.id}"} 
-      class="text-blue-600 hover:text-blue-800 text-sm"
-    >
-      Edit
-    </.link>
-    <button 
-      phx-click="delete" 
-      phx-value-id={@product.id}
-      class="text-red-600 hover:text-red-800 text-sm"
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </button>
-  </div>
+  <.link 
+    navigate={~p"/products/#{@record.id}"} 
+    class="text-blue-600 hover:text-blue-800 text-sm"
+  >
+    Edit
+  </.link>
   """
 end
+
+defp delete_action(assigns) do
+  ~H"""
+  <button 
+    phx-click="delete" 
+    phx-value-id={@record.id}
+    class="text-red-600 hover:text-red-800 text-sm"
+    data-confirm="Are you sure?"
+  >
+    Delete
+  </button>
+  """
+end
+```
+
+And in your template, pass the actions:
+
+```elixir
+<.live_table
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+  actions={actions()}
+/>
 ```
 
 ### Enable Card View
