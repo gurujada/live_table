@@ -73,20 +73,15 @@ let liveSocket = new LiveSocket("/live", Socket, {
 @import "../../deps/live_table/priv/static/live-table.css";
 ```
 
-2. **Verify Tailwind Configuration**
-```javascript
-// tailwind.config.js
-module.exports = {
-  content: [
-    "./js/**/*.js",
-    "../lib/*_web.ex",
-    "../lib/*_web/**/*.*ex",
-    "../deps/live_table/**/*.ex"  // Add this line
-  ],
-}
-```
+2. **Tailwind v4 users**
+- No config file is required by default. Ensure your CSS includes the LiveTable import shown above and that your build pipeline processes it.
 
-3. **Check Build Process**
+3. **If using DaisyUI**
+- Ensure DaisyUI is installed per its v4 instructions.
+- Set your theme via `data-theme` on `html` or `body` if not using system default.
+- The LiveTable shim is safe: DaisyUI styles will override it when present.
+
+4. **Check Build Process**
 ```bash
 # Rebuild assets
 cd assets && npm run build

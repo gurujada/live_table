@@ -1,5 +1,7 @@
 # Quick Start Guide
 
+Note on styling: LiveTable uses DaisyUI class semantics with a Tailwind-based shim, so it looks good without DaisyUI. If DaisyUI is present, components adopt your active Daisy theme automatically.
+
 Get up and running with LiveTable in 5 minutes! This guide assumes you've already completed the [installation](installation.md).
 
 ## What We'll Build

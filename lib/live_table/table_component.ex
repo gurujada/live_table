@@ -49,7 +49,7 @@ defmodule LiveTable.TableComponent do
               <.exports formats={get_in(@table_options, [:exports, :formats])} />
             </div>
           </div>
-          
+
         <!-- Controls section -->
           <div class="mt-4">
             <.common_controls
@@ -105,7 +105,7 @@ defmodule LiveTable.TableComponent do
                 >
                   <label for="table-search" class="sr-only">Search</label>
                   <div class="relative rounded-md shadow-sm">
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3">
                       <svg
                         class="h-5 w-5 text-gray-400"
                         viewBox="0 0 20 20"
@@ -124,20 +124,20 @@ defmodule LiveTable.TableComponent do
                       name="search"
                       autocomplete="off"
                       id="table-search"
-                      class="w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
+                      class="input input-bordered w-full pl-10"
                       placeholder={@table_options[:search][:placeholder]}
                       value={@options["filters"]["search"]}
                       phx-debounce={@table_options[:search][:debounce]}
                     />
                   </div>
                 </div>
-                
+
         <!-- Per page -->
                 <select
                   :if={@options["pagination"]["paginate?"]}
                   name="per_page"
                   value={@options["pagination"]["per_page"]}
-                  class="w-20 rounded-md border-0 py-1.5 pl-3 pr-8 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:focus:ring-indigo-500"
+                  class="select select-bordered w-20"
                 >
                   {Phoenix.HTML.Form.options_for_select(
                     get_in(@table_options, [:pagination, :sizes]),
@@ -145,14 +145,9 @@ defmodule LiveTable.TableComponent do
                   )}
                 </select>
               </div>
-              
+
         <!-- Filter toggle -->
-              <button
-                :if={length(@filters) > 3}
-                type="button"
-                phx-click="toggle_filters"
-                class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700"
-              >
+              <button :if={length(@filters) > 3} type="button" phx-click="toggle_filters" class="btn">
                 <svg class="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path
                     fill-rule="evenodd"
@@ -163,7 +158,7 @@ defmodule LiveTable.TableComponent do
                 <span phx-update="ignore" id="filter-toggle-text">Filters</span>
               </button>
             </div>
-            
+
         <!-- Filters section -->
             <div
               id="filters-container"
@@ -194,7 +189,7 @@ defmodule LiveTable.TableComponent do
           <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
               <div class="overflow-hidden shadow sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+                <table class="table divide-y dark:divide-gray-700">
                   <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       <th
@@ -218,7 +213,7 @@ defmodule LiveTable.TableComponent do
                       </th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+                  <tbody class="divide-y dark:divide-gray-700 bg-white dark:bg-gray-900">
                     <tr id="empty-placeholder" class="only:table-row hidden">
                       <td
                         colspan={length(@fields) + if(has_actions(@actions), do: 1, else: 0)}
@@ -283,10 +278,7 @@ defmodule LiveTable.TableComponent do
 
       defp render_row(%{table_options: %{use_streams: false}} = var!(assigns)) do
         ~H"""
-        <tr
-          :for={resource <- @streams}
-          class="hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-neutral-200"
-        >
+        <tr :for={resource <- @streams}>
           <td
             :for={{key, field} <- @fields}
             class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-100"
@@ -302,11 +294,7 @@ defmodule LiveTable.TableComponent do
 
       defp render_row(%{table_options: %{use_streams: true}} = var!(assigns)) do
         ~H"""
-        <tr
-          :for={{id, resource} <- @streams.resources}
-          id={id}
-          class="hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-neutral-200"
-        >
+        <tr :for={{id, resource} <- @streams.resources} id={id}>
           <td
             :for={{key, field} <- @fields}
             class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-100"
@@ -365,11 +353,7 @@ defmodule LiveTable.TableComponent do
             :if={@applied_filters != %{"search" => ""}}
             class="mt-4 flex justify-end border-t border-gray-200 pt-4 dark:border-gray-700"
           >
-            <.link
-              phx-click="sort"
-              phx-value-clear_filters="true"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700"
-            >
+            <.link phx-click="sort" phx-value-clear_filters="true" class="btn">
               <svg class="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
                   fill-rule="evenodd"
@@ -396,14 +380,7 @@ defmodule LiveTable.TableComponent do
             <button
               phx-click="sort"
               phx-value-page={String.to_integer(@current_page) - 1}
-              class={[
-                "relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset",
-                if String.to_integer(@current_page) == 1 do
-                  "bg-gray-100 text-gray-400 ring-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600 dark:ring-gray-700"
-                else
-                  "bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700"
-                end
-              ]}
+              class={["btn", String.to_integer(@current_page) == 1 && "btn-disabled cursor-not-allowed"]}
               disabled={String.to_integer(@current_page) == 1}
             >
               Previous
@@ -411,14 +388,7 @@ defmodule LiveTable.TableComponent do
             <button
               phx-click="sort"
               phx-value-page={String.to_integer(@current_page) + 1}
-              class={[
-                "relative ml-3 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset",
-                if !@has_next_page do
-                  "bg-gray-100 text-gray-400 ring-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600 dark:ring-gray-700"
-                else
-                  "bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700"
-                end
-              ]}
+              class={["btn ml-3", !@has_next_page && "btn-disabled cursor-not-allowed"]}
               disabled={!@has_next_page}
             >
               Next
@@ -430,21 +400,27 @@ defmodule LiveTable.TableComponent do
 
       def exports(var!(assigns)) do
         ~H"""
-        <div class="relative inline-block text-left">
+        <div
+          class="dropdown dropdown-end text-left"
+          phx-click-away={JS.hide(to: "#export-dropdown")}
+          phx-window-keydown={JS.hide(to: "#export-dropdown")}
+          phx-key="escape"
+        >
           <div>
             <button
               type="button"
-              class="inline-flex cursor-pointer w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700"
+              class="btn"
               id="export-menu-button"
               aria-expanded="false"
               aria-haspopup="true"
               phx-click={
                 JS.toggle(
                   to: "#export-dropdown",
-                  in: "transition ease-out duration-100 transform opacity-0 scale-95",
-                  out: "transition ease-in duration-75 transform opacity-100 scale-100"
+                  in: "transition ease-out duration-150 opacity-0 -translate-y-1",
+                  out: "transition ease-in duration-150 opacity-100 translate-y-0"
                 )
               }
+              data-hide-on-click="#export-dropdown"
             >
               Export
               <svg
@@ -464,24 +440,39 @@ defmodule LiveTable.TableComponent do
 
           <div
             id="export-dropdown"
-            class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-gray-700 hidden"
+            class="dropdown-content bg-base-100 rounded-box w-56 shadow hidden z-50"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="export-menu-button"
             tabindex="-1"
           >
-            <div class="py-1" role="none">
-              <.link
-                :for={format <- @formats}
-                href="#"
-                phx-click={if format == :csv, do: "export-csv", else: "export-pdf"}
-                class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                role="menuitem"
-                tabindex="-1"
-              >
-                Export as {String.upcase(to_string(format))}
-              </.link>
-            </div>
+            <ul class="menu menu-sm" role="none">
+              <li :for={format <- @formats} role="none">
+                <.link
+                  href="#"
+                  role="menuitem"
+                  aria-label={"Export as #{String.upcase(to_string(format))}"}
+                  phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}
+                  class="btn btn-ghost btn-sm w-full justify-start"
+                >
+                  <svg
+                    class="h-4 w-4 text-gray-500 dark:text-gray-300"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Export as {String.upcase(to_string(format))}</span>
+                </.link>
+              </li>
+            </ul>
           </div>
         </div>
         """

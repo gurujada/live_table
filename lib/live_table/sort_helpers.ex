@@ -7,7 +7,7 @@ defmodule LiveTable.SortHelpers do
     ~H"""
     <div
       :if={@sortable}
-      class="group inline-flex cursor-pointer whitespace-nowrap"
+      class="group inline-flex items-center cursor-pointer whitespace-nowrap align-middle"
       phx-click="sort"
       id={@key}
       phx-hook="SortableColumn"
@@ -17,10 +17,10 @@ defmodule LiveTable.SortHelpers do
         })
       }
     >
-      {@label}
+      <span class="leading-5">{@label}</span>
       <span class="ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
         <svg
-          class="size-3.5 ms-1 -me-0.5 text-gray-400 dark:text-neutral-500"
+          class="h-4 w-4 relative top-[1px] text-gray-400 dark:text-neutral-500"
           xmlns="http://www.w3.org/2000/svg"
           width="24"
           height="24"
