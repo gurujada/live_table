@@ -51,7 +51,7 @@ Present data the way your users need it:
 - **Table mode** for traditional row/column layouts
 - **Card mode** for rich, visual presentations
 - **Custom components** for specialized displays
-- **Complete UI customization** with custom headers, content, and footers
+- **Complete UI customization** with custom headers, custom controls, content, and footers
 - **Responsive design** that works on all devices
 
 ### ⚡ Real-time Updates

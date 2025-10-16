@@ -13,6 +13,8 @@ config :esbuild,
        --format=esm
        --outfile=../priv/static/live-table.js
        --alias:live_select=#{Path.expand("../deps/live_select/priv/static/live_select.min.js", __DIR__)}
+       --alias:nouislider=#{Path.expand("../assets/vendor/nouislider.mjs", __DIR__)}
+       --alias:nouislider/dist/nouislider.css=#{Path.expand("../assets/vendor/nouislider.css", __DIR__)}
      ),
     cd: Path.expand("../assets", __DIR__)
   ],
@@ -22,6 +24,7 @@ config :esbuild,
       --bundle
       --outfile=../priv/static/live-table.css
       --loader:.css=css
+      --alias:nouislider/dist/nouislider.css=#{Path.expand("../assets/vendor/nouislider.css", __DIR__)}
     ),
     cd: Path.expand("../assets", __DIR__)
   ]

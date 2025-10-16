@@ -40,6 +40,16 @@ defmodule LiveTable.TableComponentTest do
       }
   end
 
+  defmodule CustomControls do
+    use Phoenix.Component
+
+    def controls(assigns) do
+      ~H"""
+      <div id="custom-controls">My Controls</div>
+      """
+    end
+  end
+
   describe "live_table/1 - basic rendering" do
     test "renders table mode with basic structure" do
       assigns = %{
@@ -1068,6 +1078,112 @@ defmodule LiveTable.TableComponentTest do
 
       assert html_without_actions =~ ~s(id=\"empty-placeholder\")
       assert html_without_actions =~ ~s(colspan=\"2\")
+    end
+  end
+
+  describe "custom controls" do
+    test "uses custom controls in table mode and hides defaults" do
+      defmodule CustomControlsTable do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :table,
+            use_streams: false,
+            custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls}
+          }
+      end
+
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: true, searchable: true}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, "per_page" => 10, "page" => "1"}
+        },
+        streams: []
+      }
+
+      html = render_component(&CustomControlsTable.live_table/1, assigns)
+
+      assert html =~ "custom-controls"
+      # Default per_page select should not render when custom_controls provided
+      refute html =~ "name=\"per_page\""
+      # Default search input should not render
+      refute html =~ "table-search"
+    end
+
+    test "uses custom controls in card mode" do
+      defmodule CustomControlsCardTable do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :card,
+            use_streams: false,
+            custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls},
+            card_component: fn %{record: record} ->
+              assigns = %{record: record}
+
+              ~H"""
+              <div class="card">{@record.name}</div>
+              """
+            end
+          }
+      end
+
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, "per_page" => 10, "page" => "1"}
+        },
+        streams: [%{name: "X"}]
+      }
+
+      html = render_component(&CustomControlsCardTable.live_table/1, assigns)
+
+      assert html =~ "custom-controls"
+      refute html =~ "name=\"per_page\""
+    end
+
+    test "custom_header takes precedence over custom_controls" do
+      defmodule CustomHeader2 do
+        use Phoenix.Component
+
+        def header(assigns) do
+          ~H"""
+          <div id="custom-header">Header Only</div>
+          """
+        end
+      end
+
+      defmodule CustomHeaderWithControlsTable do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :table,
+            use_streams: false,
+            custom_header: {CustomHeader2, :header},
+            custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls}
+          }
+      end
+
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: []
+      }
+
+      html = render_component(&CustomHeaderWithControlsTable.live_table/1, assigns)
+
+      assert html =~ "custom-header"
+      refute html =~ "custom-controls"
     end
   end
 end

@@ -1,7 +1,6 @@
 {
   "type": "module",
   "dependencies": {
-    "nouislider": "^15.0.0",
     "live_select": "file:../deps/live_select/priv/static/live_select.min.js"
   }
 }

@@ -136,18 +136,25 @@ window.liveSocket = liveSocket
 
 #### Add CSS Styles
 
-Add LiveTable styles to your `assets/css/app.css`:
+Add LiveTable styles to your `assets/css/app.css`.
 
+- If your app uses Tailwind (recommended):
 ```css
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* Add LiveTable styles */
-@import "../../deps/live_table/priv/static/live-table.css";
-
-/* Your existing styles */
+/* Source CSS so Tailwind can process @apply/@layer */
+@import "../../deps/live_table/assets/css/live-table.css";
 ```
+
+- If your app does NOT use Tailwind:
+```css
+/* Use the prebuilt, dependency-free stylesheet */
+@import "../../deps/live_table/priv/static/live-table.css";
+```
+
+Both options work; choose the one that matches your pipeline.
 
 ### Database Setup
 

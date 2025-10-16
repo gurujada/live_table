@@ -344,6 +344,28 @@ end
 
 **Note:** Default sort only works with simple schema fields for single table queries. For custom queries with joins, LiveTable doesn't currently support default sorting on joined fields.
 
+### Override Header Controls
+
+You can override just the header controls (search, per-page, filter toggle) without replacing the entire header.
+
+```elixir
+def table_options do
+  %{
+    custom_controls: {__MODULE__, :my_controls}
+  }
+end
+
+defp my_controls(assigns) do
+  ~H"""
+  <.form for={%{}} phx-change="sort">
+    <!-- your controls here -->
+  </.form>
+  """
+end
+```
+
+Note: If you set `custom_header`, it replaces the whole header; `custom_controls` won’t be used.
+
 ### Add Custom Actions
 
 Define actions as component assign items and pass them to `<.live_table>`.

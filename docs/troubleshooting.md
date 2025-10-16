@@ -89,6 +89,13 @@ cd assets && npm run build
 cd assets && npm run dev
 ```
 
+5. **“Unknown at rule @apply” errors**
+- Cause: Your CSS pipeline is not running Tailwind/PostCSS over a file that contains Tailwind directives (like `@apply`, `@layer`).
+- Fix options:
+  - If your app uses Tailwind: import the source CSS so Tailwind can process it: `@import "../../deps/live_table/assets/css/live-table.css"`.
+  - If your app doesn’t use Tailwind: import the prebuilt fallback instead: `@import "../../deps/live_table/priv/static/live-table.css"`.
+- Library build note: The library no longer tries to bundle its CSS with esbuild. Any @apply errors you saw during compile should be gone. Use one of the import options above in your host app.
+
 ## Query and Data Issues
 
 ### Empty Table Despite Having Data

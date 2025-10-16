@@ -545,6 +545,81 @@ defp custom_header(assigns) do
 end
 ```
 
+## Custom Controls
+
+Render your own header controls without replacing the entire header.
+
+```elixir
+# In your LiveView
+
+def table_options do
+  %{
+    # Applies in both :table and :card modes
+    custom_controls: {__MODULE__, :my_controls}
+  }
+end
+
+# A 1-arity function component that receives assigns
+# with :fields, :filters, :options, and :table_options
+# Wire events to LiveTable using phx-change="sort" and phx-click handlers
+# like "toggle_filters" the same way the built-in controls do.
+defp my_controls(assigns) do
+  ~H"""
+  <.form for={%{}} phx-change="sort">
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div class="flex items-center gap-3">
+          <!-- Search -->
+          <div
+            :if={
+              Enum.any?(@fields, fn
+                {_, %{searchable: true}} -> true
+                _ -> false
+              end) && @table_options.search.enabled
+            }
+            class="w-64"
+          >
+            <input
+              type="text"
+              name="search"
+              autocomplete="off"
+              class="input input-bordered w-full"
+              placeholder={@table_options[:search][:placeholder]}
+              value={@options["filters"]["search"]}
+              phx-debounce={@table_options[:search][:debounce]}
+            />
+          </div>
+
+          <!-- Per page -->
+          <select
+            :if={@options["pagination"]["paginate?"]}
+            name="per_page"
+            value={@options["pagination"]["per_page"]}
+            class="select select-bordered w-20"
+          >
+            {Phoenix.HTML.Form.options_for_select(
+              get_in(@table_options, [:pagination, :sizes]),
+              @options["pagination"]["per_page"]
+            )}
+          </select>
+        </div>
+
+        <!-- Filter toggle -->
+        <button :if={length(@filters) > 3} type="button" phx-click="toggle_filters" class="btn">
+          Filters
+        </button>
+      </div>
+    </div>
+  </.form>
+  """
+end
+```
+
+Notes:
+- Precedence: if `custom_header` is provided, it replaces the entire header and `custom_controls` is ignored.
+- Events: use `phx-change="sort"` for forms and `phx-click` events like `toggle_filters` to integrate with LiveTable state.
+- Assigns: you receive `:fields`, `:filters`, `:options`, and `:table_options` to build your controls.
+
 ## Performance Considerations
 
 ### Large Datasets

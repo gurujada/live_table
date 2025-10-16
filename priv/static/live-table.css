@@ -1,4 +1,4 @@
-/* node_modules/nouislider/dist/nouislider.css */
+/* vendor/nouislider.css */
 .noUi-target,
 .noUi-target * {
   -webkit-touch-callout: none;
@@ -271,4 +271,221 @@
   transform: translate(0, -18px);
   top: auto;
   right: 28px;
+}
+
+/* css/live-table.css */
+.live-table-container {
+  @apply w-full;
+}
+.live-table {
+  @apply min-w-full divide-y divide-gray-300 dark:divide-gray-700;
+}
+.live-table thead {
+  @apply bg-gray-50 dark:bg-gray-800;
+}
+.live-table th {
+  @apply px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100;
+}
+.live-table tbody {
+  @apply divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900;
+}
+.live-table td {
+  @apply whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-100;
+}
+.live-table tr {
+  @apply hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors;
+}
+.live-table-filters {
+  @apply rounded-lg bg-gray-50 p-4 dark:bg-gray-800;
+}
+.live-table-search {
+  @apply block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500;
+}
+.live-table-button {
+  @apply inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700;
+}
+.live-table-button-primary {
+  @apply inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600 dark:bg-indigo-500 dark:hover:bg-indigo-400;
+}
+.live-table-pagination {
+  @apply flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6 dark:border-gray-700;
+}
+.live-table-empty {
+  @apply py-10 text-center;
+}
+.live-table-empty-icon {
+  @apply mx-auto h-12 w-12 text-gray-400;
+}
+.live-table-empty-title {
+  @apply mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100;
+}
+.live-table-empty-description {
+  @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
+}
+.live-table-card {
+  @apply relative flex flex-col rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition-shadow;
+}
+.live-table-card-grid {
+  @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3;
+}
+.live-table-sort-icon {
+  @apply h-5 w-5 text-gray-400;
+}
+.live-table-sort-active {
+  @apply text-gray-700 dark:text-gray-300;
+}
+.live-table-dropdown {
+  @apply absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-gray-700;
+}
+@media (max-width: 640px) {
+  .live-table-wrapper {
+    @apply -mx-4 overflow-x-auto;
+  }
+  .live-table {
+    @apply min-w-[640px];
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .live-table-container {
+    color-scheme: dark;
+  }
+}
+.live-table-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.live-table-focus {
+  @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+}
+.live-table-loading {
+  @apply opacity-50 pointer-events-none;
+}
+.live-table-spinner {
+  @apply inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent;
+}
+.noUi-target {
+  @apply bg-gray-200 dark:bg-gray-700 border-0 rounded-full shadow-inner;
+}
+.noUi-horizontal {
+  @apply h-2;
+}
+.noUi-handle {
+  @apply w-5 h-5 rounded-full bg-white dark:bg-gray-200 shadow-md border-2 border-indigo-600 dark:border-indigo-500 cursor-grab active:cursor-grabbing;
+  @apply hover:bg-gray-50 dark:hover:bg-gray-100 hover:border-indigo-700 dark:hover:border-indigo-400;
+  @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+  right: -10px !important;
+  top: -6px !important;
+}
+.noUi-handle:before,
+.noUi-handle:after {
+  display: none;
+}
+.noUi-connect {
+  @apply bg-indigo-600 dark:bg-indigo-500;
+}
+.noUi-tooltip {
+  @apply bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md py-1 px-2 shadow-lg;
+  @apply border-0;
+  bottom: 120%;
+}
+.noUi-pips {
+  @apply text-gray-500 dark:text-gray-400;
+}
+.noUi-marker {
+  @apply bg-gray-300 dark:bg-gray-600;
+}
+.noUi-pips-horizontal {
+  @apply h-8;
+  top: 100%;
+}
+.noUi-value {
+  @apply text-xs;
+}
+.noUi-marker-horizontal.noUi-marker {
+  @apply w-px h-2;
+}
+.noUi-marker-horizontal.noUi-marker-large {
+  @apply h-3;
+}
+.live-select-container {
+  @apply relative;
+}
+.live-select-dropdown {
+  @apply absolute z-50 w-full mt-1 max-h-60 overflow-auto rounded-md bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none;
+}
+.live-select-option {
+  @apply relative cursor-pointer select-none py-2 px-3;
+}
+.live-select-option-active {
+  @apply bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400;
+}
+.live-select-tag {
+  @apply inline-flex items-center gap-x-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-400;
+}
+.live-select-tag-remove {
+  @apply ml-0.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-indigo-400 hover:bg-indigo-200 hover:text-indigo-500 dark:hover:bg-indigo-800 dark:hover:text-indigo-300 focus:bg-indigo-500 focus:text-white focus:outline-none;
+}
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-x-1.5 h-10 min-h-10 rounded-md px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset;
+    @apply bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-gray-700;
+  }
+  .btn-disabled {
+    @apply bg-gray-100 text-gray-400 ring-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600 dark:ring-gray-700;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700;
+  }
+  .btn-sm {
+    @apply h-8 px-3 py-1.5 text-sm;
+  }
+  .input {
+    @apply block w-full rounded-md border-0 py-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white;
+  }
+  .input-bordered {
+    @apply ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 dark:ring-gray-700 dark:focus:ring-indigo-500;
+  }
+  .select {
+    @apply rounded-md border-0 py-2 text-gray-900 focus:ring-2 focus:ring-inset sm:text-sm dark:bg-gray-800 dark:text-white;
+  }
+  .select-bordered {
+    @apply ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 dark:ring-gray-700 dark:focus:ring-indigo-500;
+  }
+  .table {
+    @apply min-w-full;
+  }
+  .dropdown-content {
+    @apply absolute right-0 z-50 mt-2 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 backdrop-blur-sm backdrop-saturate-150 dark:bg-gray-800 dark:ring-gray-700;
+    @apply border border-gray-200 dark:border-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500;
+  }
+  .menu {
+    @apply p-2 space-y-1;
+  }
+  .menu-sm {
+    @apply text-sm;
+  }
+  .menu > li > a {
+    @apply flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-gray-200 dark:hover:bg-gray-700;
+  }
+  .dropdown {
+    @apply relative inline-block;
+  }
+  .dropdown-end {
+    @apply float-right;
+  }
+  .rounded-box {
+    @apply rounded-lg;
+  }
+  .bg-base-100 {
+    @apply bg-white dark:bg-gray-800;
+  }
 }

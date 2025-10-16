@@ -314,6 +314,7 @@ LiveTable allows complete UI customization through custom components. You can re
 def table_options do
   %{
     custom_header: {MyApp.CustomComponents, :header},
+    custom_controls: {MyApp.CustomComponents, :controls},
     custom_content: {MyApp.CustomComponents, :content},
     custom_footer: {MyApp.CustomComponents, :footer}
   }
@@ -322,8 +323,11 @@ end
 
 **Available customizations:**
 - `custom_header` - Replace the entire header section (search, filters, controls)
+- `custom_controls` - Replace only the header controls bar (search, per-page, filter toggle)
 - `custom_content` - Replace the table/card content area
 - `custom_footer` - Replace the footer section (pagination, exports)
+
+Note: When `custom_header` is provided, it replaces the full header. In that case `custom_controls` is ignored.
 
 ### Real-World Example: College Counselling Interface
 
@@ -919,6 +923,7 @@ LiveTable allows complete UI customization through custom components. You can re
 def table_options do
   %{
     custom_header: {MyApp.CustomComponents, :header},
+    custom_controls: {MyApp.CustomComponents, :controls},
     custom_content: {MyApp.CustomComponents, :content},
     custom_footer: {MyApp.CustomComponents, :footer}
   }
@@ -927,8 +932,11 @@ end
 
 **Available customizations:**
 - `custom_header` - Replace the entire header section (search, filters, controls)
+- `custom_controls` - Replace only the header controls bar (search, per-page, filter toggle)
 - `custom_content` - Replace the table/card content area
 - `custom_footer` - Replace the footer section (pagination, exports)
+
+Note: When `custom_header` is provided, it replaces the full header. In that case `custom_controls` is ignored.
 
 ### Real-World Example: College Counselling Interface
 

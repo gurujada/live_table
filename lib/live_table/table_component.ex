@@ -49,15 +49,10 @@ defmodule LiveTable.TableComponent do
               <.exports formats={get_in(@table_options, [:exports, :formats])} />
             </div>
           </div>
-
+          
         <!-- Controls section -->
           <div class="mt-4">
-            <.common_controls
-              fields={@fields}
-              filters={@filters}
-              options={@options}
-              table_options={@table_options}
-            />
+            <.render_controls {assigns} />
           </div>
         </div>
         """
@@ -75,14 +70,24 @@ defmodule LiveTable.TableComponent do
             </div>
           </div>
           <div class="mt-4">
-            <.common_controls
-              fields={@fields}
-              filters={@filters}
-              options={@options}
-              table_options={@table_options}
-            />
+            <.render_controls {assigns} />
           </div>
         </div>
+        """
+      end
+
+      defp render_controls(%{table_options: %{custom_controls: {module, function}}} = assigns) do
+        apply(module, function, [assigns])
+      end
+
+      defp render_controls(var!(assigns)) do
+        ~H"""
+        <.common_controls
+          fields={@fields}
+          filters={@filters}
+          options={@options}
+          table_options={@table_options}
+        />
         """
       end
 
@@ -131,7 +136,7 @@ defmodule LiveTable.TableComponent do
                     />
                   </div>
                 </div>
-
+                
         <!-- Per page -->
                 <select
                   :if={@options["pagination"]["paginate?"]}
@@ -145,7 +150,7 @@ defmodule LiveTable.TableComponent do
                   )}
                 </select>
               </div>
-
+              
         <!-- Filter toggle -->
               <button :if={length(@filters) > 3} type="button" phx-click="toggle_filters" class="btn">
                 <svg class="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -158,7 +163,7 @@ defmodule LiveTable.TableComponent do
                 <span phx-update="ignore" id="filter-toggle-text">Filters</span>
               </button>
             </div>
-
+            
         <!-- Filters section -->
             <div
               id="filters-container"
