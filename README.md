@@ -44,7 +44,8 @@ In your `config/config.exs`:
 ```elixir
 config :live_table,
   repo: YourApp.Repo,
-  pubsub: YourApp.PubSub
+  pubsub: YourApp.PubSub,
+  app: :your_app  # Required for exports to work correctly
 
 # Optional: Oban for exports (installer can configure this if you opt in)
 config :your_app, Oban,

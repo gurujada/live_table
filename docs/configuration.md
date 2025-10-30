@@ -16,6 +16,7 @@ Configure LiveTable globally in your `config/config.exs`:
 config :live_table,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub,
+  app: :your_app,  # Required for exports
   components: YourApp.CustomComponents,  # Optional
   defaults: %{
     pagination: %{
@@ -44,6 +45,7 @@ config :live_table,
 
 - **`repo`** - Your application's Ecto repository
 - **`pubsub`** - Your application's PubSub module for real-time updates
+- **`app`** - Your application's name (atom) - Required for export functionality to work correctly
 
 ### Optional Configuration
 
@@ -590,6 +592,9 @@ Replace LiveTable's default components with your own:
 ```elixir
 # config/config.exs
 config :live_table,
+  repo: YourApp.Repo,
+  pubsub: YourApp.PubSub,
+  app: :your_app,
   components: YourApp.CustomComponents
 ```
 
@@ -645,6 +650,7 @@ Here's a comprehensive configuration example:
 config :live_table,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub,
+  app: :your_app,
   defaults: %{
     pagination: %{
       enabled: true,
@@ -716,6 +722,7 @@ config :live_table,
 
 - **`repo`** - Your application's Ecto repository
 - **`pubsub`** - Your application's PubSub module for real-time updates
+- **`app`** - Your application's name (atom) - Required for export functionality to work correctly
 
 ### Optional Configuration
 
@@ -1199,6 +1206,9 @@ Replace LiveTable's default components with your own:
 ```elixir
 # config/config.exs
 config :live_table,
+  repo: YourApp.Repo,
+  pubsub: YourApp.PubSub,
+  app: :your_app,
   components: YourApp.CustomComponents
 ```
 
@@ -1254,6 +1264,7 @@ Here's a comprehensive configuration example:
 config :live_table,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub,
+  app: :your_app,
   defaults: %{
     pagination: %{
       enabled: true,
