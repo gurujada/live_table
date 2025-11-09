@@ -406,7 +406,7 @@ defmodule LiveTable.TableComponent do
       def exports(var!(assigns)) do
         ~H"""
         <div
-          class="dropdown dropdown-end text-left"
+          class="relative inline-block text-left"
           phx-click-away={JS.hide(to: "#export-dropdown")}
           phx-window-keydown={JS.hide(to: "#export-dropdown")}
           phx-key="escape"
@@ -421,8 +421,8 @@ defmodule LiveTable.TableComponent do
               phx-click={
                 JS.toggle(
                   to: "#export-dropdown",
-                  in: "transition ease-out duration-150 opacity-0 -translate-y-1",
-                  out: "transition ease-in duration-150 opacity-100 translate-y-0"
+                  in: "transition ease-out duration-150 transform opacity-0 scale-95",
+                  out: "transition ease-in duration-100 transform opacity-100 scale-100"
                 )
               }
               data-hide-on-click="#export-dropdown"
@@ -445,7 +445,7 @@ defmodule LiveTable.TableComponent do
 
           <div
             id="export-dropdown"
-            class="dropdown-content bg-base-100 rounded-box w-56 shadow hidden z-50"
+            class="dropdown-content bg-base-100 rounded-box w-56 shadow z-50 hidden absolute right-0 top-full mt-2"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="export-menu-button"
