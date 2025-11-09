@@ -140,51 +140,27 @@ defmodule Mix.Tasks.LiveTable.Gen.Live do
   end
 
   defp add_live_resource_use(zipper, schema_module) do
-    has_live_resource? =
-      zipper
-      |> Sourceror.Zipper.traverse(false, fn node, acc ->
-        case node do
-          %Sourceror.Zipper{node: {:use, _, [{:__aliases__, _, [:LiveTable, :LiveResource]} | _]}} ->
-            {node, true}
+    use_statement = "use LiveTable.LiveResource, schema: #{inspect(schema_module)}"
+    {:ok, ast} = Code.string_to_quoted(use_statement)
 
-          _ ->
-            {node, acc}
-        end
-      end)
-      |> elem(1)
+    case find_liveview_use_statement(zipper) do
+      {:ok, liveview_use_zipper} ->
+        updated_zipper =
+          liveview_use_zipper
+          |> Sourceror.Zipper.insert_right(ast)
+          |> Sourceror.Zipper.up()
 
-    if has_live_resource? do
-      {:ok, zipper}
-    else
-      case find_liveview_use_statement(zipper) do
-        {:ok, liveview_use_zipper} ->
-          use_statement = "use LiveTable.LiveResource, schema: #{inspect(schema_module)}"
-          {:ok, ast} = Code.string_to_quoted(use_statement)
-          {:ok, Sourceror.Zipper.insert_right(liveview_use_zipper, ast)}
+        {:ok, updated_zipper}
 
-        :error ->
-          use_statement = "use LiveTable.LiveResource, schema: #{inspect(schema_module)}"
-          {:ok, ast} = Code.string_to_quoted(use_statement)
-          {:ok, Sourceror.Zipper.insert_child(zipper, ast)}
-      end
+      :error ->
+        {:ok, Sourceror.Zipper.insert_child(zipper, ast)}
     end
   end
 
   defp find_liveview_use_statement(zipper) do
-    zipper
-    |> Sourceror.Zipper.find(fn
-      %Sourceror.Zipper{node: {:use, _, args}} ->
-        Enum.any?(args, fn
-          :live_view -> true
-          _ -> false
-        end)
-
-      _ ->
-        false
-    end)
-    |> case do
+    case Sourceror.Zipper.search_pattern(zipper, "use __, :live_view") do
       nil -> :error
-      zipper -> {:ok, zipper}
+      z -> {:ok, z}
     end
   end
 
@@ -278,7 +254,7 @@ defmodule Mix.Tasks.LiveTable.Gen.Live do
       case type do
         :string -> "%{label: \"#{label}\", sortable: true, searchable: true}"
         :text -> "%{label: \"#{label}\", searchable: true}"
-        :boolean -> "%{label: \"#{label}\"}"
+        :boolean -> "%{label: \"#{label}\", sortable: false}"
         :id -> "%{label: \"#{label}\", sortable: true}"
         _ -> "%{label: \"#{label}\", sortable: false}"
       end

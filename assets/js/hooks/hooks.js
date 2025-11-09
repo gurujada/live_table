@@ -12,4 +12,6 @@ const TableHooks = {
   ...live_select,
 };
 
+export { TableHooks };
+
 export default TableHooks;
