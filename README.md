@@ -68,9 +68,8 @@ const liveSocket = new LiveSocket("/live", Socket, {
 Add to `assets/css/app.css`:
 
 ```css
-
-
-@import "../../deps/live_table/priv/static/live-table.css";
+/* Import LiveTable source CSS so your Tailwind processes it */
+@import "../../deps/live_table/assets/css/live-table.css";
 ```
 
 ### 4. Create Your First Table

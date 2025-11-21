@@ -199,7 +199,7 @@ defmodule Mix.Tasks.LiveTable.Install do
             igniter
 
           false ->
-            live_table_import = ~s|@import "../../deps/live_table/priv/static/live-table.css";|
+            live_table_import = ~s|@import "../../deps/live_table/assets/css/live-table.css";|
             updated_content = add_css_import(content, live_table_import)
 
             igniter

@@ -68,20 +68,30 @@ let liveSocket = new LiveSocket("/live", Socket, {
 **Solutions:**
 
 1. **Import CSS Files**
+
+LiveTable requires Tailwind CSS to process its styles. Add to your `assets/css/app.css`:
+
 ```css
-/* assets/css/app.css */
-@import "../../deps/live_table/priv/static/live-table.css";
+/* Import LiveTable source CSS so Tailwind processes it */
+@import "../../deps/live_table/assets/css/live-table.css";
 ```
 
-2. **Tailwind v4 users**
-- No config file is required by default. Ensure your CSS includes the LiveTable import shown above and that your build pipeline processes it.
+2. **Ensure Tailwind is Processing the CSS**
 
-3. **If using DaisyUI**
-- Ensure DaisyUI is installed per its v4 instructions.
-- Set your theme via `data-theme` on `html` or `body` if not using system default.
-- The LiveTable shim is safe: DaisyUI styles will override it when present.
+Verify your `tailwind.config.js` includes LiveTable in the content paths:
 
-4. **Check Build Process**
+```javascript
+module.exports = {
+  content: [
+    "./js/**/*.js",
+    "../lib/your_app_web/**/*.*ex",
+    "../deps/live_table/lib/**/*.*ex"  // Add this line
+  ],
+  // ... rest of config
+}
+```
+
+3. **Check Build Process**
 ```bash
 # Rebuild assets
 cd assets && npm run build
@@ -89,12 +99,47 @@ cd assets && npm run build
 cd assets && npm run dev
 ```
 
-5. **“Unknown at rule @apply” errors**
-- Cause: Your CSS pipeline is not running Tailwind/PostCSS over a file that contains Tailwind directives (like `@apply`, `@layer`).
-- Fix options:
-  - If your app uses Tailwind: import the source CSS so Tailwind can process it: `@import "../../deps/live_table/assets/css/live-table.css"`.
-  - If your app doesn’t use Tailwind: import the prebuilt fallback instead: `@import "../../deps/live_table/priv/static/live-table.css"`.
-- Library build note: The library no longer tries to bundle its CSS with esbuild. Any @apply errors you saw during compile should be gone. Use one of the import options above in your host app.
+4. **"Unknown at rule @apply" errors**
+
+This means Tailwind is not processing the CSS file. Ensure:
+- You have Tailwind CSS installed and configured
+- Your build pipeline runs Tailwind over the imported CSS
+- The import path is correct: `../../deps/live_table/assets/css/live-table.css`
+
+### Dark Mode Not Working
+
+**Problem:** Dark mode styles don't apply when your app is in dark mode.
+
+**For DaisyUI users** (Phoenix 1.8+):
+
+If your app uses `data-theme="dark"` (DaisyUI's approach), configure Tailwind to recognize it:
+
+**Tailwind v4** - Add to `assets/css/app.css`:
+```css
+@import "tailwindcss";
+
+/* Configure dark mode for DaisyUI */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@import "../../deps/live_table/assets/css/live-table.css";
+```
+
+**Tailwind v3** - Update `tailwind.config.js`:
+```javascript
+module.exports = {
+  darkMode: ['variant', '&:where([data-theme="dark"], [data-theme="dark"] *)'],
+  // ... rest of config
+}
+```
+
+**For non-DaisyUI users**:
+
+Ensure your app applies the `.dark` class to the root element (this is Tailwind's default):
+
+```javascript
+// Toggle dark mode by adding/removing class
+document.documentElement.classList.toggle('dark')
+```
 
 ## Query and Data Issues
 

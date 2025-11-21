@@ -136,25 +136,50 @@ window.liveSocket = liveSocket
 
 #### Add CSS Styles
 
-Add LiveTable styles to your `assets/css/app.css`.
+Add LiveTable styles to your `assets/css/app.css`:
 
-- If your app uses Tailwind (recommended):
 ```css
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* Source CSS so Tailwind can process @apply/@layer */
+/* Import LiveTable source CSS so Tailwind can process it */
 @import "../../deps/live_table/assets/css/live-table.css";
 ```
 
-- If your app does NOT use Tailwind:
+**Important**: LiveTable requires Tailwind CSS to process the styles. The source CSS uses Tailwind directives (`@apply`, `@layer`) that must be compiled by your app's Tailwind pipeline.
+
+#### Configure Dark Mode for DaisyUI
+
+If you're using **DaisyUI** (common in Phoenix 1.8+ apps), you need to configure Tailwind to use DaisyUI's `data-theme` attribute for dark mode.
+
+**For Tailwind v4** (Phoenix 1.8+), add to your `assets/css/app.css`:
+
 ```css
-/* Use the prebuilt, dependency-free stylesheet */
-@import "../../deps/live_table/priv/static/live-table.css";
+@import "tailwindcss";
+
+/* Configure dark mode for DaisyUI */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Then import LiveTable CSS */
+@import "../../deps/live_table/assets/css/live-table.css";
 ```
 
-Both options work; choose the one that matches your pipeline.
+**For Tailwind v3**, update your `tailwind.config.js`:
+
+```javascript
+module.exports = {
+  darkMode: ['variant', '&:where([data-theme="dark"], [data-theme="dark"] *)'],
+  content: [
+    "./js/**/*.js",
+    "../lib/your_app_web/**/*.*ex",
+    "../deps/live_table/lib/**/*.*ex"
+  ],
+  // ... rest of config
+}
+```
+
+**If NOT using DaisyUI**, the default Tailwind dark mode will work. Just ensure your app applies the `.dark` class to the root element when dark mode is active.
 
 ### Database Setup
 

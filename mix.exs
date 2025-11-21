@@ -52,7 +52,7 @@ defmodule LiveTable.MixProject do
         "GitHub" => @source_url,
         "Docs" => "https://hexdocs.pm/live_table"
       },
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE priv/static/)
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE priv/static/*.js assets/css assets/vendor)
     ]
   end
 

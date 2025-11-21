@@ -159,12 +159,16 @@ LiveTable is designed to handle real-world application demands:
 
 ## Styling and Themes
 
-- Daisy semantics: Uses DaisyUI class names like `btn`, `select`, `input`, `dropdown`, and `menu` for consistent UI.
-- Tailwind-only support: LiveTable ships a small Tailwind-based shim in `live-table.css` so everything looks good even without DaisyUI installed.
-- DaisyUI integration: If your app includes DaisyUI, the components automatically adopt your active Daisy theme without extra configuration.
-- Dark mode: Respects Tailwind `dark:` classes and DaisyUI theme tokens. In shim-only mode, it follows your Tailwind dark strategy (e.g., class or media).
-- How to enable: Import `../../deps/live_table/priv/static/live-table.css` in your app CSS. With DaisyUI present, its styles cleanly override the shim.
-- Theming: Switch Daisy themes via the `data-theme` attribute on `html`/`body` or via your Daisy configuration. LiveTable doesn’t set a theme.
+LiveTable uses Tailwind CSS with DaisyUI-style component classes for a consistent UI:
+
+- **Component Classes**: Uses DaisyUI-style class names like `btn`, `select`, `input`, `dropdown`, and `menu`
+- **Tailwind Integration**: Includes a Tailwind-based shim so components work without DaisyUI installed
+- **DaisyUI Compatible**: If your app includes DaisyUI, components automatically adopt your active theme
+- **Dark Mode**: Supports both approaches:
+  - **DaisyUI**: Configure Tailwind to use `[data-theme="dark"]` selector (see installation docs)
+  - **Standard Tailwind**: Uses `.dark` class on root element
+- **Setup**: Import `../../deps/live_table/assets/css/live-table.css` in your app CSS so your Tailwind pipeline processes it
+- **Theming**: LiveTable doesn't set themes - it inherits from your app's configuration
 
 ## Integration Requirements
 
