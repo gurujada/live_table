@@ -1,5 +1,3 @@
-@import "nouislider/dist/nouislider.css";
-
 /* LiveTable Styles - Uses Sutra UI semantic CSS variables */
 
 /* Table Container */
@@ -56,62 +54,6 @@
 
 .live-table-spinner {
     @apply inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent;
-}
-
-/* NoUiSlider Custom Styling - keeping nouislider as-is per decision */
-.noUi-target {
-    @apply bg-muted border-0 rounded-full shadow-inner;
-}
-
-.noUi-horizontal {
-    @apply h-2;
-}
-
-.noUi-handle {
-    @apply w-5 h-5 rounded-full bg-background shadow-md border-2 border-primary cursor-grab active:cursor-grabbing;
-    @apply hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
-    right: -10px !important;
-    top: -6px !important;
-}
-
-.noUi-handle:before,
-.noUi-handle:after {
-    display: none;
-}
-
-.noUi-connect {
-    @apply bg-primary;
-}
-
-.noUi-tooltip {
-    @apply bg-popover text-popover-foreground text-xs rounded-md py-1 px-2 shadow-lg;
-    @apply border border-border;
-    bottom: 120%;
-}
-
-.noUi-pips {
-    @apply text-muted-foreground;
-}
-
-.noUi-marker {
-    @apply bg-border;
-}
-
-.noUi-pips-horizontal {
-    @apply h-8;
-    top: 100%;
-}
-
-.noUi-value {
-    @apply text-xs;
-}
-
-.noUi-marker-horizontal.noUi-marker {
-    @apply w-px h-2;
-}
-
-.noUi-marker-horizontal.noUi-marker-large {
-    @apply h-3;
 }
 
 /* LiveSelect Custom Styling - keeping live_select as-is per decision */

@@ -28,7 +28,7 @@ defmodule LiveTable.LiveViewHelpers do
 
             {key, %{"min" => min, "max" => max}}, acc ->
               filter = get_filter(key)
-              {min_val, max_val} = parse_range_values(filter.options.type, min, max)
+              {min_val, max_val} = parse_range_values(filter.options, min, max)
 
               updated_filter =
                 filter
@@ -248,15 +248,45 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
-      def handle_event("change", params, socket) do
-        params |> dbg()
-        {:noreply, socket}
+      # Handle range_change events from Sutra's range_slider
+      # Payload format: %{"key_min" => val, "key_max" => val}
+      # Transforms to: %{"filters" => %{key => %{"min" => val, "max" => val}}}
+      def handle_event("range_change", params, socket) do
+        {key, min, max} = extract_range_params(params)
+
+        handle_event(
+          "sort",
+          %{"filters" => %{key => %{"min" => min, "max" => max}}},
+          socket
+        )
       end
 
-      def handle_event("submit", params, socket) do
-        params |> dbg()
-        {:noreply, socket}
+      defp extract_range_params(params) do
+        # Find the key by looking for *_min suffix
+        {min_key, min_val} =
+          Enum.find(params, fn {k, _v} -> String.ends_with?(k, "_min") end)
+
+        {_max_key, max_val} =
+          Enum.find(params, fn {k, _v} -> String.ends_with?(k, "_max") end)
+
+        # Extract base key by removing _min suffix
+        key = String.replace_suffix(min_key, "_min", "")
+
+        # Get the filter to check if values should be integers
+        filter = get_filter(key)
+        {min_val, max_val} = maybe_convert_to_integer(min_val, max_val, filter)
+
+        {key, min_val, max_val}
       end
+
+      # Convert floats to integers when step is an integer
+      # (JSON doesn't distinguish between integers and floats)
+      defp maybe_convert_to_integer(min_val, max_val, %LiveTable.Range{options: %{step: step}})
+           when is_integer(step) do
+        {trunc(min_val), trunc(max_val)}
+      end
+
+      defp maybe_convert_to_integer(min_val, max_val, _filter), do: {min_val, max_val}
 
       def handle_event("live_select_change", %{"text" => text, "id" => id}, socket) do
         options =

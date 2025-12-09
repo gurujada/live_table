@@ -58,23 +58,8 @@ defmodule LiveTable.FilterHelpers do
 
       def encode_filters(filters) do
         Enum.reduce(filters, %{}, fn
-          {k, %LiveTable.Range{options: %{current_min: min, current_max: max, type: :number}}},
-          acc ->
+          {k, %LiveTable.Range{options: %{current_min: min, current_max: max}}}, acc ->
             k = k |> to_string
-            acc |> Map.merge(%{k => [min: min, max: max]})
-
-          {k, %LiveTable.Range{options: %{current_min: min, current_max: max, type: :date}}},
-          acc ->
-            k = k |> to_string
-            min = min |> Date.to_iso8601()
-            max = max |> Date.to_iso8601()
-            acc |> Map.merge(%{k => [min: min, max: max]})
-
-          {k, %LiveTable.Range{options: %{current_min: min, current_max: max, type: :datetime}}},
-          acc ->
-            k = k |> to_string
-            min = min |> NaiveDateTime.to_iso8601()
-            max = max |> NaiveDateTime.to_iso8601()
             acc |> Map.merge(%{k => [min: min, max: max]})
 
           {k, %LiveTable.Boolean{field: _, key: key}}, acc ->

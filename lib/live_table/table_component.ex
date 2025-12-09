@@ -89,7 +89,7 @@ defmodule LiveTable.TableComponent do
                       _ -> false
                     end) && @table_options.search.enabled
                   }
-                  class="w-64"
+                  class="w-56"
                 >
                   <label for="table-search" class="sr-only">Search</label>
                   <.input_group>
@@ -127,7 +127,7 @@ defmodule LiveTable.TableComponent do
                   />
                 </.select>
                 
-                <!-- Filter toggle -->
+        <!-- Filter toggle -->
                 <button
                   :if={length(@filters) > 3}
                   type="button"
@@ -150,10 +150,7 @@ defmodule LiveTable.TableComponent do
             </div>
             
         <!-- Filters section -->
-            <div
-              id="filters-container"
-              class={["", length(@filters) > 3 && "hidden"]}
-            >
+            <div id="filters-container" class={["", length(@filters) > 3 && "hidden"]}>
               <.filters filters={@filters} applied_filters={@options["filters"]} />
             </div>
           </div>
@@ -256,7 +253,9 @@ defmodule LiveTable.TableComponent do
             <Icon.icon name="hero-folder-open" class="size-12" />
           </:icon>
           <:title>No data</:title>
-          <:description>No records found. Try adjusting your filters or create a new record.</:description>
+          <:description>
+            No records found. Try adjusting your filters or create a new record.
+          </:description>
         </.empty>
         """
       end
