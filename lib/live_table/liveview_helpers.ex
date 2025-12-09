@@ -3,7 +3,6 @@ defmodule LiveTable.LiveViewHelpers do
   defmacro __using__(opts) do
     quote do
       use LiveTable.ExportHelpers, schema: unquote(opts[:schema])
-      use LiveTable.FilterToggleHelpers
 
       @impl true
       # Fetches records based on URL params

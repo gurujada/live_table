@@ -18,9 +18,9 @@ defmodule LiveTable.SortHelpers do
       }
     >
       <span class="leading-5">{@label}</span>
-      <span class="ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+      <span class="ml-2 flex-none rounded text-muted-foreground group-hover:visible group-focus:visible">
         <svg
-          class="h-4 w-4 relative top-[1px] text-gray-400 dark:text-neutral-500"
+          class="size-4 relative top-[1px] text-muted-foreground"
           xmlns="http://www.w3.org/2000/svg"
           width="24"
           height="24"
@@ -32,12 +32,12 @@ defmodule LiveTable.SortHelpers do
           stroke-linejoin="round"
         >
           <path
-            class={[Keyword.get(@sort_params, @key) == :desc && "text-blue-600 dark:text-blue-500"]}
+            class={[Keyword.get(@sort_params, @key) == :desc && "text-primary"]}
             d="m7 15 5 5 5-5"
           >
           </path>
           <path
-            class={[Keyword.get(@sort_params, @key) == :asc && "text-blue-600 dark:text-blue-500"]}
+            class={[Keyword.get(@sort_params, @key) == :asc && "text-primary"]}
             d="m7 9 5-5 5 5"
           >
           </path>

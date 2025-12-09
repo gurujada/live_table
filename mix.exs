@@ -40,7 +40,8 @@ defmodule LiveTable.MixProject do
       {:igniter, "~> 0.6.28"},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.10"},
-      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev}
+      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
+      {:sutra_ui, path: "../phx_ui"}
     ]
   end
 
