@@ -110,7 +110,7 @@ defmodule LiveTable.TableComponent do
                 </div>
 
                 <.select
-                  :if={@options["pagination"]["paginate?"]}
+                  :if={@options["pagination"]["paginate?"] && @table_options.pagination[:mode] != :infinite_scroll}
                   id="per-page-select"
                   name="per_page"
                   value={to_string(@options["pagination"]["per_page"])}
@@ -126,7 +126,7 @@ defmodule LiveTable.TableComponent do
                     label={to_string(size)}
                   />
                 </.select>
-                
+
         <!-- Filter toggle -->
                 <button
                   :if={length(@filters) > 3}
@@ -148,7 +148,7 @@ defmodule LiveTable.TableComponent do
                 <.exports formats={get_in(@table_options, [:exports, :formats])} />
               </div>
             </div>
-            
+
         <!-- Filters section -->
             <div id="filters-container" class={["", length(@filters) > 3 && "hidden"]}>
               <.filters filters={@filters} applied_filters={@options["filters"]} />
@@ -216,6 +216,41 @@ defmodule LiveTable.TableComponent do
               </div>
             </div>
           </div>
+        </div>
+        """
+      end
+
+      defp content_section(
+             %{table_options: %{mode: :card, pagination: %{mode: :infinite_scroll}}} =
+               var!(assigns)
+           ) do
+        ~H"""
+        <div
+          id="infinite-scroll-container"
+          phx-update="stream"
+          phx-viewport-bottom={@options["pagination"][:has_next_page] && !@loading_more && "load_more"}
+          class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <div :for={{id, record} <- @streams.resources} id={id}>
+            {@table_options.card_component.(%{record: record})}
+          </div>
+        </div>
+
+        <.loader
+          :if={@loading_more}
+          loading_component={@table_options.pagination[:loading_component]}
+        />
+        """
+      end
+
+      defp loader(%{loading_component: component} = assigns) when is_function(component, 1) do
+        component.(%{})
+      end
+
+      defp loader(var!(assigns)) do
+        ~H"""
+        <div class="flex justify-center py-8">
+          <Icon.icon name="hero-arrow-path" class="size-6 animate-spin text-muted-foreground" />
         </div>
         """
       end
@@ -295,7 +330,7 @@ defmodule LiveTable.TableComponent do
       defp footer_section(var!(assigns)) do
         ~H"""
         <.paginate
-          :if={@options["pagination"]["paginate?"]}
+          :if={@options["pagination"]["paginate?"] && @table_options.pagination[:mode] != :infinite_scroll}
           current_page={@options["pagination"]["page"]}
           has_next_page={@options["pagination"][:has_next_page]}
         />

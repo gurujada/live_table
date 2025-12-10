@@ -4,6 +4,7 @@ defmodule LiveTable.TableConfig do
   @default_options %{
     pagination: %{
       enabled: true,
+      mode: :buttons,
       sizes: [10, 25, 50],
       default_size: 10
     },
