@@ -35,3 +35,7 @@ admin_table-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# OpenCode agent docs (local workflow, not tracked)
+/.opencode/
+/agents.md
+

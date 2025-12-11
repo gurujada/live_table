@@ -18,11 +18,26 @@ defmodule LiveTable.TableComponent do
           |> assign_new(:actions, fn -> [] end)
 
         ~H"""
-        <div class="w-full" id="live-table" phx-hook="Download">
+        <div class="w-full" id="live-table" phx-hook={@table_options[:exports][:enabled] && ".Download"}>
           <.render_header {assigns} />
           <.render_content {assigns} />
           <.render_footer {assigns} />
         </div>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download">
+          export default {
+            mounted() {
+              this.handleEvent("download", ({ path }) => {
+                const link = document.createElement("a");
+                link.href = path;
+                link.setAttribute("download", "");
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              });
+            }
+          }
+        </script>
         """
       end
 

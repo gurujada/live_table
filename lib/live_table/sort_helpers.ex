@@ -10,7 +10,7 @@ defmodule LiveTable.SortHelpers do
       class="group inline-flex items-center cursor-pointer whitespace-nowrap align-middle"
       phx-click="sort"
       id={@key}
-      phx-hook="SortableColumn"
+      phx-hook=".SortableColumn"
       phx-value-sort={
         Jason.encode!(%{
           @key => (@sort_params[@key] || :asc) |> to_string() |> next_sort_order()
@@ -44,6 +44,25 @@ defmodule LiveTable.SortHelpers do
         </svg>
       </span>
     </div>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".SortableColumn">
+      export default {
+        mounted() {
+          this.handleClick = (event) => {
+            if (event.shiftKey) {
+              event.preventDefault();
+              this.pushEvent("sort", {
+                sort: this.el.getAttribute("phx-value-sort"),
+                shift_key: true,
+              });
+            }
+          };
+          this.el.addEventListener("click", this.handleClick);
+        },
+        destroyed() {
+          this.el.removeEventListener("click", this.handleClick);
+        },
+      }
+    </script>
     """
   end
 
