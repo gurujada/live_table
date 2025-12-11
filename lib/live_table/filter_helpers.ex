@@ -30,13 +30,63 @@ defmodule LiveTable.FilterHelpers do
             {k, "false"}, acc ->
               Map.delete(acc, k)
 
-            {key, ["[" <> rest]}, acc ->
+            # Handle SutraUI.LiveSelect single mode: JSON string like "{\"label\":\"X\",\"value\":[1,\"desc\"]}"
+            {key, "{" <> _ = json}, acc ->
               case get_filter(key) do
                 %LiveTable.Select{} ->
-                  id = ("[" <> rest) |> Jason.decode!() |> List.first()
-                  Map.put(acc, key, %{id: [id]})
+                  case Jason.decode(json) do
+                    {:ok, %{"value" => [id | _]}} ->
+                      Map.put(acc, key, %{id: [id]})
 
-                true ->
+                    {:ok, %{"value" => id}} when not is_list(id) ->
+                      Map.put(acc, key, %{id: [id]})
+
+                    _ ->
+                      acc
+                  end
+
+                _ ->
+                  acc
+              end
+
+            # Handle SutraUI.LiveSelect tags mode: list of JSON strings like ["{\"label\":\"X\",\"value\":[1,\"desc\"]}"]
+            {key, values}, acc when is_list(values) ->
+              case get_filter(key) do
+                %LiveTable.Select{} ->
+                  ids =
+                    values
+                    |> Enum.map(fn
+                      # SutraUI.LiveSelect format: {"label": "...", "value": [id, desc]} or {"label": "...", "value": id}
+                      "{" <> _ = json ->
+                        case Jason.decode(json) do
+                          {:ok, %{"value" => [id | _]}} -> id
+                          {:ok, %{"value" => id}} when not is_list(id) -> id
+                          _ -> nil
+                        end
+
+                      # Legacy live_select format: "[id, desc]"
+                      "[" <> _ = json ->
+                        case Jason.decode(json) do
+                          {:ok, [id | _]} -> id
+                          _ -> nil
+                        end
+
+                      # Empty string (cleared selection)
+                      "" ->
+                        nil
+
+                      _ ->
+                        nil
+                    end)
+                    |> Enum.reject(&is_nil/1)
+
+                  if ids == [] do
+                    Map.delete(acc, key)
+                  else
+                    Map.put(acc, key, %{id: ids})
+                  end
+
+                _ ->
                   acc
               end
 

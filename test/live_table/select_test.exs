@@ -29,8 +29,8 @@ defmodule LiveTable.SelectTest do
       assert result.field == {:categories, :id}
       assert result.key == "category-select"
       assert result.options.label == "Select"
-      assert result.options.prompt == "Select an option"
-      assert result.options.loading_text == "Loading options..."
+      assert result.options.placeholder == "Search..."
+      assert result.options.mode == :tags
       assert result.options.selected == []
     end
 
@@ -61,11 +61,12 @@ defmodule LiveTable.SelectTest do
       assert is_struct(result, Ecto.Query.DynamicExpr)
 
       query =
-        from p in Product,
+        from(p in Product,
           join: c in Category,
           as: :categories,
           on: c.id == p.category_id,
           where: ^result
+        )
 
       assert inspect(query) =~ "where: ^true and c1.id in ^[1, 2]"
     end
@@ -77,11 +78,12 @@ defmodule LiveTable.SelectTest do
       result = Select.apply(initial_condition, filter)
 
       query =
-        from p in Product,
+        from(p in Product,
           join: c in Category,
           as: :categories,
           on: c.id == p.category_id,
           where: ^result
+        )
 
       assert inspect(query) =~ "where: p0.price > 100 and c1.id in ^[1]"
     end

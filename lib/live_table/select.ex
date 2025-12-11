@@ -15,12 +15,22 @@ defmodule LiveTable.Select do
     - `:options_source` - Function or module for dynamic option loading
     - `:option_template` - Custom template for rendering options
     - `:selected` - List of pre-selected values
-    - `:loading_text` - Text to display while loading options
-    - `:prompt` - Prompt text for the select
     - `:placeholder` - Placeholder text for the select
     - `:css_classes` - CSS classes for the main container
     - `:label_classes` - CSS classes for the label element
-    - `:select_classes` - CSS classes for the select element
+
+    ### LiveSelect Options
+
+    These options are passed directly to the underlying `SutraUI.LiveSelect` component:
+
+    - `:mode` - Selection mode (default: `:tags`)
+      - `:single` - Select one option, input shows selected label
+      - `:tags` - Multi-select with tag pills, dropdown closes after each selection
+      - `:quick_tags` - Multi-select with tag pills, dropdown stays open for rapid selection
+    - `:allow_clear` - Show clear button in single mode (default: `false`)
+    - `:max_selectable` - Maximum number of selections allowed, 0 = unlimited (default: `0`)
+    - `:user_defined_options` - Allow users to create custom options by typing (default: `false`)
+    - `:debounce` - Debounce time in ms for search input (default: `100`)
 
     For default values, see: [LiveTable.Select source code](https://github.com/gurujada/live_table/blob/master/lib/live_table/select.ex)
 
@@ -65,7 +75,55 @@ defmodule LiveTable.Select do
     ```
 
     You could write your function to have other args passed to it as well. Just make sure the first arg is the text.
-    It must return a tuple, with the first element being the label and the second being the value(or a list of fields).
+
+  ## Return Format Contract
+
+  **IMPORTANT**: The `options_source` callback MUST return data in one of these formats:
+
+    ```elixir
+    # Format 1: Tuple with list value (recommended)
+    {label, [primary_key, extra_info, ...]}
+
+    # Format 2: Tuple with simple value
+    {label, primary_key}
+    ```
+
+  The **first element** of the value (or the value itself if not a list) is used as the primary key
+  for filtering. This value is used in the `WHERE id IN (...)` query clause.
+
+  ### Correct Examples
+
+    ```elixir
+    # Using user ID as the filter value
+    def search_users(text) do
+      User
+      |> where([u], ilike(u.name, ^"%\#{text}%"))
+      |> select([u], {u.name, [u.id, u.email]})  # id is first element
+      |> limit(10)
+      |> Repo.all()
+    end
+
+    # Simple format with just the primary key
+    def search_categories(text) do
+      Category
+      |> where([c], ilike(c.name, ^"%\#{text}%"))
+      |> select([c], {c.name, c.id})  # id is the value
+      |> limit(10)
+      |> Repo.all()
+    end
+    ```
+
+  ### Incorrect Examples
+
+    ```elixir
+    # WRONG: Using email as the value - will fail when filtering by id
+    def search_users(text) do
+      User
+      |> where([u], ilike(u.name, ^"%\#{text}%"))
+      |> select([u], {u.name, u.email})  # email is NOT a valid primary key!
+      |> Repo.all()
+    end
+    ```
 
   ## Option Templates
 
@@ -89,7 +147,7 @@ defmodule LiveTable.Select do
       assigns = %{option: option}
       ~H\"\"\"
       <div class="flex flex-col">
-        <span class="font-bold"><%= @option.label %></span> inas
+        <span class="font-bold"><%= @option.label %></span>
         <span class="text-sm text-gray-500"><%= @option.value |> Enum.at(0) %></span>
       </div>
       \"\"\"
@@ -112,7 +170,7 @@ defmodule LiveTable.Select do
 
   If the field you want to use is part of the base schema(given to `LiveResource`), you can simply pass the field name as an atom.
     ```elixir
-    # Creating a basic select filter
+    # Creating a basic select filter (tags mode - default)
     Select.new(:category, "category_select", %{
       label: "Category",
       options: [
@@ -131,13 +189,34 @@ defmodule LiveTable.Select do
       })
     ```
 
+  ### Selection Mode Examples
+
     ```elixir
-    # Advanced example with all options
-    Select.new({:category, :name}, "category_name", %{
-      label: "Category",
-      placeholder: "Search for categories...",
-      options_source: {Demo.Catalog, :search_categories, [\optional args\]}
-      option_template: &custom_template/1,
+    # Single selection mode - pick one option
+    Select.new(:status, "status_filter", %{
+      label: "Status",
+      mode: :single,
+      allow_clear: true,
+      options: [
+        %{label: "Active", value: 1},
+        %{label: "Inactive", value: 0}
+      ]
+    })
+
+    # Tags mode (default) - multi-select with dropdown closing after each selection
+    Select.new(:categories, "categories_filter", %{
+      label: "Categories",
+      mode: :tags,
+      max_selectable: 5,
+      options_source: {Demo.Catalog, :search_categories, []}
+    })
+
+    # Quick tags mode - multi-select with dropdown staying open
+    Select.new(:tags, "tags_filter", %{
+      label: "Tags",
+      mode: :quick_tags,
+      user_defined_options: true,  # Allow creating new tags by typing
+      options_source: {Demo.Content, :search_tags, []}
     })
     ```
 
@@ -145,7 +224,6 @@ defmodule LiveTable.Select do
 
   """
   import Ecto.Query
-  import LiveSelect
 
   use Phoenix.Component
   defstruct [:field, :key, :options]
@@ -156,13 +234,15 @@ defmodule LiveTable.Select do
     options_source: nil,
     option_template: nil,
     selected: [],
-    loading_text: "Loading options...",
-    prompt: "Select an option",
-    placeholder: "Select an option",
+    placeholder: "Search...",
     css_classes: "",
     label_classes: "block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100 mb-2",
-    select_classes:
-      "block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:focus:ring-indigo-500"
+    # LiveSelect options
+    mode: :tags,
+    allow_clear: false,
+    max_selectable: 0,
+    user_defined_options: false,
+    debounce: 100
   }
 
   @doc false
@@ -185,27 +265,26 @@ defmodule LiveTable.Select do
   @doc false
   def render(assigns) do
     ~H"""
-    <div phx-change="change" id={"select_filter[#{@key}]"} class={@filter.options.css_classes}>
+    <div id={"select_filter[#{@key}]"} class={@filter.options.css_classes}>
       <label :if={@filter.options.label} class={@filter.options.label_classes}>
         {@filter.options.label}
       </label>
-      <.live_select
+      <.live_component
+        module={SutraUI.LiveSelect}
         field={Phoenix.Component.to_form(%{})["filters[#{@key}]"]}
         id={"#{@key}"}
-        placeholder={@filter.options.placeholder || @filter.options.prompt}
-        text_input_class={@filter.options.select_classes}
-        text_input_selected_class="bg-gray-50 dark:bg-gray-700"
-        dropdown_class="absolute mt-1 w-full rounded-md bg-white dark:bg-gray-900 shadow-lg border border-gray-200 dark:border-gray-700"
-        option_class="relative px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-150"
-        selected_option_class="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
-        active_option_class="bg-gray-100 dark:bg-gray-800"
-        mode={:tags}
-        tag_class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400"
+        placeholder={@filter.options.placeholder}
+        mode={@filter.options[:mode] || :tags}
+        allow_clear={@filter.options[:allow_clear] || false}
+        max_selectable={@filter.options[:max_selectable] || 0}
+        user_defined_options={@filter.options[:user_defined_options] || false}
+        debounce={@filter.options[:debounce]}
+        class="live-table-select"
       >
         <:option :let={option}>
           {render_option_template(@filter.options.option_template, option)}
         </:option>
-      </.live_select>
+      </.live_component>
     </div>
     """
   end
@@ -220,6 +299,14 @@ defmodule LiveTable.Select do
         ID: {@id} • {@description}
       </span>
     </div>
+    """
+  end
+
+  # Fallback for options without the expected structure
+  defp render_option_template(nil, %{label: label}) do
+    assigns = %{label: label}
+    ~H"""
+    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
     """
   end
 

@@ -19,6 +19,21 @@ defmodule LiveTable.LiveViewHelpers do
             {k, v} -> {String.to_existing_atom(k), String.to_existing_atom(v)}
           end)
 
+        # Track which LiveSelects have been restored to avoid re-restoring on push_patch
+        already_restored = Map.get(socket.assigns, :live_select_restored, MapSet.new())
+
+        # Collect LiveSelect updates to send after socket is set up
+        # Only include ones that haven't been restored yet
+        live_select_updates =
+          Map.get(params, "filters", %{})
+          |> Enum.filter(fn {key, val} -> match?(%{"id" => _}, val) end)
+          |> Enum.map(fn {key, %{"id" => ids}} ->
+            filter = get_filter(key)
+            ids = Enum.map(ids, &String.to_integer/1)
+            {filter.key, ids}
+          end)
+          |> Enum.reject(fn {key, _ids} -> MapSet.member?(already_restored, key) end)
+
         filters =
           Map.get(params, "filters", %{})
           |> Map.put("search", params["search"] || "")
@@ -97,52 +112,59 @@ defmodule LiveTable.LiveViewHelpers do
               {resources, options}
           end
 
-        # Update LiveSelect components with selected values from URL params
+        # Mark the keys we're about to restore
+        newly_restored_keys =
+          live_select_updates
+          |> Enum.map(fn {key, _ids} -> key end)
+          |> MapSet.new()
+
+        updated_restored = MapSet.union(already_restored, newly_restored_keys)
+
         socket =
           socket
           |> assign_to_socket(resources, unquote(opts[:table_options]))
           |> assign(:options, updated_options)
           |> assign(:current_path, current_path)
+          |> assign(:live_select_restored, updated_restored)
           |> maybe_assign_infinite_scroll(unquote(opts[:table_options]))
 
-        # Update LiveSelect components with selected values from URL params
-        for {key, filter} <- filters do
-          case filter do
-            %LiveTable.Select{options: %{selected: selected}} when selected != [] ->
-              # Get the options for this filter
-              options =
-                case filter.options do
-                  %{options: options} when is_list(options) and options != [] ->
-                    options
-
-                  %{options_source: {module, function, args}} ->
-                    apply(module, function, ["" | args])
-
-                  _ ->
-                    []
-                end
-
-              # Find the selected options based on the selected IDs
-              selected_options =
-                Enum.map(selected, fn id ->
-                  Enum.find(options, fn
-                    %{value: [option_id, _]} -> option_id == id
-                    _ -> false
-                  end)
-                end)
-                |> Enum.reject(&is_nil/1)
-
-              # Update the LiveSelect component with the selected options
-              if selected_options != [] do
-                send_update(LiveSelect.Component, id: filter.key, value: selected_options)
-              end
-
-            _ ->
-              :ok
-          end
-        end
+        restore_live_select_from_params(live_select_updates)
 
         {:noreply, socket}
+      end
+
+      # Restores LiveSelect selection state from URL params
+      defp restore_live_select_from_params([]), do: :ok
+
+      defp restore_live_select_from_params(updates) do
+        for {key, ids} <- updates do
+          filter = get_filter(key)
+
+          options =
+            case filter.options do
+              %{options: opts} when is_list(opts) and opts != [] ->
+                opts
+
+              %{options_source: {module, function, args}} ->
+                apply(module, function, ["" | args])
+
+              _ ->
+                []
+            end
+
+          selection =
+            Enum.map(ids, fn id ->
+              Enum.find(options, fn
+                %{value: [opt_id | _]} -> opt_id == id
+                %{value: opt_id} -> opt_id == id
+                {_label, [opt_id | _]} -> opt_id == id
+                {_label, opt_id} -> opt_id == id
+                _ -> false
+              end) || %{label: to_string(id), value: id}
+            end)
+
+          send_update(SutraUI.LiveSelect, id: key, restore_selection: selection)
+        end
       end
 
       defp assign_to_socket(socket, resources, %{use_streams: true}) do
@@ -219,8 +241,21 @@ defmodule LiveTable.LiveViewHelpers do
           |> Map.take(~w(page per_page sort_params))
           |> Map.reject(fn {_, v} -> v == "" || is_nil(v) end)
 
+        # Clear all LiveSelect components when clearing filters
+        for {_filter_key, filter} <- filters() do
+          case filter do
+            %LiveTable.Select{} ->
+              send_update(SutraUI.LiveSelect, id: filter.key, reset_value: [])
+
+            _ ->
+              :ok
+          end
+        end
+
         socket =
           socket
+          # Reset tracking so LiveSelects can be restored from URL again
+          |> assign(:live_select_restored, MapSet.new())
           |> push_patch(to: "/#{current_path}?#{Plug.Conn.Query.encode(options)}")
 
         {:noreply, socket}
@@ -311,7 +346,7 @@ defmodule LiveTable.LiveViewHelpers do
               options
           end
 
-        send_update(LiveSelect.Component, id: id, options: options)
+        send_update(SutraUI.LiveSelect, id: id, options: options)
 
         {:noreply, socket}
       end
