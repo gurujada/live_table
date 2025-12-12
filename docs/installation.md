@@ -34,6 +34,7 @@ mix live_table.install
 
 The installer automatically:
 - Adds LiveTable configuration to `config/config.exs`
+- Adds LiveTable hooks import to `assets/js/app.js`
 - Optionally configures Oban for exports (use `--oban` flag or you'll be prompted)
 
 ### Step 3: Manual Steps
@@ -65,6 +66,61 @@ That's it! See the [Quick Start Guide](quick-start.html) to create your first ta
 
 ---
 
+## Colocated Hooks Setup
+
+LiveTable uses Phoenix 1.8+ colocated hooks for JavaScript functionality (sorting, exports).
+The installer automatically configures this, but if you need to set it up manually:
+
+### What the Installer Does
+
+The installer adds this import to your `assets/js/app.js`:
+
+```javascript
+import { hooks as liveTableHooks } from "phoenix-colocated/live_table";
+```
+
+And spreads it into your LiveSocket hooks:
+
+```javascript
+const liveSocket = new LiveSocket("/live", Socket, {
+    params: { _csrf_token: csrfToken },
+    hooks: { ...myAppHooks, ...liveTableHooks },  // liveTableHooks added here
+});
+```
+
+### Deployment Requirement
+
+**Important:** For colocated hooks to work, `mix compile` must run before building assets.
+
+Update your deployment aliases in `mix.exs`:
+
+```elixir
+defp aliases do
+  [
+    # ... other aliases
+    "assets.deploy": [
+      "compile",  # Required: extracts colocated hooks before esbuild
+      "esbuild my_app --minify",
+      "tailwind my_app --minify",
+      "phx.digest"
+    ]
+  ]
+end
+```
+
+Or if using a release task:
+
+```elixir
+release: ["compile", "assets.deploy", "release"]
+```
+
+Without this, you'll see browser console errors like:
+```
+unknown hook found for "LiveTable.SortHelpers.SortableColumn"
+```
+
+---
+
 ## Manual Configuration
 
 If the installer doesn't work for your project structure, add to `config/config.exs`:
@@ -75,7 +131,7 @@ config :live_table,
   pubsub: YourApp.PubSub
 ```
 
-> **Note**: LiveTable uses colocated hooks (Phoenix 1.8+), so there's no need to import JavaScript hooks or CSS manually.
+And manually add the hooks import to `assets/js/app.js` as shown above.
 
 ---
 

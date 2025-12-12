@@ -19,7 +19,7 @@ defmodule LiveTable.LiveResource do
       import Join
       import Filter
       import Transformer
-      import Debug, only: [debug_pipeline: 2]
+      import LiveTable.Debug, only: [debug_pipeline: 2]
 
       use Helpers,
         schema: unquote(opts[:schema]),

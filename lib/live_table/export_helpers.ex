@@ -1,17 +1,19 @@
 defmodule LiveTable.ExportHelpers do
   @moduledoc false
+
+  @doc false
+  def generate_export_timestamp do
+    DateTime.utc_now()
+    |> DateTime.to_string()
+    |> String.replace([" ", ":", "."], "-")
+    |> String.replace(~r/[^a-zA-Z0-9\-]/, "")
+  end
+
   defmacro __using__(opts) do
     quote do
       def handle_event("export-csv", _params, socket) do
         {export_topic, updated_socket} = maybe_subscribe(socket)
-
-        header_data =
-          fields()
-          |> Enum.reduce([[], []], fn {k, %{label: label}}, [key_names, headers] ->
-            [[k | key_names], [label | headers]]
-          end)
-          |> Enum.map(&Enum.reverse/1)
-
+        header_data = extract_header_data()
         options = socket.assigns.options |> put_in(["pagination", "paginate?"], false)
 
         query_string =
@@ -56,12 +58,7 @@ defmodule LiveTable.ExportHelpers do
              )}
 
           _ ->
-            header_data =
-              fields()
-              |> Enum.reduce([[], []], fn {k, %{label: label}}, [key_names, headers] ->
-                [[k | key_names], [label | headers]]
-              end)
-              |> Enum.map(&Enum.reverse/1)
+            header_data = extract_header_data()
 
             query_string =
               list_resources(
@@ -82,6 +79,15 @@ defmodule LiveTable.ExportHelpers do
 
             {:noreply, updated_socket}
         end
+      end
+
+      # Extracts header keys and labels from fields for export
+      defp extract_header_data do
+        fields()
+        |> Enum.reduce([[], []], fn {k, %{label: label}}, [key_names, headers] ->
+          [[k | key_names], [label | headers]]
+        end)
+        |> Enum.map(&Enum.reverse/1)
       end
 
       defp maybe_subscribe(socket) do

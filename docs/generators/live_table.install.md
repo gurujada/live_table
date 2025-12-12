@@ -28,7 +28,21 @@ config :live_table,
   pubsub: YourApp.PubSub
 ```
 
-### 2. Oban Configuration (Optional)
+### 2. JavaScript Hooks (`assets/js/app.js`)
+
+Adds the LiveTable colocated hooks import:
+
+```javascript
+import { hooks as liveTableHooks } from "phoenix-colocated/live_table";
+```
+
+And spreads them into your LiveSocket:
+
+```javascript
+hooks: { ...myAppHooks, ...liveTableHooks }
+```
+
+### 3. Oban Configuration (Optional)
 
 If you use the `--oban` flag (for CSV/PDF exports):
 
@@ -51,7 +65,20 @@ In your `lib/your_app_web.ex`, add `"exports"` to your static paths:
 def static_paths, do: ~w(assets fonts images favicon.ico robots.txt exports)
 ```
 
-### 2. Start Oban (if using exports)
+### 2. Update Deployment Aliases
+
+Ensure `mix compile` runs before building assets in your `mix.exs`:
+
+```elixir
+"assets.deploy": [
+  "compile",  # Required for colocated hooks
+  "esbuild my_app --minify",
+  "tailwind my_app --minify",
+  "phx.digest"
+]
+```
+
+### 3. Start Oban (if using exports)
 
 Add Oban to your supervision tree in `lib/your_app/application.ex`:
 
@@ -62,7 +89,7 @@ children = [
 ]
 ```
 
-### 3. Restart Your Server
+### 4. Restart Your Server
 
 ```bash
 mix phx.server
@@ -81,10 +108,15 @@ mix phx.server
 
 The installer expects a standard Phoenix project structure. If your config is in a different location, you'll need to manually add the configuration.
 
-> **Note**: LiveTable uses colocated hooks (Phoenix 1.8+), so there's no need to import JavaScript hooks or CSS manually.
+### "Unknown hook found" errors
+
+If you see browser console errors about unknown hooks, ensure:
+1. The `app.js` import was added correctly
+2. You ran `mix compile` before building assets
+3. See [Troubleshooting Guide](../troubleshooting.html#colocated-hooks-issues)
 
 ## See Also
 
-- [Installation Guide](installation.html) - Full installation walkthrough
-- [Quick Start](quick-start.html) - Create your first table
+- [Installation Guide](../installation.html) - Full installation walkthrough
+- [Quick Start](../quick-start.html) - Create your first table
 - [mix live_table.gen.live](live_table.gen.live.html) - Generate LiveView with table

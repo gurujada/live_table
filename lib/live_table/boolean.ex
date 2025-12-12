@@ -69,8 +69,9 @@ defmodule LiveTable.Boolean do
   """
 
   import Ecto.Query
-  import LiveTable.SortHelpers, only: [dynamic_component: 1]
   use Phoenix.Component
+  import SutraUI.Checkbox, only: [checkbox: 1]
+  import SutraUI.Label, only: [label: 1]
 
   defstruct [:field, :key, :options]
 
@@ -86,27 +87,18 @@ defmodule LiveTable.Boolean do
 
   @doc false
   def render(assigns) do
-    components_module = Application.get_env(:live_table, :components, LiveTable.Components)
-
-    assigns = Map.put(assigns, :components_module, components_module)
-
     ~H"""
     <div class="flex items-center gap-2">
-      <.dynamic_component
-        module={@components_module}
-        function={:lt_checkbox}
+      <input type="hidden" name={"filters[#{@key}]"} value="false" />
+      <.checkbox
         id={"filters-#{@key}"}
         name={"filters[#{@key}]"}
         checked={Map.has_key?(@applied_filters, @key) || Map.get(@filter.options, :default)}
         class={Map.get(@filter.options, :class, "")}
       />
-      <.dynamic_component
-        module={@components_module}
-        function={:lt_label}
-        for={"filters-#{@key}"}
-      >
+      <.label for={"filters-#{@key}"}>
         {@filter.options.label}
-      </.dynamic_component>
+      </.label>
     </div>
     """
   end

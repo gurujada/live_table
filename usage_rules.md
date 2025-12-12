@@ -285,7 +285,7 @@ When helping with LiveTable implementation:
 - LiveTable repo and pubsub config (always required)
 - Oban queue configuration (only if using exports)
 
-> **Note**: LiveTable uses colocated hooks (Phoenix 1.8+), so there's no need to import JavaScript hooks or CSS manually.
+> **Note**: LiveTable uses colocated hooks (Phoenix 1.8+). The installer adds the required `app.js` import automatically. For deployment, ensure `mix compile` runs before `assets.deploy`.
 
 ## Transformer Usage
 

@@ -9,7 +9,7 @@ defmodule LiveTable do
   ## Getting Started
 
   ```bash
-  # Add to mix.exs: {:live_table, "~> 0.3.1"}
+  # Add to mix.exs: {:live_table, "~> #{Mix.Project.config()[:version]}"}
   mix deps.get
   mix live_table.install
   ```

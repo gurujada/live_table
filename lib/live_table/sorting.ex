@@ -2,15 +2,12 @@ defmodule LiveTable.Sorting do
   @moduledoc false
   import Ecto.Query
 
-  # Returns query unchanged when sorting is disabled
   def maybe_sort(query, _, _, false), do: query
 
-  # Applies sorting if enabled based on fields and sort params
   def maybe_sort(query, fields, sort_params, true) do
     sort(query, fields, sort_params)
   end
 
-  # Builds ORDER BY expressions based on sort params and field definitions
   def sort(query, fields, sort_params) do
     sorts =
       Enum.reduce(sort_params, [], fn

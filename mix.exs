@@ -8,8 +8,9 @@ defmodule LiveTable.MixProject do
     [
       app: :live_table,
       version: @version,
-      elixir: "~> 1.17",
+      elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:phoenix_live_view] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
@@ -39,8 +40,7 @@ defmodule LiveTable.MixProject do
       {:igniter, "~> 0.7.0"},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.13"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
-      {:sutra_ui, path: "../phx_ui"}
+      {:sutra_ui, path: "../sutra_ui"}
     ]
   end
 
@@ -52,7 +52,7 @@ defmodule LiveTable.MixProject do
         "GitHub" => @source_url,
         "Docs" => "https://hexdocs.pm/live_table"
       },
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE priv/static/)
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE)
     ]
   end
 
@@ -133,9 +133,6 @@ defmodule LiveTable.MixProject do
           LiveTable.Range,
           LiveTable.Select,
           LiveTable.Transformer
-        ],
-        "UI Components": [
-          LiveTable.Components
         ]
       ],
       before_closing_head_tag: &docs_before_closing_head_tag/1,

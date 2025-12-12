@@ -1,20 +1,11 @@
 defmodule LiveTable.CsvGenerator do
   @moduledoc false
-  # A module for generating CSV files from Ecto queries.
-  # This module provides functionality to convert Ecto queries into CSV files,
-  # with support for custom headers and efficient streaming of large datasets.
 
   alias NimbleCSV.RFC4180, as: CSV
   @repo Application.compile_env(:live_table, :repo)
 
-  # Generates a CSV file from an Ecto query with specified headers.
   def generate_csv(query, header_data) do
-    timestamp =
-      DateTime.utc_now()
-      |> DateTime.to_string()
-      |> String.replace([" ", ":", "."], "-")
-      |> String.replace(~r/[^a-zA-Z0-9\-]/, "")
-
+    timestamp = LiveTable.ExportHelpers.generate_export_timestamp()
     temp_path = Path.join(System.tmp_dir!(), "export-#{timestamp}.csv")
     query = get_query(query)
 

@@ -1,4 +1,4 @@
-defmodule Debug do
+defmodule LiveTable.Debug do
   @moduledoc """
   Debug utilities for inspecting LiveTable query building.
 

@@ -9,14 +9,9 @@ defmodule LiveTable.PdfGenerator do
   import Ecto.Query, only: [limit: 2]
   # Generates a PDF file from an Ecto query with specified headers.
   def generate_pdf(query, header_data) do
-    timestamp =
-      DateTime.utc_now()
-      |> DateTime.to_string()
-      |> String.replace([" ", ":", "."], "-")
-      |> String.replace(~r/[^a-zA-Z0-9\-]/, "")
-
+    timestamp = LiveTable.ExportHelpers.generate_export_timestamp()
     temp_path = Path.join(System.tmp_dir!(), "export-#{timestamp}.typ")
-    query = get_query(query) |> limit(10_000)
+    query = LiveTable.CsvGenerator.get_query(query) |> limit(10_000)
 
     case generate_typst_file(query, temp_path, header_data) do
       {:ok, path} -> compile_typst_to_pdf(path)
@@ -140,27 +135,4 @@ defmodule LiveTable.PdfGenerator do
   end
 
   defp format_value(value), do: "[#{value}]"
-
-  def get_query(query) do
-    qs =
-      query
-      |> String.trim_leading("#Ecto.Query<")
-      |> String.trim_trailing(">")
-
-    try do
-      query =
-        Code.eval_string("""
-          import Ecto.Query
-          #{qs}
-        """)
-        |> elem(0)
-
-      case query do
-        %Ecto.Query{} -> query
-        _ -> raise ArgumentError, "Invalid Ecto query string"
-      end
-    rescue
-      CompileError -> raise ArgumentError, "Invalid Ecto query string"
-    end
-  end
 end

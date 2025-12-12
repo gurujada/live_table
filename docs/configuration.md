@@ -16,7 +16,6 @@ Configure LiveTable globally in your `config/config.exs`:
 config :live_table,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub,
-  components: YourApp.CustomComponents,  # Optional
   defaults: %{
     pagination: %{
       enabled: true,
@@ -47,7 +46,6 @@ config :live_table,
 
 ### Optional Configuration
 
-- **`components`** - Custom component module (defaults to built-in components)
 - **`defaults`** - Override default table options
 
 ## Per-table Configuration
@@ -583,59 +581,6 @@ scope "/admin" do
 end
 ```
 
-## Custom Components
-
-Replace LiveTable's default components with your own:
-
-```elixir
-# config/config.exs
-config :live_table,
-  components: YourApp.CustomComponents
-```
-
-Create your custom components module:
-
-```elixir
-# lib/your_app/custom_components.ex
-defmodule YourApp.CustomComponents do
-  use Phoenix.Component
-
-  # Override the default input component
-  def input(assigns) do
-    ~H"""
-    <div class="relative">
-      <input
-        type={@type}
-        name={@name}
-        checked={@checked}
-        class="peer sr-only"
-      />
-      <label class="flex items-center cursor-pointer">
-        <div class="relative">
-          <div class="w-4 h-4 border-2 border-gray-300 rounded peer-checked:bg-blue-600 peer-checked:border-blue-600"></div>
-          <svg class="absolute inset-0 w-4 h-4 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <span class="ml-2 text-sm text-gray-700"><%= @label %></span>
-      </label>
-    </div>
-    """
-  end
-
-  # Override the default icon component
-  def icon(%{name: "sort-asc"} = assigns) do
-    ~H"""
-    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-    </svg>
-    """
-  end
-end
-```
-
-
-
 ## Complete Example
 
 Here's a comprehensive configuration example:
@@ -719,7 +664,6 @@ config :live_table,
 
 ### Optional Configuration
 
-- **`components`** - Custom component module (defaults to built-in components)
 - **`defaults`** - Override default table options
 
 ## Per-table Configuration
@@ -1191,59 +1135,6 @@ scope "/admin" do
   oban_dashboard "/oban"
 end
 ```
-
-## Custom Components
-
-Replace LiveTable's default components with your own:
-
-```elixir
-# config/config.exs
-config :live_table,
-  components: YourApp.CustomComponents
-```
-
-Create your custom components module:
-
-```elixir
-# lib/your_app/custom_components.ex
-defmodule YourApp.CustomComponents do
-  use Phoenix.Component
-
-  # Override the default input component
-  def input(assigns) do
-    ~H"""
-    <div class="relative">
-      <input
-        type={@type}
-        name={@name}
-        checked={@checked}
-        class="peer sr-only"
-      />
-      <label class="flex items-center cursor-pointer">
-        <div class="relative">
-          <div class="w-4 h-4 border-2 border-gray-300 rounded peer-checked:bg-blue-600 peer-checked:border-blue-600"></div>
-          <svg class="absolute inset-0 w-4 h-4 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <span class="ml-2 text-sm text-gray-700"><%= @label %></span>
-      </label>
-    </div>
-    """
-  end
-
-  # Override the default icon component
-  def icon(%{name: "sort-asc"} = assigns) do
-    ~H"""
-    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-    </svg>
-    """
-  end
-end
-```
-
-
 
 ## Complete Example
 

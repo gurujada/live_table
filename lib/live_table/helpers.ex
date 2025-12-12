@@ -8,10 +8,8 @@ defmodule LiveTable.Helpers do
       use LiveTable.FilterHelpers
 
       use LiveTable.LiveViewHelpers,
-        # schema: unquote(opts[:schema]),
         table_options: unquote(opts[:table_options])
 
-      # Parse range values, converting to integer if step is integer
       def parse_range_values(%{step: step}, min, max) when is_integer(step) do
         {min_int, _} = Integer.parse(min)
         {max_int, _} = Integer.parse(max)

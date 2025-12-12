@@ -18,7 +18,7 @@ defmodule LiveTable.TableComponent do
           |> assign_new(:actions, fn -> [] end)
 
         ~H"""
-        <div class="w-full" id="live-table" phx-hook={@table_options[:exports][:enabled] && ".Download"}>
+        <div class="w-full" id="live-table" phx-hook=".Download">
           <.render_header {assigns} />
           <.render_content {assigns} />
           <.render_footer {assigns} />
@@ -42,7 +42,6 @@ defmodule LiveTable.TableComponent do
       end
 
       defp render_header(%{table_options: %{custom_header: {module, function}}} = assigns) do
-        # Call custom header component
         apply(module, function, [assigns])
       end
 
@@ -177,7 +176,6 @@ defmodule LiveTable.TableComponent do
       end
 
       defp render_content(%{table_options: %{custom_content: {module, function}}} = assigns) do
-        # Call custom content component
         apply(module, function, [assigns])
       end
 
@@ -217,7 +215,11 @@ defmodule LiveTable.TableComponent do
                       </th>
                     </tr>
                   </thead>
-                  <tbody class="bg-background">
+                  <tbody
+                    id="resources-stream"
+                    phx-update={@table_options[:use_streams] && "stream"}
+                    class="bg-background"
+                  >
                     <tr id="empty-placeholder" class="only:table-row hidden hover:bg-transparent">
                       <td colspan={length(@fields) + if(has_actions(@actions), do: 1, else: 0)}>
                         <.render_empty_state table_options={@table_options} />
@@ -293,7 +295,6 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      # Empty state rendering - supports custom callback or default Sutra UI empty component
       defp render_empty_state(%{table_options: %{empty_state: callback}} = assigns)
            when is_function(callback, 1) do
         callback.(assigns)
@@ -339,12 +340,6 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      defp render_row(_),
-        do:
-          raise(ArgumentError,
-            message: "Requires `use_streams` to be set to a boolean in table_options"
-          )
-
       defp footer_section(var!(assigns)) do
         ~H"""
         <.paginate
@@ -358,7 +353,6 @@ defmodule LiveTable.TableComponent do
       end
 
       defp render_footer(%{table_options: %{custom_footer: {module, function}}} = assigns) do
-        # Call custom content component
         apply(module, function, [assigns])
       end
 
@@ -369,32 +363,48 @@ defmodule LiveTable.TableComponent do
       end
 
       def filters(var!(assigns)) do
+        filter_count = length(var!(assigns).filters)
+        cols = min(filter_count, 3)
+        var!(assigns) = assign(var!(assigns), :cols, cols)
+
         ~H"""
-        <div :if={@filters != []} class="space-y-4">
-          <.form for={%{}} phx-change="sort" class="flex flex-wrap gap-4 items-end">
-            <div :for={{key, filter} <- @filters} class="contents">
+        <div :if={@filters != []} class="filter-bar">
+          <div class={[
+            "filter-bar-grid",
+            filter_bar_cols_class(@cols)
+          ]}>
+            <div :for={{key, filter} <- @filters} class="filter-bar-item">
               {filter.__struct__.render(%{
                 key: key,
                 filter: filter,
                 applied_filters: @applied_filters
               })}
             </div>
-          </.form>
+          </div>
           <div
             :if={@applied_filters != %{"search" => ""} and @applied_filters != %{}}
-            class="flex justify-end"
+            class="filter-bar-actions"
           >
             <button
               type="button"
               phx-click="sort"
               phx-value-clear_filters="true"
-              class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              class="filter-bar-clear"
             >
               <Icon.icon name="hero-x-mark" class="size-4" /> Clear Filters
             </button>
           </div>
         </div>
         """
+      end
+
+      defp filter_bar_cols_class(cols) do
+        case cols do
+          1 -> "filter-bar-cols-1"
+          2 -> "filter-bar-cols-2"
+          3 -> "filter-bar-cols-3"
+          _ -> "filter-bar-cols-3"
+        end
       end
 
       def paginate(var!(assigns)) do

@@ -466,6 +466,11 @@ end
 - Make sure field keys in `fields/0` match the select keys in your query
 - For joined fields, use `assoc: {:alias_name, :field}` where alias_name matches your query alias
 
+**"Unknown hook found" errors in browser console?**
+- Ensure `assets/js/app.js` imports LiveTable hooks (the installer does this automatically)
+- Run `mix compile` before building assets
+- See [Troubleshooting Guide](troubleshooting.html#colocated-hooks-issues) for details
+
 **Styling looks wrong?**
 - Ensure your Tailwind CSS build is processing LiveTable's lib directory
 - LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for components
