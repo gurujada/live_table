@@ -238,13 +238,13 @@ mix phx.server
 
 Navigate to `http://localhost:4000/products` and you should see:
 
-✅ **A fully functional data table** with your products
-✅ **Sortable columns** - click any column header to sort
-✅ **Multi-column sorting** - hold Shift and click multiple headers
-✅ **Search functionality** - type in the search box to filter products
-✅ **Advanced filters** - toggle active products, adjust price range
-✅ **Pagination** - if you have many products
-✅ **Export buttons** - download CSV or PDF reports
+- ✅ **A fully functional data table** with your products
+- ✅ **Sortable columns** - click any column header to sort
+- ✅ **Multi-column sorting** - hold Shift and click multiple headers
+- ✅ **Search functionality** - type in the search box to filter products
+- ✅ **Advanced filters** - toggle active products, adjust price range
+- ✅ **Pagination** - if you have many products
+- ✅ **Export buttons** - download CSV or PDF reports
 
 ## Advanced Example: Custom Query with Joins
 
@@ -467,9 +467,8 @@ end
 - For joined fields, use `assoc: {:alias_name, :field}` where alias_name matches your query alias
 
 **Styling looks wrong?**
-- Ensure Tailwind CSS is properly configured
-- Check that LiveTable CSS is imported
-- Verify Tailwind is processing LiveTable classes
+- Ensure your Tailwind CSS build is processing LiveTable's lib directory
+- LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for components
 
 ## Learn More
 

@@ -1,0 +1,345 @@
+# Filters Cheatsheet
+
+## Filter Types Overview
+
+### Available Filters
+{: .col-2}
+
+| Type | Module | Use Case |
+|------|--------|----------|
+| Boolean | `LiveTable.Boolean` | Toggle on/off conditions |
+| Range | `LiveTable.Range` | Numeric/date ranges |
+| Select | `LiveTable.Select` | Dropdown selection |
+| Transformer | `LiveTable.Transformer` | Custom query logic |
+
+## Boolean Filter
+
+### Basic Usage
+{: .col-2}
+
+```elixir
+def filters do
+  [
+    in_stock: Boolean.new(:quantity, "in_stock", %{
+      label: "In Stock Only",
+      condition: dynamic([p], p.quantity > 0)
+    })
+  ]
+end
+```
+
+### Options
+{: .col-2}
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `label` | string | Display label |
+| `condition` | dynamic | Ecto dynamic condition |
+| `default` | boolean | Default state |
+
+### Examples
+{: .col-2}
+
+```elixir
+# Active records
+active: Boolean.new(:active, "active", %{
+  label: "Active Only",
+  condition: dynamic([r], r.active == true)
+})
+
+# Published items
+published: Boolean.new(:published_at, "published", %{
+  label: "Published",
+  condition: dynamic([r], not is_nil(r.published_at))
+})
+
+# Recent items (last 7 days)
+recent: Boolean.new(:inserted_at, "recent", %{
+  label: "Last 7 Days",
+  condition: dynamic([r], 
+    r.inserted_at >= ago(7, "day"))
+})
+```
+
+## Range Filter
+
+### Basic Usage
+{: .col-2}
+
+```elixir
+def filters do
+  [
+    price_range: Range.new(:price, "price_range", %{
+      type: :number,
+      label: "Price Range",
+      min: 0,
+      max: 1000,
+      step: 10
+    })
+  ]
+end
+```
+
+### Options
+{: .col-2}
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `label` | string | Display label |
+| `type` | atom | `:number`, `:date`, `:datetime` |
+| `min` | number/date | Minimum value |
+| `max` | number/date | Maximum value |
+| `step` | number | Increment step |
+
+### Examples
+{: .col-2}
+
+```elixir
+# Number range
+price: Range.new(:price, "price", %{
+  type: :number,
+  label: "Price",
+  min: 0,
+  max: 10000,
+  step: 100
+})
+
+# Date range
+created: Range.new(:inserted_at, "created", %{
+  type: :date,
+  label: "Created Date"
+})
+
+# Quantity range
+stock: Range.new(:quantity, "stock", %{
+  type: :number,
+  label: "Stock Level",
+  min: 0,
+  max: 1000
+})
+```
+
+## Select Filter
+
+### Basic Usage
+{: .col-2}
+
+```elixir
+def filters do
+  [
+    status: Select.new(:status, "status", %{
+      label: "Status",
+      options: [
+        %{label: "Active", value: ["active"]},
+        %{label: "Pending", value: ["pending"]},
+        %{label: "Archived", value: ["archived"]}
+      ]
+    })
+  ]
+end
+```
+
+### Options
+{: .col-2}
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `label` | string | Display label |
+| `options` | list | Available choices |
+| `multiple` | boolean | Allow multi-select |
+| `searchable` | boolean | Enable search in dropdown |
+
+### Examples
+{: .col-2}
+
+```elixir
+# Single select
+category: Select.new(:category_id, "category", %{
+  label: "Category",
+  options: [
+    %{label: "Electronics", value: [1]},
+    %{label: "Clothing", value: [2]},
+    %{label: "Books", value: [3]}
+  ]
+})
+
+# Multiple select
+tags: Select.new(:tag, "tags", %{
+  label: "Tags",
+  multiple: true,
+  options: [
+    %{label: "Featured", value: ["featured"]},
+    %{label: "Sale", value: ["sale"]},
+    %{label: "New", value: ["new"]}
+  ]
+})
+
+# Dynamic options
+status: Select.new(:status, "status", %{
+  label: "Status",
+  options: Enum.map(statuses(), fn s ->
+    %{label: String.capitalize(s), value: [s]}
+  end)
+})
+```
+
+### For Joined Tables
+{: .col-2}
+
+```elixir
+# Use tuple for joined field
+category: Select.new({:categories, :name}, "category", %{
+  label: "Category",
+  options: [
+    %{label: "Electronics", value: ["Electronics"]},
+    %{label: "Clothing", value: ["Clothing"]}
+  ]
+})
+```
+
+## Transformer
+
+### Basic Usage
+{: .col-2}
+
+```elixir
+def filters do
+  [
+    custom: Transformer.new("custom_filter", %{
+      query_transformer: &apply_custom_filter/2
+    })
+  ]
+end
+
+defp apply_custom_filter(query, filter_data) do
+  case filter_data do
+    %{"field" => value} when value != "" ->
+      from q in query, where: q.field == ^value
+    _ ->
+      query
+  end
+end
+```
+
+### Function Signature
+{: .col-2}
+
+```elixir
+def my_transformer(query, filter_data) do
+  # query: Current Ecto query
+  # filter_data: Map from URL params
+  # Returns: Modified query
+  query
+end
+```
+
+### Options
+{: .col-2}
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `query_transformer` | function/2 | Transform function |
+
+Alternative: `{Module, :function}` tuple
+
+### Examples
+{: .col-2}
+
+```elixir
+# Join and aggregate
+sales_filter: Transformer.new("sales", %{
+  query_transformer: &filter_by_sales/2
+})
+
+defp filter_by_sales(query, %{"min" => min}) 
+     when min != "" do
+  from p in query,
+    join: s in Sale, on: s.product_id == p.id,
+    group_by: p.id,
+    having: sum(s.amount) >= ^String.to_integer(min)
+end
+defp filter_by_sales(query, _), do: query
+
+# Complex conditions
+date_filter: Transformer.new("dates", %{
+  query_transformer: &filter_dates/2
+})
+
+defp filter_dates(query, data) do
+  query
+  |> maybe_filter_start(data["start"])
+  |> maybe_filter_end(data["end"])
+end
+
+defp maybe_filter_start(q, nil), do: q
+defp maybe_filter_start(q, ""), do: q
+defp maybe_filter_start(q, date) do
+  from r in q, where: r.date >= ^date
+end
+```
+
+## Filter Patterns
+
+### Combining Filters
+{: .col-2}
+
+```elixir
+def filters do
+  [
+    # Boolean toggles
+    active: Boolean.new(:active, "active", %{
+      label: "Active Only",
+      condition: dynamic([r], r.active == true)
+    }),
+    
+    # Range filters
+    price: Range.new(:price, "price", %{
+      type: :number,
+      label: "Price Range"
+    }),
+    
+    # Select dropdown
+    category: Select.new(:category, "category", %{
+      label: "Category",
+      options: category_options()
+    }),
+    
+    # Custom transformer
+    search: Transformer.new("advanced", %{
+      query_transformer: &advanced_search/2
+    })
+  ]
+end
+```
+
+### Accessing Filter State
+{: .col-2}
+
+```elixir
+# In template, check applied filters
+@options["filters"]["status"]
+
+# In transformer, access all filter data
+defp my_transformer(query, filter_data) do
+  IO.inspect(filter_data)  # Debug
+  query
+end
+```
+
+## Quick Reference
+
+### Filter Field Syntax
+{: .col-2}
+
+| Syntax | Use Case |
+|--------|----------|
+| `:field` | Simple schema field |
+| `{:alias, :field}` | Joined table field |
+
+### Common Gotchas
+{: .col-2}
+
+- Boolean `condition` must be an Ecto `dynamic`
+- Select `value` must be a list: `["value"]` not `"value"`
+- Transformer must always return a query
+- For joins, use `{:alias, :field}` tuple

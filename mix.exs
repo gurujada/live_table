@@ -8,7 +8,7 @@ defmodule LiveTable.MixProject do
     [
       app: :live_table,
       version: @version,
-      elixir: "~> 1.14",
+      elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -28,18 +28,18 @@ defmodule LiveTable.MixProject do
 
   defp deps do
     [
-      {:phoenix_live_view, "~> 1.0"},
-      {:phoenix_html, "~> 4.1"},
-      {:ecto, "~> 3.10"},
-      {:jason, "~> 1.2"},
-      {:nimble_csv, "~> 1.2"},
-      {:oban, "~> 2.19"},
+      {:phoenix_live_view, "~> 1.1"},
+      {:phoenix_html, "~> 4.3"},
+      {:ecto, "~> 3.13"},
+      {:jason, "~> 1.4"},
+      {:nimble_csv, "~> 1.3"},
+      {:oban, "~> 2.20"},
       {:oban_web, "~> 2.11"},
       {:postgrex, ">= 0.0.0"},
-      {:igniter, "~> 0.6.28"},
-      {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:ecto_sql, "~> 3.10"},
-      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
+      {:igniter, "~> 0.7.0"},
+      {:ex_doc, "~> 0.39", only: :dev, runtime: false},
+      {:ecto_sql, "~> 3.13"},
+      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:sutra_ui, path: "../phx_ui"}
     ]
   end
@@ -68,19 +68,31 @@ defmodule LiveTable.MixProject do
       source_ref: "v#{@version}",
       extras: [
         "README.md",
+        "LICENSE",
         "usage_rules.md",
+        # Getting Started
         "docs/overview.md",
         "docs/installation.md",
         "docs/quick-start.md",
+        # Configuration
         "docs/configuration.md",
+        # API Reference
         "docs/api/fields.md",
         "docs/api/filters.md",
         "docs/api/transformers.md",
         "docs/api/exports.md",
         "docs/api/table-options.md",
+        # Generators
+        "docs/generators/live_table.install.md",
+        "docs/generators/live_table.gen.live.md",
+        # Examples
         "docs/examples/simple-table.md",
         "docs/examples/complex-queries.md",
-        "docs/troubleshooting.md"
+        # Support
+        "docs/troubleshooting.md",
+        # Cheatsheets
+        "cheatsheets/live-table.cheatmd",
+        "cheatsheets/filters.cheatmd"
       ],
       groups_for_extras: [
         "Getting Started": [
@@ -98,27 +110,32 @@ defmodule LiveTable.MixProject do
           "docs/api/exports.md",
           "docs/api/table-options.md"
         ],
+        Generators: [
+          "docs/generators/live_table.install.md",
+          "docs/generators/live_table.gen.live.md"
+        ],
         Examples: [
           "docs/examples/simple-table.md",
           "docs/examples/complex-queries.md"
         ],
         Support: [
-          "docs/troubleshooting.md"
+          "docs/troubleshooting.md",
+          "usage_rules.md"
+        ],
+        Cheatsheets: [
+          "cheatsheets/live-table.cheatmd",
+          "cheatsheets/filters.cheatmd"
         ]
       ],
       groups_for_modules: [
-        "Core Components": [
-          LiveTable.LiveResource,
-          LiveTable.Component
-        ],
         "Filter Types": [
-          LiveTable.Filter.Boolean,
-          LiveTable.Filter.Range,
-          LiveTable.Filter.Select
+          LiveTable.Boolean,
+          LiveTable.Range,
+          LiveTable.Select,
+          LiveTable.Transformer
         ],
-        "Export System": [
-          LiveTable.Export.CSV,
-          LiveTable.Export.PDF
+        "UI Components": [
+          LiveTable.Components
         ]
       ],
       before_closing_head_tag: &docs_before_closing_head_tag/1,

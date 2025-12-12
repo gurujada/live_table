@@ -125,7 +125,10 @@ defmodule LiveTable.TableComponent do
                 </div>
 
                 <.select
-                  :if={@options["pagination"]["paginate?"] && @table_options.pagination[:mode] != :infinite_scroll}
+                  :if={
+                    @options["pagination"]["paginate?"] &&
+                      @table_options.pagination[:mode] != :infinite_scroll
+                  }
                   id="per-page-select"
                   name="per_page"
                   value={to_string(@options["pagination"]["per_page"])}
@@ -141,7 +144,7 @@ defmodule LiveTable.TableComponent do
                     label={to_string(size)}
                   />
                 </.select>
-
+                
         <!-- Filter toggle -->
                 <button
                   :if={length(@filters) > 3}
@@ -163,7 +166,7 @@ defmodule LiveTable.TableComponent do
                 <.exports formats={get_in(@table_options, [:exports, :formats])} />
               </div>
             </div>
-
+            
         <!-- Filters section -->
             <div id="filters-container" class={["", length(@filters) > 3 && "hidden"]}>
               <.filters filters={@filters} applied_filters={@options["filters"]} />
@@ -191,7 +194,7 @@ defmodule LiveTable.TableComponent do
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
               <div class="overflow-hidden shadow sm:rounded-lg border border-border">
                 <table class="table">
-                  <thead class="bg-muted">
+                  <thead class={["bg-muted", @table_options[:fixed_header] && "sticky top-0 z-10"]}>
                     <tr>
                       <th
                         :for={{key, field} <- @fields}
@@ -345,7 +348,9 @@ defmodule LiveTable.TableComponent do
       defp footer_section(var!(assigns)) do
         ~H"""
         <.paginate
-          :if={@options["pagination"]["paginate?"] && @table_options.pagination[:mode] != :infinite_scroll}
+          :if={
+            @options["pagination"]["paginate?"] && @table_options.pagination[:mode] != :infinite_scroll
+          }
           current_page={@options["pagination"]["page"]}
           has_next_page={@options["pagination"][:has_next_page]}
         />

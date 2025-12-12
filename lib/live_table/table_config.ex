@@ -23,6 +23,7 @@ defmodule LiveTable.TableConfig do
     },
     mode: :table,
     use_streams: true,
+    fixed_header: false,
     debug: :off
   }
 

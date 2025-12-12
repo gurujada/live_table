@@ -305,6 +305,7 @@ defmodule LiveTable.Select do
   # Fallback for options without the expected structure
   defp render_option_template(nil, %{label: label}) do
     assigns = %{label: label}
+
     ~H"""
     <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
     """

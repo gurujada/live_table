@@ -86,6 +86,61 @@ defp format_priority_with_context(priority, record) do
 end
 ```
 
+#### `component` (function)
+Alternative to `renderer` - a function component that receives assigns with `:value` and `:record`.
+
+```elixir
+status: %{
+  label: "Status",
+  component: &status_badge/1
+}
+
+defp status_badge(assigns) do
+  ~H"""
+  <span class={[
+    "px-2 py-1 rounded-full text-xs font-medium",
+    status_color(@value)
+  ]}>
+    <%= @value %>
+  </span>
+  """
+end
+
+defp status_color("active"), do: "bg-green-100 text-green-800"
+defp status_color("pending"), do: "bg-yellow-100 text-yellow-800"
+defp status_color(_), do: "bg-gray-100 text-gray-800"
+```
+
+**Difference from `renderer`:**
+- `renderer` receives the value directly (and optionally the record as second arg)
+- `component` receives assigns map with `@value` and `@record` keys
+
+#### `empty_text` (string)
+Text to display when the cell value is `nil`.
+
+```elixir
+price: %{
+  label: "Price",
+  sortable: true,
+  empty_text: "N/A"
+}
+
+description: %{
+  label: "Description",
+  empty_text: "No description provided"
+}
+
+discount: %{
+  label: "Discount",
+  empty_text: "-"
+}
+```
+
+**Notes:**
+- Defaults to empty string if not specified
+- Useful for optional fields where `nil` is meaningful
+- Works with or without custom renderers
+
 #### `computed` (dynamic query)
 Define calculated fields using Ecto dynamic expressions.
 
@@ -549,3 +604,181 @@ end
 - Verify `searchable: true` is set
 - Search only works on text/string fields
 - For custom queries: searchable fields must be in your select clause
+
+## Actions
+
+Actions provide row-level operations like edit, delete, or custom actions. Unlike fields, actions are passed directly to the `<.live_table>` component.
+
+### Basic Actions
+
+```elixir
+# In your LiveView
+def actions do
+  [
+    edit: &edit_action/1,
+    delete: &delete_action/1
+  ]
+end
+
+defp edit_action(assigns) do
+  ~H"""
+  <.link navigate={~p"/products/#{@record.id}/edit"} class="text-blue-600 hover:text-blue-800">
+    Edit
+  </.link>
+  """
+end
+
+defp delete_action(assigns) do
+  ~H"""
+  <.link
+    phx-click="delete"
+    phx-value-id={@record.id}
+    data-confirm="Are you sure?"
+    class="text-red-600 hover:text-red-800"
+  >
+    Delete
+  </.link>
+  """
+end
+```
+
+```heex
+<%# In your template %>
+<.live_table
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+  actions={actions()}
+/>
+```
+
+### Actions with Label
+
+Use a map format to customize the column header:
+
+```elixir
+def actions do
+  %{
+    label: "Actions",  # Column header text
+    items: [
+      edit: &edit_action/1,
+      delete: &delete_action/1,
+      view: &view_action/1
+    ]
+  }
+end
+```
+
+### Action Component Assigns
+
+Each action component receives assigns with:
+- `@record` - The full record for that row
+
+```elixir
+defp view_action(assigns) do
+  ~H"""
+  <.link navigate={~p"/products/#{@record.id}"}>
+    View <%= @record.name %>
+  </.link>
+  """
+end
+```
+
+### Conditional Actions
+
+Show/hide actions based on record state:
+
+```elixir
+defp publish_action(assigns) do
+  ~H"""
+  <button
+    :if={!@record.published}
+    phx-click="publish"
+    phx-value-id={@record.id}
+    class="text-green-600 hover:text-green-800"
+  >
+    Publish
+  </button>
+  <span :if={@record.published} class="text-gray-400">Published</span>
+  """
+end
+
+defp archive_action(assigns) do
+  ~H"""
+  <button
+    :if={@record.status != "archived"}
+    phx-click="archive"
+    phx-value-id={@record.id}
+    class="text-yellow-600 hover:text-yellow-800"
+  >
+    Archive
+  </button>
+  """
+end
+```
+
+### Dropdown Actions
+
+For many actions, use a dropdown menu:
+
+```elixir
+defp actions_dropdown(assigns) do
+  ~H"""
+  <div class="relative" x-data="{ open: false }">
+    <button @click="open = !open" class="text-gray-500 hover:text-gray-700">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+      </svg>
+    </button>
+    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+      <.link navigate={~p"/products/#{@record.id}"} class="block px-4 py-2 hover:bg-gray-100">
+        View
+      </.link>
+      <.link navigate={~p"/products/#{@record.id}/edit"} class="block px-4 py-2 hover:bg-gray-100">
+        Edit
+      </.link>
+      <button phx-click="duplicate" phx-value-id={@record.id} class="block w-full text-left px-4 py-2 hover:bg-gray-100">
+        Duplicate
+      </button>
+      <hr class="my-1" />
+      <button phx-click="delete" phx-value-id={@record.id} class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+        Delete
+      </button>
+    </div>
+  </div>
+  """
+end
+
+def actions do
+  %{
+    label: "",  # No header for dropdown column
+    items: [
+      menu: &actions_dropdown/1
+    ]
+  }
+end
+```
+
+### Handling Action Events
+
+Handle action events in your LiveView:
+
+```elixir
+def handle_event("delete", %{"id" => id}, socket) do
+  product = Products.get_product!(id)
+  {:ok, _} = Products.delete_product(product)
+  
+  {:noreply, 
+   socket
+   |> put_flash(:info, "Product deleted")
+   |> push_navigate(to: ~p"/products")}
+end
+
+def handle_event("publish", %{"id" => id}, socket) do
+  product = Products.get_product!(id)
+  {:ok, _} = Products.update_product(product, %{published: true})
+  
+  {:noreply, put_flash(socket, :info, "Product published")}
+end
+```

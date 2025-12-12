@@ -65,6 +65,7 @@ Control pagination behavior and appearance.
 ```elixir
 pagination: %{
   enabled: true,              # Enable/disable pagination
+  mode: :buttons,             # :buttons (default) or :infinite_scroll
   sizes: [10, 25, 50],       # Available page size options
   default_size: 25           # Default page size
 }
@@ -72,6 +73,7 @@ pagination: %{
 
 **Options:**
 - `enabled` (boolean) - Enable or disable pagination entirely
+- `mode` (atom) - `:buttons` for traditional pagination, `:infinite_scroll` for infinite scroll (card mode only)
 - `sizes` (list) - Available page size options (recommended max: 50)
 - `default_size` (integer) - Default number of records per page
 
@@ -88,6 +90,14 @@ pagination: %{
   default_size: 15
 }
 
+# Infinite scroll pagination (card mode only)
+pagination: %{
+  enabled: true,
+  mode: :infinite_scroll,
+  default_size: 20,
+  loading_component: &custom_loader/1  # Optional custom loading indicator
+}
+
 # Large datasets with conservative pagination
 pagination: %{
   enabled: true,
@@ -95,6 +105,45 @@ pagination: %{
   default_size: 10
 }
 ```
+
+### Infinite Scroll
+
+For seamless data loading as users scroll. **Note: Infinite scroll only works in card mode.**
+
+```elixir
+def table_options do
+  %{
+    mode: :card,  # Required for infinite scroll
+    card_component: &my_card/1,
+    pagination: %{
+      enabled: true,
+      mode: :infinite_scroll,
+      default_size: 25,
+      loading_component: &my_loader/1  # Optional
+    }
+  }
+end
+
+# Custom loading component (optional)
+defp my_loader(assigns) do
+  ~H"""
+  <div class="flex justify-center py-8">
+    <div class="animate-pulse text-gray-500">Loading more...</div>
+  </div>
+  """
+end
+```
+
+**How it works:**
+- Uses `phx-viewport-bottom` to detect when user scrolls near bottom
+- Triggers `load_more` event automatically
+- **Only works with `:card` mode** (not `:table` mode)
+- Displays loading indicator while fetching
+
+**Notes:**
+- Infinite scroll requires `mode: :card` with a `card_component`
+- Traditional pagination (`:buttons`) is better for table mode
+- The `loading_component` receives an empty assigns map
 
 ### Sorting Options
 
@@ -245,19 +294,108 @@ mode: :card,
 card_component: &product_card/1
 ```
 
-### Custom Components
+### Streams Configuration
 
-Override default LiveTable components.
+Control whether LiveTable uses Phoenix Streams or regular assigns.
 
 ```elixir
-components: %{
-  header: &custom_header/1,         # Custom table header
-  pagination: &custom_pagination/1,  # Custom pagination controls
-  search: &custom_search/1          # Custom search input
-}
+use_streams: true   # Default - use Phoenix streams
+use_streams: false  # Use regular assigns
 ```
 
-## Complete Configuration Examples
+**Options:**
+- `true` (default) - Use Phoenix streams for efficient DOM updates
+- `false` - Use regular assigns (useful for certain edge cases)
+
+**Examples:**
+
+```elixir
+# Default: use streams (recommended for most cases)
+def table_options do
+  %{
+    use_streams: true
+  }
+end
+
+# Disable streams (if you need direct assign access)
+def table_options do
+  %{
+    use_streams: false
+  }
+end
+```
+
+**Notes:**
+- Streams provide better performance for large datasets
+- Streams enable efficient partial DOM updates
+- Use `false` only if you have specific compatibility requirements
+
+### Fixed Header
+
+Make the table header sticky when scrolling.
+
+```elixir
+fixed_header: true   # Sticky header
+fixed_header: false  # Default - normal header
+```
+
+**Examples:**
+
+```elixir
+# Enable sticky header for long tables
+def table_options do
+  %{
+    fixed_header: true
+  }
+end
+```
+
+**Notes:**
+- Useful for tables with many rows where users need to see column headers while scrolling
+- Works with table mode only (not card mode)
+- Requires a scrollable container for the effect to be visible
+
+### Empty State
+
+Customize what's displayed when there are no records.
+
+```elixir
+empty_state: &my_empty_component/1
+```
+
+**Examples:**
+
+```elixir
+def table_options do
+  %{
+    empty_state: &custom_empty_state/1
+  }
+end
+
+defp custom_empty_state(assigns) do
+  ~H"""
+  <div class="text-center py-12">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+    </svg>
+    <h3 class="mt-2 text-sm font-semibold text-gray-900">No products</h3>
+    <p class="mt-1 text-sm text-gray-500">Get started by creating a new product.</p>
+    <div class="mt-6">
+      <.link navigate={~p"/products/new"} class="btn btn-primary">
+        Add Product
+      </.link>
+    </div>
+  </div>
+  """
+end
+```
+
+**Notes:**
+- Receives the full assigns map (access to `@fields`, `@filters`, `@options`, etc.)
+- Default empty state shows a generic "No data" message
+- Use to provide context-specific guidance or actions
+
+### Custom Components
 
 ### E-commerce Product Table
 

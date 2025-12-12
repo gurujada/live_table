@@ -1,12 +1,10 @@
 defmodule LiveTable.Components do
-  @moduledoc """
-  Default form components for LiveTable using Sutra UI.
-
-  These components wrap Sutra UI primitives to provide form inputs used by LiveTable.
-  If you want to use different components, configure your own module in config.exs:
-
-      config :live_table, :components, MyApp.Components
-  """
+  @moduledoc false
+  # Internal form components for LiveTable using Sutra UI.
+  # These components wrap Sutra UI primitives to provide form inputs used by LiveTable.
+  # If you want to use different components, configure your own module in config.exs:
+  #
+  #     config :live_table, :components, MyApp.Components
 
   use Phoenix.Component
 

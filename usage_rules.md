@@ -61,9 +61,6 @@ end
 # Add {:oban, "~> 2.19"} only if using export functionality
 ```
 
-### DON'T Skip Asset Setup
-**NEVER** implement LiveTable without proper asset configuration
-
 ## Required Setup Checklist
 
 When implementing with LiveTable, ALWAYS ensure:
@@ -86,24 +83,6 @@ config :live_table,
 # config :your_app, Oban,
 #   repo: YourApp.Repo,
 #   queues: [exports: 10]
-```
-
-### 3. JavaScript Assets
-```javascript
-// In assets/js/app.js
-import hooks_default from "../../deps/live_table/priv/static/live-table.js";
-
-const liveSocket = new LiveSocket("/live", Socket, {
-  hooks: hooks_default,  // Required
-  // ... other config
-});
-```
-
-### 4. CSS Assets
-```css
-/* In assets/css/app.css */
-@source "../../deps/live_table/lib";
-@import "../../deps/live_table/priv/static/live-table.css";
 ```
 
 ## Implementation Templates
@@ -283,10 +262,7 @@ When helping with LiveTable implementation:
    - Schema pattern → Keys match schema fields
    - Custom pattern → Keys match select clause
 
-4. **Are all required assets configured?**
-   - Check deps, config, JS hooks, CSS imports
-
-5. **Is the template structure correct?**
+4. **Is the template structure correct?**
    - Verify `fields()`, `filters()`, `@options`, `@streams`
 
 ## Quick Reference
@@ -308,7 +284,216 @@ When helping with LiveTable implementation:
 ### Must-Have Config
 - LiveTable repo and pubsub config (always required)
 - Oban queue configuration (only if using exports)
-- JavaScript hooks import
-- CSS imports
+
+> **Note**: LiveTable uses colocated hooks (Phoenix 1.8+), so there's no need to import JavaScript hooks or CSS manually.
+
+## Transformer Usage
+
+Transformers are LiveTable's most powerful feature for complex query modifications.
+
+### When to Use Transformers
+- Complex filtering that can't be expressed with simple conditions
+- Joins with aggregations (GROUP BY, HAVING)
+- Dynamic query modifications based on multiple parameters
+- Role-based data access
+
+### Transformer Pattern
+```elixir
+def filters do
+  [
+    advanced_filter: Transformer.new("advanced", %{
+      query_transformer: &apply_advanced_filter/2
+    })
+  ]
+end
+
+defp apply_advanced_filter(query, filter_data) do
+  case filter_data do
+    %{"min_sales" => min} when min != "" ->
+      from p in query,
+        join: s in Sale, on: s.product_id == p.id,
+        group_by: p.id,
+        having: sum(s.amount) >= ^String.to_integer(min)
+    _ ->
+      query
+  end
+end
+```
+
+### Transformer Rules
+- Always return a query (even if unchanged)
+- Function receives `(query, filter_data)` where `filter_data` is a map
+- Can use `{Module, :function}` tuple syntax for reusable transformers
+- Transformers are applied after standard filters
+
+## Debug Mode
+
+Debug mode helps developers understand query building.
+
+### Enabling Debug
+```elixir
+def table_options do
+  %{
+    debug: :query  # or :trace or :off (default)
+  }
+end
+```
+
+### Debug Modes
+- `:off` - No debug output (default, production)
+- `:query` - Prints compiled query to terminal
+- `:trace` - Uses `dbg()` for step-by-step tracing
+
+**Note**: Debug only works in `:dev` environment.
+
+## Pagination Modes
+
+### Standard Pagination (Default)
+```elixir
+pagination: %{
+  enabled: true,
+  mode: :buttons,
+  sizes: [10, 25, 50],
+  default_size: 25
+}
+```
+
+### Infinite Scroll (Card Mode Only)
+```elixir
+# Infinite scroll only works with card mode
+def table_options do
+  %{
+    mode: :card,
+    card_component: &my_card/1,
+    pagination: %{
+      enabled: true,
+      mode: :infinite_scroll,
+      default_size: 20,
+      loading_component: &custom_loader/1  # Optional
+    }
+  }
+end
+```
+
+## Actions Configuration
+
+Actions provide row-level operations separate from fields.
+
+### Simple Actions List
+```elixir
+def actions do
+  [
+    edit: &edit_action/1,
+    delete: &delete_action/1
+  ]
+end
+```
+
+### Actions with Label
+```elixir
+def actions do
+  %{
+    label: "Actions",
+    items: [
+      edit: &edit_action/1,
+      delete: &delete_action/1
+    ]
+  }
+end
+```
+
+### Action Component
+```elixir
+defp edit_action(assigns) do
+  ~H"""
+  <.link navigate={~p"/items/#{@record.id}/edit"}>Edit</.link>
+  """
+end
+```
+
+### Template with Actions
+```heex
+<.live_table
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+  actions={actions()}
+/>
+```
+
+## Additional Table Options
+
+### Streams Control
+```elixir
+use_streams: true   # Default - efficient DOM updates
+use_streams: false  # Regular assigns
+```
+
+### Fixed Header
+```elixir
+fixed_header: true  # Sticky header on scroll
+```
+
+### Empty State
+```elixir
+empty_state: &custom_empty_state/1
+
+defp custom_empty_state(assigns) do
+  ~H"""
+  <div class="text-center py-8">No records found</div>
+  """
+end
+```
+
+### Card Mode
+```elixir
+mode: :card,
+card_component: &product_card/1
+
+defp product_card(assigns) do
+  ~H"""
+  <div class="p-4 border rounded">
+    <h3><%= @record.name %></h3>
+  </div>
+  """
+end
+```
+
+## Field Options Reference
+
+### Component vs Renderer
+```elixir
+# renderer - receives value directly (or value, record)
+price: %{renderer: &format_price/1}
+
+# component - receives assigns with @value and @record
+status: %{component: &status_badge/1}
+
+defp status_badge(assigns) do
+  ~H"<span><%= @value %></span>"  # Access via @value, @record
+end
+```
+
+### Empty Text
+```elixir
+price: %{
+  label: "Price",
+  empty_text: "N/A"  # Shown when value is nil
+}
+```
+
+## Generator Usage
+
+### Install Generator
+```bash
+mix live_table.install
+mix live_table.install --oban  # With Oban for exports
+```
+
+### LiveView Generator
+```bash
+mix live_table.gen.live Products Product products name:string price:decimal
+```
 
 This document ensures LLMs provide accurate, complete LiveTable implementations every time.

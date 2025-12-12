@@ -2,6 +2,10 @@
 
 LiveTable is a powerful Phoenix LiveView component library that transforms data presentation in your web applications. It provides everything you need to build sophisticated, interactive data tables with minimal code.
 
+![LiveTable Demo](https://github.com/gurujada/live_table/blob/master/demo.gif?raw=true)
+
+[Live Demo (1M+ records)](https://livetable.gurujada.com) | [Advanced Demo](https://josaa.gurujada.com) | [Advanced Demo Source](https://github.com/ChivukulaVirinchi/college-app)
+
 ## What is LiveTable?
 
 LiveTable is designed for developers who need to present complex data in an intuitive, interactive way. Whether you're building admin dashboards, e-commerce catalogs, or analytics platforms, LiveTable provides the tools to create rich data experiences without the complexity.
@@ -159,12 +163,13 @@ LiveTable is designed to handle real-world application demands:
 
 ## Styling and Themes
 
-- Daisy semantics: Uses DaisyUI class names like `btn`, `select`, `input`, `dropdown`, and `menu` for consistent UI.
-- Tailwind-only support: LiveTable ships a small Tailwind-based shim in `live-table.css` so everything looks good even without DaisyUI installed.
-- DaisyUI integration: If your app includes DaisyUI, the components automatically adopt your active Daisy theme without extra configuration.
-- Dark mode: Respects Tailwind `dark:` classes and DaisyUI theme tokens. In shim-only mode, it follows your Tailwind dark strategy (e.g., class or media).
-- How to enable: Import `../../deps/live_table/priv/static/live-table.css` in your app CSS. With DaisyUI present, its styles cleanly override the shim.
-- Theming: Switch Daisy themes via the `data-theme` attribute on `html`/`body` or via your Daisy configuration. LiveTable doesn’t set a theme.
+LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for its UI components and uses Tailwind CSS for styling.
+
+- **SutraUI dependency**: LiveTable uses SutraUI components which provide DaisyUI-compatible semantic class names (`btn`, `select`, `input`, `dropdown`, `menu`).
+- **Tailwind-based**: Everything looks good out of the box with Tailwind CSS.
+- **DaisyUI integration**: If your app includes DaisyUI, components automatically adopt your active Daisy theme.
+- **Dark mode**: Respects Tailwind `dark:` classes and DaisyUI theme tokens.
+- **Custom UI**: If you want to use a different UI framework, you can replace the entire UI using `custom_header`, `custom_controls`, `custom_content`, and `custom_footer` options.
 
 ## Integration Requirements
 
@@ -177,7 +182,6 @@ LiveTable is designed to handle real-world application demands:
 ### Optional Dependencies
 - **Typst** - PDF generation engine for reports
 - **Phoenix PubSub** - Real-time updates across users
-- **Custom CSS frameworks** - Alternative to Tailwind
 
 ## Learning Path
 

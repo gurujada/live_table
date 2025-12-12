@@ -52,50 +52,6 @@ end
 """
 ```
 
-3. **Check JavaScript Assets**
-```javascript
-// assets/js/app.js - ensure LiveTable hooks are imported
-import {LiveTableHooks} from "../deps/live_table/priv/static/live-table"
-let liveSocket = new LiveSocket("/live", Socket, {
-  hooks: {...LiveTableHooks}
-})
-```
-
-### CSS Styles Not Applied
-
-**Problem:** Table appears unstyled or with broken layout.
-
-**Solutions:**
-
-1. **Import CSS Files**
-```css
-/* assets/css/app.css */
-@import "../../deps/live_table/priv/static/live-table.css";
-```
-
-2. **Tailwind v4 users**
-- No config file is required by default. Ensure your CSS includes the LiveTable import shown above and that your build pipeline processes it.
-
-3. **If using DaisyUI**
-- Ensure DaisyUI is installed per its v4 instructions.
-- Set your theme via `data-theme` on `html` or `body` if not using system default.
-- The LiveTable shim is safe: DaisyUI styles will override it when present.
-
-4. **Check Build Process**
-```bash
-# Rebuild assets
-cd assets && npm run build
-# Or for development
-cd assets && npm run dev
-```
-
-5. **“Unknown at rule @apply” errors**
-- Cause: Your CSS pipeline is not running Tailwind/PostCSS over a file that contains Tailwind directives (like `@apply`, `@layer`).
-- Fix options:
-  - If your app uses Tailwind: import the source CSS so Tailwind can process it: `@import "../../deps/live_table/assets/css/live-table.css"`.
-  - If your app doesn’t use Tailwind: import the prebuilt fallback instead: `@import "../../deps/live_table/priv/static/live-table.css"`.
-- Library build note: The library no longer tries to bundle its CSS with esbuild. Any @apply errors you saw during compile should be gone. Use one of the import options above in your host app.
-
 ## Query and Data Issues
 
 ### Empty Table Despite Having Data

@@ -1,0 +1,299 @@
+# LiveTable Cheatsheet
+
+## Setup
+
+### Installation
+{: .col-2}
+
+```elixir
+# mix.exs
+{:live_table, "~> 0.3.1"}
+```
+
+```bash
+mix deps.get
+mix live_table.install
+```
+
+### Configuration
+{: .col-2}
+
+```elixir
+# config/config.exs
+config :live_table,
+  repo: MyApp.Repo,
+  pubsub: MyApp.PubSub
+```
+
+## Basic Usage
+
+### Minimal LiveView
+{: .col-2}
+
+```elixir
+defmodule MyAppWeb.ProductLive.Index do
+  use MyAppWeb, :live_view
+  use LiveTable.LiveResource, schema: MyApp.Product
+
+  def fields do
+    [
+      id: %{label: "ID", sortable: true},
+      name: %{label: "Name", sortable: true, searchable: true},
+      price: %{label: "Price", sortable: true}
+    ]
+  end
+
+  def filters, do: []
+end
+```
+
+### Template
+{: .col-2}
+
+```heex
+<.live_table
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+/>
+```
+
+## Fields
+
+### Field Options
+{: .col-2}
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `label` | string | Column header text |
+| `sortable` | boolean | Enable column sorting |
+| `searchable` | boolean | Include in text search |
+| `renderer` | function/1 or /2 | Custom cell renderer |
+| `component` | function/1 | Component with `@value`, `@record` |
+| `empty_text` | string | Display when value is nil |
+| `computed` | dynamic | Calculated field |
+| `assoc` | tuple | For joined fields: `{:alias, :field}` |
+
+### Renderer Examples
+{: .col-2}
+
+```elixir
+# function/1 - value only
+price: %{
+  label: "Price",
+  renderer: &format_currency/1
+}
+
+defp format_currency(amount) do
+  assigns = %{amount: amount}
+  ~H"$<%= @amount %>"
+end
+
+# function/2 - value + record
+status: %{
+  label: "Status",
+  renderer: &render_status/2
+}
+
+defp render_status(status, record) do
+  assigns = %{status: status, record: record}
+  ~H"<%= @status %> - <%= @record.name %>"
+end
+```
+
+## Table Options
+
+### Common Options
+{: .col-2}
+
+```elixir
+def table_options do
+  %{
+    pagination: %{
+      enabled: true,
+      mode: :buttons,        # or :infinite_scroll (card mode only)
+      sizes: [10, 25, 50],
+      default_size: 25
+    },
+    sorting: %{
+      enabled: true,
+      default_sort: [name: :asc]
+    },
+    exports: %{
+      enabled: true,
+      formats: [:csv, :pdf]
+    },
+    search: %{
+      enabled: true,
+      debounce: 300,
+      placeholder: "Search..."
+    },
+    mode: :table,            # or :card
+    use_streams: true,
+    fixed_header: false,
+    debug: :off              # :query or :trace
+  }
+end
+```
+
+### Card Mode
+{: .col-2}
+
+```elixir
+def table_options do
+  %{
+    mode: :card,
+    card_component: &product_card/1
+  }
+end
+
+defp product_card(assigns) do
+  ~H"""
+  <div class="p-4 border rounded">
+    <h3><%= @record.name %></h3>
+    <p>$<%= @record.price %></p>
+  </div>
+  """
+end
+```
+
+### Empty State
+{: .col-2}
+
+```elixir
+def table_options do
+  %{
+    empty_state: &custom_empty/1
+  }
+end
+
+defp custom_empty(assigns) do
+  ~H"""
+  <div class="text-center py-8">
+    No products found
+  </div>
+  """
+end
+```
+
+## Actions
+
+### Basic Actions
+{: .col-2}
+
+```elixir
+def actions do
+  %{
+    label: "Actions",
+    items: [
+      edit: &edit_action/1,
+      delete: &delete_action/1
+    ]
+  }
+end
+
+defp edit_action(assigns) do
+  ~H"""
+  <.link navigate={~p"/products/#{@record.id}/edit"}>
+    Edit
+  </.link>
+  """
+end
+```
+
+### In Template
+{: .col-2}
+
+```heex
+<.live_table
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+  actions={actions()}
+/>
+```
+
+## Custom Queries
+
+### Data Provider Pattern
+{: .col-2}
+
+```elixir
+defmodule MyAppWeb.ReportLive.Index do
+  use MyAppWeb, :live_view
+  use LiveTable.LiveResource  # no schema!
+
+  def mount(_params, _session, socket) do
+    socket = assign(socket, :data_provider, 
+      {MyApp.Reports, :list_with_joins, []})
+    {:ok, socket}
+  end
+
+  def fields do
+    [
+      # Keys must match select clause
+      order_id: %{label: "Order", sortable: true},
+      customer_name: %{
+        label: "Customer",
+        sortable: true,
+        assoc: {:customers, :name}  # for sorting
+      }
+    ]
+  end
+end
+```
+
+### Context Function
+{: .col-2}
+
+```elixir
+def list_with_joins do
+  from o in Order,
+    join: c in Customer, 
+    on: o.customer_id == c.id,
+    as: :customers,  # alias for assoc
+    select: %{
+      order_id: o.id,
+      customer_name: c.name
+    }
+end
+```
+
+## Debug Mode
+
+### Enable Debug
+{: .col-2}
+
+```elixir
+def table_options do
+  %{
+    debug: :query  # Shows compiled query
+    # debug: :trace  # Uses dbg()
+    # debug: :off    # Default
+  }
+end
+```
+
+Output appears in terminal (dev only).
+
+## Quick Reference
+
+### Callbacks
+{: .col-2}
+
+| Callback | Required | Description |
+|----------|----------|-------------|
+| `fields/0` | Yes | Column definitions |
+| `filters/0` | Yes | Filter definitions |
+| `table_options/0` | No | Table configuration |
+| `actions/0` | No | Row actions |
+
+### Pagination Modes
+{: .col-2}
+
+| Mode | Description |
+|------|-------------|
+| `:buttons` | Traditional prev/next buttons |
+| `:infinite_scroll` | Load more on scroll (card mode only) |

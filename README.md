@@ -1,259 +1,97 @@
 # LiveTable
 
-A powerful Phoenix LiveView component library for building dynamic, interactive data tables with real-time updates. Perfect for admin panels, dashboards, and any application requiring advanced data presentation.
+A Phoenix LiveView component library for building dynamic, interactive data tables with real-time updates.
 
-## ✨ Features
+[![Hex.pm](https://img.shields.io/hexpm/v/live_table.svg)](https://hex.pm/packages/live_table)
+[![Documentation](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/live_table)
 
-- **🔍 Advanced Filtering** - Text search, range filters, select dropdowns, boolean toggles
-- **📊 Smart Sorting** - Multi-column sorting with shift-click support
-- **📄 Flexible Pagination** - Configurable page sizes with efficient querying
-- **📤 Export Capabilities** - CSV and PDF exports with background processing
-- **⚡ Real-time Updates** - Built for Phoenix LiveView with instant feedback
-- **🎨 Multiple View Modes** - Table and card layouts with custom components
-- **🔗 Custom Queries** - Support for complex joins and computed fields
-- **🚀 Performance Optimized** - Streams-based rendering for large datasets
+## Features
+
+- **Advanced Filtering** - Text search, range filters, select dropdowns, boolean toggles, and transformers
+- **Smart Sorting** - Multi-column sorting with shift-click support
+- **Flexible Pagination** - Standard pagination or infinite scroll
+- **Export Capabilities** - CSV and PDF exports with background processing
+- **Real-time Updates** - Built for Phoenix LiveView with instant feedback
+- **Multiple View Modes** - Table and card layouts with custom components
+- **Complex Queries** - Full support for joins, aggregations, and computed fields
 
 ![LiveTable Demo](https://github.com/gurujada/live_table/blob/master/demo.gif?raw=true)
 
-**[Live Demo with 1M+ records →](https://livetable.gurujada.com)**
+[Live Demo (1M+ records)](https://livetable.gurujada.com) | [Advanced Demo](https://josaa.gurujada.com) | [Advanced Demo Source](https://github.com/ChivukulaVirinchi/college-app)
 
-**[Advanced Demo with custom queries, & transformer usage →](https://josaa.gurujada.com)**
+## Quick Start
 
-**[Advanced Demo Git Url →](https://github.com/ChivukulaVirinchi/college-app)**
-
-
-## 🚀 Quick Start
-
-### 1. Installation
-
-Add to your `mix.exs`:
+**1. Add dependency:**
 
 ```elixir
-def deps do
-  [
-    {:live_table, "~> 0.3.1"},
-    {:oban, "~> 2.19"}  # Optional: required for exports (installer can add if you opt in)
-  ]
-end
+# mix.exs
+{:live_table, "~> 0.3.1"}
 ```
 
-### 2. Basic Configuration
+**2. Install:**
 
-In your `config/config.exs`:
+```bash
+mix deps.get && mix live_table.install
+```
+
+**3. Create a table:**
 
 ```elixir
-config :live_table,
-  repo: YourApp.Repo,
-  pubsub: YourApp.PubSub
-
-# Optional: Oban for exports (installer can configure this if you opt in)
-config :your_app, Oban,
-  repo: YourApp.Repo,
-  queues: [exports: 10]
-```
-
-### 3. Setup Assets
-
-Add to `assets/js/app.js`:
-
-```javascript
-import { TableHooks } from "../../deps/live_table/priv/static/live-table.js";
-
-const liveSocket = new LiveSocket("/live", Socket, {
-  params: { _csrf_token: csrfToken },
-  hooks: TableHooks
-});
-```
-
-Add to `assets/css/app.css`:
-
-```css
-
-
-@import "../../deps/live_table/priv/static/live-table.css";
-```
-
-### 4. Create Your First Table
-LiveTable requires field & filter definitions to build a table. Additional configuration options can be defined per table under `table_options`.
-
-```elixir
-# lib/your_app_web/live/product_live/index.ex
-defmodule YourAppWeb.ProductLive.Index do
-  use YourAppWeb, :live_view
-  use LiveTable.LiveResource, schema: YourApp.Product
+# lib/my_app_web/live/product_live/index.ex
+defmodule MyAppWeb.ProductLive.Index do
+  use MyAppWeb, :live_view
+  use LiveTable.LiveResource, schema: MyApp.Product
 
   def fields do
     [
       id: %{label: "ID", sortable: true},
-      name: %{label: "Product Name", sortable: true, searchable: true},
-      price: %{label: "Price", sortable: true},
-      stock_quantity: %{label: "Stock", sortable: true}
+      name: %{label: "Name", sortable: true, searchable: true},
+      price: %{label: "Price", sortable: true}
     ]
   end
 
   def filters do
     [
-      in_stock: Boolean.new(:stock_quantity, "in_stock", %{
-        label: "In Stock Only",
-        condition: dynamic([p], p.stock_quantity > 0)
-      }),
-
-      price_range: Range.new(:price, "price_range", %{
-        type: :number,
-        label: "Price Range",
-        min: 0,
-        max: 1000
+      in_stock: Boolean.new(:quantity, "in_stock", %{
+        label: "In Stock",
+        condition: dynamic([p], p.quantity > 0)
       })
     ]
   end
 end
 ```
 
-### 5. Add to Your Template
+**4. Render it:**
 
-```elixir
-# lib/your_app_web/live/product_live/index.html.heex
-<.live_table
-  fields={fields()}
-  filters={filters()}
-  options={@options}
-  streams={@streams}
-/>
+```heex
+<%# lib/my_app_web/live/product_live/index.html.heex %>
+<.live_table fields={fields()} filters={filters()} options={@options} streams={@streams} />
 ```
 
-That's it! You now have a fully functional data table with sorting, filtering, pagination, and search.
+## Documentation
 
-## 🏗 Usage Patterns
+**[Full Documentation on HexDocs](https://hexdocs.pm/live_table)**
 
-### Simple Tables (Single Schema)
+- [Installation Guide](https://hexdocs.pm/live_table/installation.html)
+- [Quick Start Tutorial](https://hexdocs.pm/live_table/quick-start.html)
+- [API Reference](https://hexdocs.pm/live_table/api-reference.html)
+- [Transformers Guide](https://hexdocs.pm/live_table/transformers.html) - LiveTable's most powerful feature
 
-For basic tables querying a single schema, use the `schema:` parameter. The field keys must match the schema field names exactly:
+## AI/LLM Integration
 
-```elixir
-defmodule YourAppWeb.UserLive.Index do
-  use YourAppWeb, :live_view
-  use LiveTable.LiveResource, schema: YourApp.User
+LiveTable includes [usage rules](https://hexdocs.pm/live_table/usage_rules.html) for AI assistants to provide accurate code suggestions.
 
-  def fields do
-    [
-      id: %{label: "ID", sortable: true},        # Must match User.id field
-      email: %{label: "Email", sortable: true, searchable: true},   # Must match User.email field
-      name: %{label: "Name", sortable: true, searchable: true}      # Must match User.name field
-    ]
-  end
-end
-```
+## License
 
-### Complex Tables (Custom Queries)
+MIT License. See [LICENSE](LICENSE) for details.
 
-For tables with joins, computed fields, or complex logic, you must define a custom data provider. The field keys must match the keys in your query's `select` clause:
-
-```elixir
-defmodule YourAppWeb.OrderReportLive.Index do
-  use YourAppWeb, :live_view
-  use LiveTable.LiveResource
-
-  def mount(_params, _session, socket) do
-    # Assign your custom data provider
-    socket = assign(socket, :data_provider, {YourApp.Orders, :list_with_details, []})
-    {:ok, socket}
-  end
-
-  def fields do
-    [
-      order_id: %{label: "Order #", sortable: true},        # Must match select key
-      customer_name: %{label: "Customer", sortable: true, searchable: true},  # Must match select key
-      total_amount: %{label: "Total", sortable: true},      # Must match select key
-      # For sorting by joined fields, specify the alias used in your query
-      product_name: %{
-        label: "Product",
-        sortable: true,
-        assoc: {:order_items, :name}    # Must match query alias and field
-      }
-    ]
-  end
-
-  def filters do
-    [
-      status: Select.new({:orders, :status}, "status", %{
-        label: "Order Status",
-        options: [
-          %{label: "Pending", value: ["pending"]},
-          %{label: "Completed", value: ["completed"]}
-        ]
-      })
-    ]
-  end
-end
-```
-
-```elixir
-# In your context
-defmodule YourApp.Orders do
-  def list_with_details do
-    from o in Order,
-      join: c in Customer, on: o.customer_id == c.id,
-      join: oi in OrderItem, on: oi.order_id == o.id, as: :order_items,
-      select: %{
-        order_id: o.id,               # Field key must match this
-        customer_name: c.name,        # Field key must match this
-        total_amount: o.total_amount, # Field key must match this
-        product_name: oi.product_name # Field key must match this
-      }
-  end
-end
-```
-
-## 📚 Documentation
-
-- **[Installation & Setup](docs/installation.md)** - Complete setup guide
-- **[Quick Start Guide](docs/quick-start.md)** - Get up and running in 5 minutes
-- **[Configuration](docs/configuration.md)** - Customize table behavior
-- **[API Reference](docs/api/fields.md)** - Complete API documentation
-- **[Examples](docs/examples/simple-table.md)** - Real-world usage examples
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
-
-## 🎯 Use Cases
-
-LiveTable is perfect for:
-
-- **Admin Dashboards** - Manage users, orders, products with advanced filtering
-- **E-commerce Catalogs** - Product listings with search, filters, and sorting
-- **Data Analytics** - Present large datasets with exports and real-time updates
-- **CRM Systems** - Customer and lead management with custom views
-- **Inventory Management** - Track stock with complex filtering and reporting
-
-## 🤖 AI/LLM Integration
-
-LiveTable includes comprehensive usage guidelines for AI assistants and LLMs to provide accurate code suggestions:
-
-- **[LLM Usage Rules](usage_rules.md)** - Complete patterns and examples for accurate code generation
-
-These guidelines ensure AI tools understand:
-- Critical field key mapping requirements
-- The two distinct usage patterns (simple vs. custom queries)
-- Required dependencies and configuration
-- Common anti-patterns to avoid
-
-## 📄 License
-
-MIT License. See LICENSE for details.
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create your feature branch
+3. Open a Pull Request
 
-## 📞 Support
+## Support
 
-- **Issues**: [GitHub Issues](https://github.com/gurujada/live_table/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/gurujada/live_table/discussions)
-- **Documentation**: [API Docs](https://hexdocs.pm/live_table)
-- **AI Guidelines**: [LLM Usage Rules](usage_rules.md)
-
----
-
-Built with ❤️ for the Phoenix LiveView community.
+- [GitHub Issues](https://github.com/gurujada/live_table/issues)
+- [GitHub Discussions](https://github.com/gurujada/live_table/discussions)
