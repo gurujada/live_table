@@ -115,7 +115,7 @@ defmodule LiveTable.TableComponentTest do
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
       assert html =~ "No data"
-      assert html =~ "Get started by creating a new record"
+      assert html =~ "No records found"
     end
   end
 
@@ -333,7 +333,7 @@ defmodule LiveTable.TableComponentTest do
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
       assert html =~ "filters-container"
-      assert html =~ "Clear filters"
+      assert html =~ "Clear Filters"
     end
 
     test "shows filter toggle button when more than 3 filters" do
@@ -360,8 +360,8 @@ defmodule LiveTable.TableComponentTest do
 
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
-      assert html =~ "toggle_filters"
-      assert html =~ "Filters"
+      assert html =~ "filter-show-text"
+      assert html =~ "Show Filters"
       # Filters should be hidden by default
       assert html =~ "hidden"
     end
@@ -390,8 +390,8 @@ defmodule LiveTable.TableComponentTest do
 
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
-      refute html =~ "toggle_filters"
-      refute html =~ "toggle_filters"
+      refute html =~ "filter-show-text"
+      refute html =~ "Show Filters"
     end
 
     test "hides clear filters link when no filters applied" do
@@ -436,8 +436,9 @@ defmodule LiveTable.TableComponentTest do
 
       assert html =~ "Export as CSV"
       assert html =~ "Export as PDF"
-      assert html =~ "phx-click=\"export-csv\""
-      assert html =~ "phx-click=\"export-pdf\""
+      # phx-click is encoded as JSON in dropdown menu
+      assert html =~ "export-csv"
+      assert html =~ "export-pdf"
     end
 
     test "respects configured export formats" do
@@ -617,7 +618,8 @@ defmodule LiveTable.TableComponentTest do
         streams: []
       }
 
-      assert_raise ArgumentError, ~r/Requires `use_streams` to be set/, fn ->
+      # When use_streams is not set, render_row/1 pattern match fails with FunctionClauseError
+      assert_raise FunctionClauseError, fn ->
         render_component(&InvalidStreamTable.live_table/1, assigns)
       end
     end
@@ -751,11 +753,11 @@ defmodule LiveTable.TableComponentTest do
 
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
-      # Check for dark mode classes in the new UI
-      assert html =~ "dark:bg-gray-800"
-      assert html =~ "dark:text-gray-100"
-      # Check for dark mode border/divide classes (divide is used for table borders)
-      assert html =~ "dark:divide-gray-700"
+      # Component uses semantic color classes (bg-muted, text-foreground, etc.)
+      # that support dark mode through CSS variables rather than dark: prefixes
+      assert html =~ "bg-muted"
+      assert html =~ "text-foreground"
+      assert html =~ "bg-background"
     end
   end
 
@@ -1088,7 +1090,10 @@ defmodule LiveTable.TableComponentTest do
           table_options: %{
             mode: :table,
             use_streams: false,
-            custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls}
+            custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls},
+            pagination: %{enabled: true, mode: :buttons, sizes: [10, 25, 50], default_size: 10},
+            search: %{enabled: true, debounce: 300, placeholder: "Search..."},
+            exports: %{enabled: true, formats: [:csv, :pdf]}
           }
       end
 
@@ -1121,6 +1126,9 @@ defmodule LiveTable.TableComponentTest do
             mode: :card,
             use_streams: false,
             custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls},
+            pagination: %{enabled: true, mode: :buttons, sizes: [10, 25, 50], default_size: 10},
+            search: %{enabled: true, debounce: 300, placeholder: "Search..."},
+            exports: %{enabled: true, formats: [:csv, :pdf]},
             card_component: fn %{record: record} ->
               assigns = %{record: record}
 

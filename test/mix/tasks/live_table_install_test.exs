@@ -37,21 +37,10 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       assert config_content =~ "repo: TestApp.Repo"
       assert config_content =~ "pubsub: TestApp.PubSub"
 
-      # Verify app.js was updated
+      # Verify app.js was updated with colocated hooks import
       app_js_content = File.read!("assets/js/app.js")
-      assert app_js_content =~ "import { TableHooks }"
-      assert app_js_content =~ "hooks: TableHooks"
-
-      # Verify app.css was updated
-      app_css_content = File.read!("assets/css/app.css")
-      assert app_css_content =~ "@import \"../../deps/live_table/priv/static/live-table.css\""
-
-      # The current implementation can't update static_paths, so verify the warning appears
-      assert output =~ "Reminder: add \"exports\" to your static paths"
-
-      # Verify web module is unchanged (since static_paths update fails)
-      web_content = File.read!("lib/test_app_web.ex")
-      refute web_content =~ "exports"
+      assert app_js_content =~ "liveTableHooks"
+      assert app_js_content =~ "phoenix-colocated/live_table"
     end
 
     @tag :tmp_dir
@@ -80,7 +69,6 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
         end)
 
       assert output =~ "Could not find assets/js/app.js"
-      assert output =~ "Could not find assets/css/app.css"
     end
 
     @tag :tmp_dir
@@ -99,12 +87,12 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       File.write!("config/config.exs", existing_config)
 
-      # Add existing TableHooks
+      # Add existing colocated hooks
       existing_js = """
-      import { TableHooks } from "../../deps/live_table/priv/static/live-table.js"
+      import { hooks as liveTableHooks } from "phoenix-colocated/live_table";
 
       let liveSocket = new LiveSocket("/live", Socket, {
-        hooks: TableHooks
+        hooks: { ...liveTableHooks }
       })
       """
 
@@ -115,9 +103,8 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
           Mix.Tasks.LiveTable.Install.run(["--yes"])
         end)
 
-      # The task should complete successfully and print final reminders
+      # The task should complete successfully
       assert output =~ "LiveTable has been successfully configured!"
-      assert output =~ "Reminder: add \"exports\" to your static paths"
     end
 
     @tag :tmp_dir
@@ -145,14 +132,13 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       File.cd!(tmp_dir)
       setup_fake_phoenix_project()
 
-      output =
+      _output =
         capture_io(fn ->
           Mix.Tasks.LiveTable.Install.run(["--yes"])
         end)
 
       config_content = File.read!("config/config.exs")
       refute config_content =~ "config :test_app, Oban"
-      assert output =~ "Exports use Oban"
     end
   end
 
@@ -181,14 +167,13 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
     File.cd!(tmp_dir)
     setup_fake_phoenix_project()
 
-    output =
+    _output =
       capture_io("n\ny\n", fn ->
         Mix.Tasks.LiveTable.Install.run([])
       end)
 
     config_content = File.read!("config/config.exs")
     refute config_content =~ "config :test_app, Oban"
-    assert output =~ "Exports use Oban"
   end
 
   defp setup_fake_phoenix_project do

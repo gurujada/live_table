@@ -28,7 +28,7 @@ defmodule LiveTable.PdfGenerator do
     )
 
     #set text(
-      font: "Fira Sans",
+      font: "DejaVu Sans",
       size: 8pt,
       weight: "regular"
     )

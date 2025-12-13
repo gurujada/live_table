@@ -14,7 +14,7 @@ defmodule LiveTable.DebugTest do
   # Test the debug_pipeline macro directly
   defmodule TestDebugModule do
     import Ecto.Query
-    import Debug, only: [debug_pipeline: 2]
+    import LiveTable.Debug, only: [debug_pipeline: 2]
 
     def test_query_debug do
       from(t in TestSchema, select: t)

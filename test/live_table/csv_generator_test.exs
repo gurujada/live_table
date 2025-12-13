@@ -192,9 +192,14 @@ defmodule LiveTable.CsvGeneratorTest do
 
   describe "error handling" do
     test "handles invalid query string" do
-      assert_raise ArgumentError, "Invalid Ecto query string", fn ->
-        CsvGenerator.get_query("invalid query string")
-      end
+      import ExUnit.CaptureIO
+
+      # Capture stderr to suppress the "undefined function" error from Code.eval_string
+      capture_io(:stderr, fn ->
+        assert_raise ArgumentError, "Invalid Ecto query string", fn ->
+          CsvGenerator.get_query("invalid query string")
+        end
+      end)
     end
 
     test "handles valid query string" do

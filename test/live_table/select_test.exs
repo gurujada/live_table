@@ -111,25 +111,6 @@ defmodule LiveTable.SelectTest do
       assert html =~ "custom-wrapper"
       assert html =~ "custom-label"
     end
-
-    # The below test does not work because there is no way to set the value of the live_select from the incoming params in the url.
-    # Need to upgrade it.
-
-    # test "renders with selected values" do
-    #   filter = Select.new(:category_id, "category", %{
-    #     selected: [1, 2],
-    #     label: "Category"
-    #   })
-
-    #   html = render_component(&Select.render/1, %{
-    #     key: "category",
-    #     filter: filter,
-    #     filters: %{"category" => filter}
-    #   })
-
-    #   assert html =~ "selected"
-    #   assert html =~ "Category"
-    # end
   end
 
   describe "Select filter integration" do
