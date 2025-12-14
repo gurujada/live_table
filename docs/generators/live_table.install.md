@@ -20,13 +20,16 @@ The install generator automatically configures your Phoenix application:
 
 ### 1. Configuration (`config/config.exs`)
 
-Adds LiveTable configuration with your app's Repo and PubSub:
+Adds LiveTable configuration with your app name, Repo, and PubSub:
 
 ```elixir
 config :live_table,
+  app: :your_app,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub
 ```
+
+The `:app` option is required for exports to work correctly in production releases.
 
 ### 2. Oban Configuration (Optional)
 

@@ -56,6 +56,13 @@ defmodule Mix.Tasks.LiveTable.Install do
     repo_module = Module.concat([app_module, "Repo"])
     pubsub_module = Module.concat([app_module, "PubSub"])
 
+    app_atom =
+      app_module
+      |> Module.split()
+      |> List.last()
+      |> Macro.underscore()
+      |> String.to_atom()
+
     has_config? =
       Igniter.Project.Config.configures_root_key?(igniter, "config.exs", :live_table)
 
@@ -66,6 +73,7 @@ defmodule Mix.Tasks.LiveTable.Install do
       false ->
         config_content = """
         config :live_table,
+          app: :#{inspect(app_atom)},
           repo: #{inspect(repo_module)},
           pubsub: #{inspect(pubsub_module)}
         """

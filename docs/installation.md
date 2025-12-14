@@ -74,9 +74,12 @@ If the installer doesn't work for your project structure, add to `config/config.
 
 ```elixir
 config :live_table,
+  app: :your_app,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub
 ```
+
+The `:app` option is required for exports to work correctly in production releases.
 
 ---
 

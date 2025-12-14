@@ -282,8 +282,15 @@ When helping with LiveTable implementation:
 - `{:oban, "~> 2.19"}` (only if using exports)
 
 ### Must-Have Config
-- LiveTable repo and pubsub config (always required)
+- LiveTable app, repo, and pubsub config (always required)
 - Oban queue configuration (only if using exports)
+
+```elixir
+config :live_table,
+  app: :your_app,
+  repo: YourApp.Repo,
+  pubsub: YourApp.PubSub
+```
 
 > **Note**: LiveTable uses runtime hooks, so no JavaScript configuration is required. Hooks are automatically registered when your LiveView renders.
 

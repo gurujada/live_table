@@ -34,6 +34,7 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       # Verify config file was updated
       config_content = File.read!("config/config.exs")
       assert config_content =~ "config :live_table"
+      assert config_content =~ "app: :test_app"
       assert config_content =~ "repo: TestApp.Repo"
       assert config_content =~ "pubsub: TestApp.PubSub"
 
