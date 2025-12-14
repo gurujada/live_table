@@ -76,6 +76,17 @@ defmodule LiveTable.Transformer do
   end
 
   @doc false
+  def render(assigns) do
+    render_assigns = %{
+      key: assigns.filter.key,
+      label: Map.get(assigns.filter.options, :label),
+      value: Map.get(assigns.filter.options, :applied_data, %{})
+    }
+
+    assigns.filter.options.render.(render_assigns)
+  end
+
+  @doc false
   # This gets the full query, not dynamic conditions
   def apply(query, %__MODULE__{options: %{query_transformer: transformer}} = filter) do
     filter_data = Map.get(filter.options, :applied_data, %{})

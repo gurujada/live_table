@@ -254,9 +254,10 @@ defmodule Mix.Tasks.LiveTable.Gen.Live do
       case type do
         :string -> "%{label: \"#{label}\", sortable: true, searchable: true}"
         :text -> "%{label: \"#{label}\", searchable: true}"
-        :boolean -> "%{label: \"#{label}\", sortable: false}"
+        :boolean -> "%{label: \"#{label}\"}"
         :id -> "%{label: \"#{label}\", sortable: true}"
-        _ -> "%{label: \"#{label}\", sortable: false}"
+        t when t in [:integer, :float, :decimal] -> "%{label: \"#{label}\", sortable: true}"
+        _ -> "%{label: \"#{label}\"}"
       end
 
     "      #{name}: #{opts}"
@@ -332,7 +333,7 @@ defmodule Mix.Tasks.LiveTable.Gen.Live do
           Listing #{schema_humanized}s
           <:actions>
             <.button variant="primary" navigate={~p"/#{table}/new"}>
-              <.icon name="hero-plus" /> New #{schema_humanized}
+              <.icon name="lucide-plus" /> New #{schema_humanized}
             </.button>
           </:actions>
         </.header>

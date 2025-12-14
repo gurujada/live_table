@@ -33,8 +33,9 @@ defmodule LiveTable.TestResource do
 
   Each field has:
     * `:label` - Display name in table header
-    * `:sortable` - Whether the column can be sorted
+    * `:sortable` - Whether the column can be sorted (defaults to false)
     * `:searchable` - Whether the field is included in text search
+    * `:hidden` - Whether the column is hidden from display (defaults to false)
     * `:assoc` - For joined fields, `{association_name, field_name}`
     * `:computed` - Dynamic expression for calculated fields
   """
@@ -42,8 +43,7 @@ defmodule LiveTable.TestResource do
     [
       id: %{
         label: "ID",
-        sortable: true,
-        searchable: false
+        sortable: true
       },
       name: %{
         label: "Name",
@@ -52,18 +52,15 @@ defmodule LiveTable.TestResource do
       },
       description: %{
         label: "Description",
-        sortable: false,
         searchable: true
       },
       price: %{
         label: "Price",
-        sortable: true,
-        searchable: false
+        sortable: true
       },
       stock_quantity: %{
         label: "Stock",
-        sortable: true,
-        searchable: false
+        sortable: true
       },
       category_name: %{
         label: "Category",
@@ -81,8 +78,13 @@ defmodule LiveTable.TestResource do
       total_value: %{
         label: "Total Value",
         sortable: true,
-        searchable: false,
         computed: dynamic([resource: r], r.price * r.stock_quantity)
+      },
+      # Hidden field example - available for sorting/filtering but not displayed
+      internal_rank: %{
+        label: "Internal Rank",
+        sortable: true,
+        hidden: true
       }
     ]
   end

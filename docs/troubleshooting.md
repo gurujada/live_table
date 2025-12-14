@@ -2,64 +2,7 @@
 
 This guide covers common issues, error messages, and solutions when working with LiveTable.
 
-## Colocated Hooks Issues
-
-### "Unknown hook found for..." Errors
-
-**Error:** Browser console shows:
-```
-unknown hook found for "LiveTable.SortHelpers.SortableColumn"
-unknown hook found for ".Download"
-```
-
-**Cause:** LiveTable hooks are not properly imported or colocated hooks weren't extracted.
-
-**Solutions:**
-
-1. **Ensure hooks are imported in `app.js`**
-
-   Check that `assets/js/app.js` has:
-   ```javascript
-   import { hooks as liveTableHooks } from "phoenix-colocated/live_table";
-   ```
-
-   And the hooks are spread into LiveSocket:
-   ```javascript
-   const liveSocket = new LiveSocket("/live", Socket, {
-       hooks: { ...myAppHooks, ...liveTableHooks },
-   });
-   ```
-
-2. **Run `mix compile` before assets**
-
-   Colocated hooks are extracted during Elixir compilation. If you build assets without compiling first, the hooks won't exist.
-
-   ```bash
-   mix compile
-   mix assets.deploy
-   ```
-
-3. **Update deployment aliases**
-
-   In `mix.exs`, ensure compile runs first:
-   ```elixir
-   "assets.deploy": [
-     "compile",  # Must come first!
-     "esbuild my_app --minify",
-     "tailwind my_app --minify",
-     "phx.digest"
-   ]
-   ```
-
-4. **Recompile dependencies**
-
-   If hooks are still missing after updating LiveTable:
-   ```bash
-   mix deps.compile live_table --force
-   mix compile
-   ```
-
-### Stream Container Errors
+## Stream Container Errors
 
 **Error:** Browser console shows:
 ```

@@ -27,8 +27,10 @@ The display name for the column header and exports.
 name: %{label: "Product Name"}
 ```
 
+### Optional Options
+
 #### `sortable` (boolean)
-Whether the column can be sorted. Adds clickable sort controls to the header.
+Whether the column can be sorted. Adds clickable sort controls to the header. Defaults to `false` if not specified.
 
 ```elixir
 price: %{label: "Price", sortable: true}
@@ -41,7 +43,13 @@ Whether the column is included in global text search using ILIKE matching.
 name: %{label: "Name", searchable: true}
 ```
 
-### Optional Options
+#### `hidden` (boolean)
+Whether the column is hidden from display. Hidden fields are still included in the query (for sorting, filtering, or use in renderers) and exports, but not rendered as columns. Defaults to `false`.
+
+```elixir
+# Hidden field - used for sorting/filtering but not displayed
+internal_score: %{label: "Score", hidden: true}
+```
 
 #### `renderer` (function)
 Custom function component for formatting cell display. You can use either:
@@ -375,7 +383,6 @@ def fields do
   [
     primary_action: %{
       label: "Action",
-      sortable: false,
       renderer: &render_primary_action/2  # function/2 to access full record
     }
   ]
@@ -454,7 +461,6 @@ def fields do
   [
     image: %{
       label: "Image",
-      sortable: false,
       renderer: &render_product_image/1
     },
     name: %{
@@ -516,8 +522,7 @@ end
 def fields do
   [
     avatar: %{
-      label: "",
-      sortable: false,
+      label: "Avatar",
       renderer: &render_avatar/1
     },
     name: %{

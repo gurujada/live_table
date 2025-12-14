@@ -43,8 +43,8 @@ defmodule LiveTable.SortHelpers do
         </svg>
       </span>
     </div>
-    <script :type={Phoenix.LiveView.ColocatedHook} name=".SortableColumn">
-      export default {
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".SortableColumn" runtime>
+      {
         mounted() {
           this.handleClick = (event) => {
             if (event.shiftKey) {

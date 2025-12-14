@@ -8,7 +8,7 @@ defmodule LiveTable.TableComponent do
       import SutraUI.InputGroup
       import SutraUI.Select
       import SutraUI.Empty
-      alias SutraUI.Icon
+      import SutraUI.Icon
       alias Phoenix.LiveView.JS
 
       def live_table(var!(assigns)) do
@@ -23,8 +23,8 @@ defmodule LiveTable.TableComponent do
           <.render_content {assigns} />
           <.render_footer {assigns} />
         </div>
-        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download">
-          export default {
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download" runtime>
+          {
             mounted() {
               this.handleEvent("download", ({ path }) => {
                 const link = document.createElement("a");
@@ -108,7 +108,7 @@ defmodule LiveTable.TableComponent do
                   <label for="table-search" class="sr-only">Search</label>
                   <.input_group>
                     <:prefix type="icon">
-                      <Icon.icon name="hero-magnifying-glass" class="size-4 text-muted-foreground" />
+                      <.icon name="lucide-search" class="size-4 text-muted-foreground" />
                     </:prefix>
                     <input
                       type="text"
@@ -155,7 +155,7 @@ defmodule LiveTable.TableComponent do
                   }
                   class="btn btn-outline"
                 >
-                  <Icon.icon name="hero-funnel" class="size-4" />
+                  <.icon name="lucide-filter" class="size-4" />
                   <span id="filter-show-text">Show Filters</span>
                   <span id="filter-hide-text" class="hidden">Hide Filters</span>
                 </button>
@@ -188,14 +188,21 @@ defmodule LiveTable.TableComponent do
       defp content_section(%{table_options: %{mode: :table}} = var!(assigns)) do
         ~H"""
         <div class="mt-8 flow-root">
-          <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <div class="overflow-hidden shadow sm:rounded-lg border border-border">
-                <table class="table">
-                  <thead class={["bg-muted", @table_options[:fixed_header] && "sticky top-0 z-10"]}>
+          <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
+            <div class="min-w-full py-2 align-middle sm:px-6 lg:px-8">
+              <div class={[
+                "shadow sm:rounded-lg border border-border",
+                @table_options[:fixed_header] && "max-h-[600px] overflow-y-auto",
+                !@table_options[:fixed_header] && "overflow-hidden"
+              ]}>
+                <table class="table min-w-full">
+                  <thead class={[
+                    "bg-muted",
+                    @table_options[:fixed_header] && "sticky top-0 z-10"
+                  ]}>
                     <tr>
                       <th
-                        :for={{key, field} <- @fields}
+                        :for={{key, field} <- visible_fields(@fields)}
                         scope="col"
                         class="px-3 py-3 text-start text-sm font-semibold text-foreground"
                       >
@@ -203,13 +210,13 @@ defmodule LiveTable.TableComponent do
                           key={key}
                           label={field.label}
                           sort_params={@options["sort"]["sort_params"]}
-                          sortable={field.sortable}
+                          sortable={Map.get(field, :sortable, false)}
                         />
                       </th>
                       <th
                         :if={has_actions(@actions)}
                         scope="col"
-                        class="px-3 py-3 text-start text-sm font-semibold text-foreground"
+                        class="px-3 py-3 text-center text-sm font-semibold text-foreground"
                       >
                         {actions_label(@actions)}
                       </th>
@@ -221,13 +228,15 @@ defmodule LiveTable.TableComponent do
                     class="bg-background"
                   >
                     <tr id="empty-placeholder" class="only:table-row hidden hover:bg-transparent">
-                      <td colspan={length(@fields) + if(has_actions(@actions), do: 1, else: 0)}>
+                      <td colspan={
+                        length(visible_fields(@fields)) + if(has_actions(@actions), do: 1, else: 0)
+                      }>
                         <.render_empty_state table_options={@table_options} />
                       </td>
                     </tr>
                     <.render_row
                       streams={@streams}
-                      fields={@fields}
+                      fields={visible_fields(@fields)}
                       table_options={@table_options}
                       actions={@actions}
                     />
@@ -248,7 +257,8 @@ defmodule LiveTable.TableComponent do
         <div
           id="infinite-scroll-container"
           phx-update="stream"
-          phx-viewport-bottom={@options["pagination"][:has_next_page] && !@loading_more && "load_more"}
+          phx-viewport-bottom={@options["pagination"][:has_next_page] && "load_more"}
+          phx-throttle="1000"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           <div :for={{id, record} <- @streams.resources} id={id}>
@@ -257,7 +267,7 @@ defmodule LiveTable.TableComponent do
         </div>
 
         <.loader
-          :if={@loading_more}
+          :if={@options["pagination"][:has_next_page]}
           loading_component={@table_options.pagination[:loading_component]}
         />
         """
@@ -270,7 +280,7 @@ defmodule LiveTable.TableComponent do
       defp loader(var!(assigns)) do
         ~H"""
         <div class="flex justify-center py-8">
-          <Icon.icon name="hero-arrow-path" class="size-6 animate-spin text-muted-foreground" />
+          <.icon name="lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
         </div>
         """
       end
@@ -304,7 +314,7 @@ defmodule LiveTable.TableComponent do
         ~H"""
         <.empty>
           <:icon>
-            <Icon.icon name="hero-folder-open" class="size-12" />
+            <.icon name="lucide-folder-open" class="size-12" />
           </:icon>
           <:title>No data</:title>
           <:description>
@@ -391,7 +401,7 @@ defmodule LiveTable.TableComponent do
               phx-value-clear_filters="true"
               class="filter-bar-clear"
             >
-              <Icon.icon name="hero-x-mark" class="size-4" /> Clear Filters
+              <.icon name="lucide-x" class="size-4" /> Clear Filters
             </button>
           </div>
         </div>
@@ -445,12 +455,12 @@ defmodule LiveTable.TableComponent do
         <.dropdown_menu id="export-dropdown">
           <:trigger>
             <span class="flex items-center gap-2">
-              <Icon.icon name="hero-arrow-down-tray" class="size-4" /> Export
+              <.icon name="lucide-download" class="size-4" /> Export
             </span>
           </:trigger>
           <:item
             :for={format <- @formats}
-            icon="hero-arrow-down-tray"
+            icon="lucide-download"
             on_click={if(format == :csv, do: "export-csv", else: "export-pdf")}
           >
             Export as {String.upcase(to_string(format))}
@@ -510,6 +520,10 @@ defmodule LiveTable.TableComponent do
 
       def actions_label(%{label: label}), do: label
       def actions_label(_), do: "Actions"
+
+      defp visible_fields(fields) do
+        Enum.reject(fields, fn {_key, field} -> Map.get(field, :hidden, false) end)
+      end
     end
   end
 end

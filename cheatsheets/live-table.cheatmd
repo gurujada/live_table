@@ -67,8 +67,9 @@ end
 | Option | Type | Description |
 |--------|------|-------------|
 | `label` | string | Column header text |
-| `sortable` | boolean | Enable column sorting |
+| `sortable` | boolean | Enable column sorting (default: false) |
 | `searchable` | boolean | Include in text search |
+| `hidden` | boolean | Hide from display (default: false) |
 | `renderer` | function/1 or /2 | Custom cell renderer |
 | `component` | function/1 | Component with `@value`, `@record` |
 | `empty_text` | string | Display when value is nil |

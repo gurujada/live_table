@@ -37,14 +37,12 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       assert config_content =~ "repo: TestApp.Repo"
       assert config_content =~ "pubsub: TestApp.PubSub"
 
-      # Verify app.js was updated with colocated hooks import
-      app_js_content = File.read!("assets/js/app.js")
-      assert app_js_content =~ "liveTableHooks"
-      assert app_js_content =~ "phoenix-colocated/live_table"
+      # Note: Phoenix 1.8+ uses runtime colocated hooks, so app.js is NOT modified.
+      # The hooks are automatically registered when components render.
     end
 
     @tag :tmp_dir
-    test "handles missing files gracefully", %{tmp_dir: tmp_dir} do
+    test "handles missing assets directory gracefully", %{tmp_dir: tmp_dir} do
       File.cd!(tmp_dir)
 
       # Create minimal project structure without assets
@@ -63,12 +61,15 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       File.write!("lib/test_app_web.ex", web_content)
 
+      # Task should still succeed since it no longer modifies app.js
+      # (Phoenix 1.8+ uses runtime colocated hooks)
       output =
         capture_io(fn ->
           Mix.Tasks.LiveTable.Install.run(["--yes"])
         end)
 
-      assert output =~ "Could not find assets/js/app.js"
+      # Should complete successfully
+      assert output =~ "LiveTable has been successfully configured!"
     end
 
     @tag :tmp_dir
@@ -87,17 +88,6 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       File.write!("config/config.exs", existing_config)
 
-      # Add existing colocated hooks
-      existing_js = """
-      import { hooks as liveTableHooks } from "phoenix-colocated/live_table";
-
-      let liveSocket = new LiveSocket("/live", Socket, {
-        hooks: { ...liveTableHooks }
-      })
-      """
-
-      File.write!("assets/js/app.js", existing_js)
-
       output =
         capture_io(fn ->
           Mix.Tasks.LiveTable.Install.run(["--yes"])
@@ -105,6 +95,14 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       # The task should complete successfully
       assert output =~ "LiveTable has been successfully configured!"
+
+      # Verify config wasn't duplicated
+      config_content = File.read!("config/config.exs")
+      # Count occurrences of config :live_table - should be exactly 1
+      occurrences =
+        config_content |> String.split("config :live_table") |> length() |> Kernel.-(1)
+
+      assert occurrences == 1
     end
 
     @tag :tmp_dir

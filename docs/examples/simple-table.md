@@ -521,7 +521,7 @@ defmodule YourAppWeb.CategoryLive.Index do
     [
       id: %{label: "ID", sortable: true},
       name: %{label: "Category Name", sortable: true, searchable: true},
-      description: %{label: "Description", sortable: false, searchable: true},
+      description: %{label: "Description", searchable: true},
       product_count: %{label: "Products", sortable: true, renderer: &render_count/1},
       active: %{label: "Status", sortable: true, renderer: &render_active_status/1}
     ]

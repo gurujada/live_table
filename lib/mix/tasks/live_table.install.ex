@@ -4,7 +4,6 @@ defmodule Mix.Tasks.LiveTable.Install do
 
   This task configures all necessary files for LiveTable to work properly:
   - Adds LiveTable configuration to config/config.exs
-  - Adds LiveTable hooks import to assets/js/app.js
   - Optionally configures Oban for CSV/PDF exports
 
   ## Usage
@@ -17,11 +16,10 @@ defmodule Mix.Tasks.LiveTable.Install do
 
   This task assumes LiveTable dependency is already added to mix.exs.
 
-  ## Colocated Hooks
+  ## Runtime Hooks
 
-  LiveTable uses Phoenix 1.8+ colocated hooks. The installer automatically adds
-  the required import to your `app.js`. For deployment, ensure `mix compile`
-  runs before building assets to extract the hooks.
+  LiveTable uses Phoenix 1.8+ runtime colocated hooks which require no JavaScript
+  configuration. The hooks are automatically registered when components render.
   """
 
   use Igniter.Mix.Task
@@ -45,18 +43,12 @@ defmodule Mix.Tasks.LiveTable.Install do
 
     igniter
     |> configure_live_table_config(app_name)
-    |> configure_app_js_hooks()
     |> maybe_configure_oban(app_name)
     |> Igniter.add_notice("LiveTable has been successfully configured!")
     |> Igniter.add_notice("")
     |> Igniter.add_notice("Next steps:")
     |> Igniter.add_notice("1. Restart your Phoenix server")
     |> Igniter.add_notice("2. Create your first LiveTable by following the Quick Start guide")
-    |> Igniter.add_notice("")
-    |> Igniter.add_notice("Important for deployment:")
-    |> Igniter.add_notice(
-      "  Ensure `mix compile` runs before `assets.deploy` to extract colocated hooks."
-    )
     |> add_oban_next_steps(app_name)
   end
 
@@ -91,98 +83,6 @@ defmodule Mix.Tasks.LiveTable.Install do
 
           Rewrite.Source.update(source, :content, updated_content)
         end)
-    end
-  end
-
-  defp configure_app_js_hooks(igniter) do
-    app_js_path = "assets/js/app.js"
-
-    if Igniter.exists?(igniter, app_js_path) do
-      igniter
-      |> Igniter.update_file(app_js_path, fn source ->
-        content = Rewrite.Source.get(source, :content)
-
-        if String.contains?(content, "phoenix-colocated/live_table") do
-          source
-        else
-          updated_content =
-            content
-            |> add_live_table_import()
-            |> add_live_table_to_hooks()
-
-          Rewrite.Source.update(source, :content, updated_content)
-        end
-      end)
-    else
-      Igniter.add_warning(
-        igniter,
-        "Could not find assets/js/app.js. Please manually add LiveTable hooks import."
-      )
-    end
-  end
-
-  defp add_live_table_import(content) do
-    cond do
-      String.contains?(content, "phoenix-colocated/") ->
-        Regex.replace(
-          ~r/(import\s*\{[^}]*\}\s*from\s*"phoenix-colocated\/[^"]+";?\n)(?!.*phoenix-colocated)/s,
-          content,
-          "\\1import { hooks as liveTableHooks } from \"phoenix-colocated/live_table\";\n",
-          global: false
-        )
-
-      String.contains?(content, "phoenix_live_view") ->
-        Regex.replace(
-          ~r/(import\s*\{[^}]*LiveSocket[^}]*\}\s*from\s*"phoenix_live_view";?\n)/,
-          content,
-          "\\1import { hooks as liveTableHooks } from \"phoenix-colocated/live_table\";\n"
-        )
-
-      true ->
-        "import { hooks as liveTableHooks } from \"phoenix-colocated/live_table\";\n" <> content
-    end
-  end
-
-  defp add_live_table_to_hooks(content) do
-    cond do
-      Regex.match?(~r/hooks:\s*\{[^}]*\.\.\./, content) ->
-        Regex.replace(
-          ~r/(hooks:\s*\{)([^}]*)(})/,
-          content,
-          fn _, prefix, existing, suffix ->
-            if String.contains?(existing, "liveTableHooks") do
-              "#{prefix}#{existing}#{suffix}"
-            else
-              "#{prefix}#{existing}, ...liveTableHooks#{suffix}"
-            end
-          end
-        )
-
-      Regex.match?(~r/hooks:\s*\{/, content) ->
-        Regex.replace(
-          ~r/(hooks:\s*\{)(\s*)(})/,
-          content,
-          "\\1 ...liveTableHooks \\3"
-        )
-
-      Regex.match?(~r/hooks:\s*\w+/, content) ->
-        Regex.replace(
-          ~r/(hooks:\s*)(\w+)/,
-          content,
-          "\\1{ ...\\2, ...liveTableHooks }"
-        )
-
-      # No hooks configured - add to LiveSocket options
-      Regex.match?(~r/new\s+LiveSocket\s*\([^)]*\{/, content) ->
-        Regex.replace(
-          ~r/(new\s+LiveSocket\s*\([^,]+,\s*Socket\s*,\s*\{)/,
-          content,
-          "\\1\n    hooks: { ...liveTableHooks },"
-        )
-
-      true ->
-        # Can't auto-configure, user needs to do it manually
-        content
     end
   end
 

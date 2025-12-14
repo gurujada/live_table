@@ -202,9 +202,7 @@ defmodule LiveTable.LiveViewHelpers do
       defp maybe_assign_infinite_scroll(socket, %{
              pagination: %{mode: :infinite_scroll}
            }) do
-        socket
-        |> assign(:infinite_scroll_page, 1)
-        |> assign(:loading_more, false)
+        assign(socket, :infinite_scroll_page, 1)
       end
 
       defp maybe_assign_infinite_scroll(socket, _table_options), do: socket
@@ -363,41 +361,35 @@ defmodule LiveTable.LiveViewHelpers do
       end
 
       def handle_event("load_more", _params, socket) do
-        if socket.assigns[:loading_more] do
-          {:noreply, socket}
-        else
-          socket = assign(socket, :loading_more, true)
-          next_page = socket.assigns.infinite_scroll_page + 1
+        next_page = socket.assigns.infinite_scroll_page + 1
 
-          options =
-            socket.assigns.options
-            |> put_in(["pagination", "page"], to_string(next_page))
+        options =
+          socket.assigns.options
+          |> put_in(["pagination", "page"], to_string(next_page))
 
-          data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
+        data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
 
-          {resources, has_next_page} =
-            case stream_resources(fields(), options, data_provider) do
-              {resources, overflow} ->
-                {resources, length(overflow) > 0}
+        {resources, has_next_page} =
+          case stream_resources(fields(), options, data_provider) do
+            {resources, overflow} ->
+              {resources, length(overflow) > 0}
 
-              resources when is_list(resources) ->
-                {resources, false}
-            end
+            resources when is_list(resources) ->
+              {resources, false}
+          end
 
-          updated_options =
-            put_in(socket.assigns.options["pagination"][:has_next_page], has_next_page)
+        updated_options =
+          put_in(options["pagination"][:has_next_page], has_next_page)
 
-          socket =
-            socket
-            |> stream(:resources, resources,
-              dom_id: fn _resource -> "resource-#{Ecto.UUID.generate()}" end
-            )
-            |> assign(:infinite_scroll_page, next_page)
-            |> assign(:options, updated_options)
-            |> assign(:loading_more, false)
+        socket =
+          socket
+          |> stream(:resources, resources,
+            dom_id: fn _resource -> "resource-#{Ecto.UUID.generate()}" end
+          )
+          |> assign(:infinite_scroll_page, next_page)
+          |> assign(:options, updated_options)
 
-          {:noreply, socket}
-        end
+        {:noreply, socket}
       end
 
       def remove_unused_keys(map) when is_map(map) do

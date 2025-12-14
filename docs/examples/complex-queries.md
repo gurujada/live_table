@@ -374,7 +374,7 @@ defmodule YourAppWeb.InventoryReportLive.Index do
       avg_daily_usage: %{label: "Daily Usage", sortable: true, renderer: &render_usage/1},
       days_of_supply: %{label: "Days Supply", sortable: true, renderer: &render_days_supply/2},
       last_movement: %{label: "Last Movement", sortable: true, renderer: &render_date/1},
-      status: %{label: "Status", sortable: false, renderer: &render_inventory_status/2}
+      status: %{label: "Status", renderer: &render_inventory_status/2}
     ]
   end
 

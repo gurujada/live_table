@@ -34,7 +34,6 @@ mix live_table.install
 
 The installer automatically:
 - Adds LiveTable configuration to `config/config.exs`
-- Adds LiveTable hooks import to `assets/js/app.js`
 - Optionally configures Oban for exports (use `--oban` flag or you'll be prompted)
 
 ### Step 3: Manual Steps
@@ -64,60 +63,8 @@ mix phx.server
 
 That's it! See the [Quick Start Guide](quick-start.html) to create your first table.
 
----
-
-## Colocated Hooks Setup
-
-LiveTable uses Phoenix 1.8+ colocated hooks for JavaScript functionality (sorting, exports).
-The installer automatically configures this, but if you need to set it up manually:
-
-### What the Installer Does
-
-The installer adds this import to your `assets/js/app.js`:
-
-```javascript
-import { hooks as liveTableHooks } from "phoenix-colocated/live_table";
-```
-
-And spreads it into your LiveSocket hooks:
-
-```javascript
-const liveSocket = new LiveSocket("/live", Socket, {
-    params: { _csrf_token: csrfToken },
-    hooks: { ...myAppHooks, ...liveTableHooks },  // liveTableHooks added here
-});
-```
-
-### Deployment Requirement
-
-**Important:** For colocated hooks to work, `mix compile` must run before building assets.
-
-Update your deployment aliases in `mix.exs`:
-
-```elixir
-defp aliases do
-  [
-    # ... other aliases
-    "assets.deploy": [
-      "compile",  # Required: extracts colocated hooks before esbuild
-      "esbuild my_app --minify",
-      "tailwind my_app --minify",
-      "phx.digest"
-    ]
-  ]
-end
-```
-
-Or if using a release task:
-
-```elixir
-release: ["compile", "assets.deploy", "release"]
-```
-
-Without this, you'll see browser console errors like:
-```
-unknown hook found for "LiveTable.SortHelpers.SortableColumn"
-```
+> **Note:** LiveTable uses runtime hooks, so no JavaScript configuration is required. 
+> Hooks are automatically registered when your LiveView renders.
 
 ---
 
@@ -130,8 +77,6 @@ config :live_table,
   repo: YourApp.Repo,
   pubsub: YourApp.PubSub
 ```
-
-And manually add the hooks import to `assets/js/app.js` as shown above.
 
 ---
 
@@ -239,11 +184,13 @@ Visit `/test` - you should see a working table!
 - Field keys must match your schema field names exactly
 - For custom queries, field keys must match your `select` clause keys
 
+See the [Troubleshooting Guide](troubleshooting.html) for more detailed solutions.
+
 ---
 
 ## Next Steps
 
 - [Quick Start](quick-start.html) - Build your first table
-- [Fields API](fields.html) - Field configuration options  
-- [Filters API](filters.html) - Add filtering to your tables
-- [Table Options](table-options.html) - Pagination, exports, debug mode
+- [Fields API](api/fields.html) - Field configuration options  
+- [Filters API](api/filters.html) - Add filtering to your tables
+- [Table Options](api/table-options.html) - Pagination, exports, debug mode
