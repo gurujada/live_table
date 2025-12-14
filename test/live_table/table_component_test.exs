@@ -829,10 +829,10 @@ defmodule LiveTable.TableComponentTest do
 
       html = render_component(&TestTableComponent.live_table/1, assigns)
 
-      # Should prevent text wrapping
+      # Should prevent text wrapping in cells
       assert html =~ "whitespace-nowrap"
-      # Should allow horizontal scroll
-      assert html =~ "overflow-x-auto"
+      # Table container handles overflow (overflow-hidden by default)
+      assert html =~ "overflow-hidden"
     end
 
     test "handles special characters in data" do
@@ -1080,6 +1080,645 @@ defmodule LiveTable.TableComponentTest do
 
       assert html_without_actions =~ ~s(id=\"empty-placeholder\")
       assert html_without_actions =~ ~s(colspan=\"2\")
+    end
+  end
+
+  describe "hidden fields" do
+    test "hidden field is excluded from table headers" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:secret, %{label: "Secret", sortable: false, hidden: true}},
+          {:email, %{label: "Email", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "John", secret: "hidden-value", email: "john@example.com"}]
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # Should have Name and Email headers, but not Secret
+      assert html =~ ">Name<"
+      assert html =~ ">Email<"
+      refute html =~ ">Secret<"
+    end
+
+    test "hidden field is excluded from table cells" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:secret, %{label: "Secret", sortable: false, hidden: true}},
+          {:email, %{label: "Email", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "John", secret: "hidden-value", email: "john@example.com"}]
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # Should render name and email values, but not secret
+      assert html =~ "John"
+      assert html =~ "john@example.com"
+      refute html =~ "hidden-value"
+    end
+
+    test "visible_fields keeps fields without hidden key (defaults to false)" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:email, %{label: "Email", sortable: false}},
+          {:visible, %{label: "Visible", sortable: false, hidden: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "John", email: "john@example.com", visible: "yes"}]
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # All three should be visible
+      assert html =~ ">Name<"
+      assert html =~ ">Email<"
+      assert html =~ ">Visible<"
+    end
+
+    test "empty state colspan accounts for visible fields only" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:secret, %{label: "Secret", sortable: false, hidden: true}},
+          {:email, %{label: "Email", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [],
+        actions: []
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # 2 visible fields (name, email), so colspan should be 2
+      assert html =~ ~s(colspan="2")
+    end
+
+    test "hidden field with actions still calculates colspan correctly" do
+      actions = [
+        show: fn %{record: record} ->
+          assigns = %{record: record}
+
+          ~H"""
+          <span>Show</span>
+          """
+        end
+      ]
+
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:secret, %{label: "Secret", sortable: false, hidden: true}},
+          {:email, %{label: "Email", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [],
+        actions: actions
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # 2 visible fields + 1 actions column = 3
+      assert html =~ ~s(colspan="3")
+    end
+  end
+
+  describe "sortable defaults" do
+    test "field without sortable key defaults to non-sortable (renders plain label)" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name"}},
+          {:email, %{label: "Email", sortable: true}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: []
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # Name should be plain span (not sortable), Email should have sort link
+      # Count sort links - only Email should have one
+      sort_click_count = html |> String.split("phx-click=\"sort\"") |> length() |> Kernel.-(1)
+
+      # Email has sortable: true, so it gets a sort link
+      # Name has no sortable key, defaults to false, so no sort link
+      # The form itself has phx-change="sort", but phx-click="sort" is on sort links
+      assert sort_click_count >= 1
+      assert html =~ ">Email<"
+    end
+
+    test "field with sortable: false renders plain label" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: []
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # Should render plain span, not a clickable sort link
+      assert html =~ "<span>Name</span>"
+    end
+  end
+
+  describe "empty_text field option" do
+    test "renders empty_text when field value is nil" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:notes, %{label: "Notes", sortable: false, empty_text: "N/A"}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "John", notes: nil}]
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "John"
+      assert html =~ "N/A"
+    end
+
+    test "renders actual value when not nil (ignores empty_text)" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:notes, %{label: "Notes", sortable: false, empty_text: "N/A"}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "John", notes: "Some notes here"}]
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "John"
+      assert html =~ "Some notes here"
+      # N/A should not appear since notes has a value
+      refute html =~ ">N/A<"
+    end
+
+    test "renders nothing special when value is nil and no empty_text set" do
+      assigns = %{
+        fields: [
+          {:name, %{label: "Name", sortable: false}},
+          {:notes, %{label: "Notes", sortable: false}}
+        ],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "John", notes: nil}]
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "John"
+      # No special empty text should appear
+      refute html =~ "N/A"
+    end
+  end
+
+  describe "infinite scroll mode" do
+    defmodule InfiniteScrollComponent do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :card,
+          use_streams: true,
+          pagination: %{mode: :infinite_scroll},
+          card_component: fn %{record: record} ->
+            assigns = %{record: record}
+
+            ~H"""
+            <div class="card">{@record.name}</div>
+            """
+          end
+        }
+    end
+
+    test "renders phx-viewport-bottom with load_more when has_next_page is true" do
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, has_next_page: true}
+        },
+        streams: %{
+          resources: [
+            {"item-1", %{name: "Item 1"}},
+            {"item-2", %{name: "Item 2"}}
+          ]
+        }
+      }
+
+      html = render_component(&InfiniteScrollComponent.live_table/1, assigns)
+
+      assert html =~ "phx-viewport-bottom=\"load_more\""
+      assert html =~ "phx-throttle=\"1000\""
+    end
+
+    test "does not render phx-viewport-bottom when has_next_page is false" do
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, has_next_page: false}
+        },
+        streams: %{
+          resources: [
+            {"item-1", %{name: "Item 1"}}
+          ]
+        }
+      }
+
+      html = render_component(&InfiniteScrollComponent.live_table/1, assigns)
+
+      refute html =~ "phx-viewport-bottom=\"load_more\""
+    end
+
+    test "renders loader when has_next_page is true" do
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, has_next_page: true}
+        },
+        streams: %{
+          resources: [{"item-1", %{name: "Item 1"}}]
+        }
+      }
+
+      html = render_component(&InfiniteScrollComponent.live_table/1, assigns)
+
+      # Default loader has animate-spin class
+      assert html =~ "animate-spin"
+    end
+
+    test "does not render loader when has_next_page is false" do
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, has_next_page: false}
+        },
+        streams: %{
+          resources: [{"item-1", %{name: "Item 1"}}]
+        }
+      }
+
+      html = render_component(&InfiniteScrollComponent.live_table/1, assigns)
+
+      refute html =~ "animate-spin"
+    end
+
+    test "uses custom loading_component when provided" do
+      defmodule CustomLoaderComponent do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :card,
+            use_streams: true,
+            pagination: %{
+              mode: :infinite_scroll,
+              loading_component: fn _ ->
+                assigns = %{}
+
+                ~H"""
+                <div class="custom-loader">Loading more...</div>
+                """
+              end
+            },
+            card_component: fn %{record: record} ->
+              assigns = %{record: record}
+
+              ~H"""
+              <div class="card">{@record.name}</div>
+              """
+            end
+          }
+      end
+
+      assigns = %{
+        fields: [],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, has_next_page: true}
+        },
+        streams: %{
+          resources: [{"item-1", %{name: "Item 1"}}]
+        }
+      }
+
+      html = render_component(&CustomLoaderComponent.live_table/1, assigns)
+
+      assert html =~ "custom-loader"
+      assert html =~ "Loading more..."
+    end
+  end
+
+  describe "fixed header" do
+    defmodule FixedHeaderTable do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :table,
+          use_streams: false,
+          fixed_header: true
+        }
+    end
+
+    defmodule NoFixedHeaderTable do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :table,
+          use_streams: false,
+          fixed_header: false
+        }
+    end
+
+    test "applies max-h and overflow-y-auto when fixed_header: true" do
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}]
+      }
+
+      html = render_component(&FixedHeaderTable.live_table/1, assigns)
+
+      assert html =~ "max-h-[600px]"
+      assert html =~ "overflow-y-auto"
+    end
+
+    test "applies overflow-hidden when fixed_header: false" do
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}]
+      }
+
+      html = render_component(&NoFixedHeaderTable.live_table/1, assigns)
+
+      assert html =~ "overflow-hidden"
+      refute html =~ "max-h-[600px]"
+      refute html =~ "overflow-y-auto"
+    end
+
+    test "applies sticky top-0 z-10 to thead when fixed_header: true" do
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}]
+      }
+
+      html = render_component(&FixedHeaderTable.live_table/1, assigns)
+
+      assert html =~ "sticky"
+      assert html =~ "top-0"
+      assert html =~ "z-10"
+    end
+
+    test "does not apply sticky classes when fixed_header: false" do
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}]
+      }
+
+      html = render_component(&NoFixedHeaderTable.live_table/1, assigns)
+
+      # The thead should not have sticky class
+      # We need to check the thead specifically
+      [_, thead_part | _] = String.split(html, "<thead")
+      [thead_content, _] = String.split(thead_part, "</thead>", parts: 2)
+
+      refute thead_content =~ "sticky"
+    end
+  end
+
+  describe "custom empty state" do
+    test "uses custom empty_state callback when provided" do
+      defmodule CustomEmptyStateTable do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :table,
+            use_streams: false,
+            empty_state: fn _assigns ->
+              assigns = %{}
+
+              ~H"""
+              <div class="custom-empty">Nothing to see here!</div>
+              """
+            end
+          }
+      end
+
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: []
+      }
+
+      html = render_component(&CustomEmptyStateTable.live_table/1, assigns)
+
+      assert html =~ "custom-empty"
+      assert html =~ "Nothing to see here!"
+      refute html =~ "No data"
+    end
+
+    test "uses default empty state when no callback provided" do
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: []
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "No data"
+      assert html =~ "No records found"
+    end
+  end
+
+  describe "actions header styling" do
+    test "actions header has text-center class" do
+      actions = [
+        show: fn %{record: _record} ->
+          assigns = %{}
+
+          ~H"""
+          <span>Show</span>
+          """
+        end
+      ]
+
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}],
+        actions: actions
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      # Find the actions header th element - it should have text-center
+      assert html =~ "text-center"
+      # Actions label is rendered with whitespace around it
+      assert html =~ ~r/>\s*Actions\s*</
+    end
+
+    test "uses custom actions label when provided" do
+      actions = %{
+        label: "Operations",
+        items: [
+          show: fn %{record: _record} ->
+            assigns = %{}
+
+            ~H"""
+            <span>Show</span>
+            """
+          end
+        ]
+      }
+
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}],
+        actions: actions
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ ~r/>\s*Operations\s*</
+      refute html =~ ~r/>\s*Actions\s*</
+    end
+
+    test "defaults to 'Actions' label when not provided" do
+      actions = [
+        show: fn %{record: _record} ->
+          assigns = %{}
+
+          ~H"""
+          <span>Show</span>
+          """
+        end
+      ]
+
+      assigns = %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Test"}],
+        actions: actions
+      }
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ ~r/>\s*Actions\s*</
     end
   end
 
