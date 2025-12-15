@@ -348,7 +348,7 @@ defmodule Mix.Tasks.LiveTable.Gen.LiveTest do
           Listing #{schema_humanized}s
           <:actions>
             <.button variant="primary" navigate={~p"/#{table}/new"}>
-              <.icon name="lucide-plus" /> New #{schema_humanized}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> New #{schema_humanized}
             </.button>
           </:actions>
         </.header>

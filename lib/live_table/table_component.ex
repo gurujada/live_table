@@ -8,7 +8,6 @@ defmodule LiveTable.TableComponent do
       import SutraUI.InputGroup
       import SutraUI.Select
       import SutraUI.Empty
-      import SutraUI.Icon
       alias Phoenix.LiveView.JS
 
       def live_table(var!(assigns)) do
@@ -108,7 +107,21 @@ defmodule LiveTable.TableComponent do
                   <label for="table-search" class="sr-only">Search</label>
                   <.input_group>
                     <:prefix type="icon">
-                      <.icon name="lucide-search" class="size-4 text-muted-foreground" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                      </svg>
                     </:prefix>
                     <input
                       type="text"
@@ -155,7 +168,21 @@ defmodule LiveTable.TableComponent do
                   }
                   class="btn btn-outline"
                 >
-                  <.icon name="lucide-list-filter" class="size-4" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="size-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18" /><path d="M7 12h10" /><path d="M10 18h4" />
+                  </svg>
                   <span id="filter-show-text">Show Filters</span>
                   <span id="filter-hide-text" class="hidden">Hide Filters</span>
                 </button>
@@ -280,7 +307,21 @@ defmodule LiveTable.TableComponent do
       defp loader(var!(assigns)) do
         ~H"""
         <div class="flex justify-center py-8">
-          <.icon name="lucide-loader-circle" class="size-6 animate-spin text-muted-foreground" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="size-6 animate-spin text-muted-foreground"
+            aria-hidden="true"
+          >
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
         </div>
         """
       end
@@ -314,7 +355,21 @@ defmodule LiveTable.TableComponent do
         ~H"""
         <.empty>
           <:icon>
-            <.icon name="lucide-folder-open" class="size-12" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="size-12"
+              aria-hidden="true"
+            >
+              <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H14.76a2 2 0 0 1 1.74 1.1L18 14" /><path d="M6 14h12v5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5Z" /><path d="M21 14V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7" />
+            </svg>
           </:icon>
           <:title>No data</:title>
           <:description>
@@ -401,7 +456,22 @@ defmodule LiveTable.TableComponent do
               phx-value-clear_filters="true"
               class="filter-bar-clear"
             >
-              <.icon name="lucide-x" class="size-4" /> Clear Filters
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="size-4"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+              </svg>
+              Clear Filters
             </button>
           </div>
         </div>
@@ -455,12 +525,52 @@ defmodule LiveTable.TableComponent do
         <.dropdown_menu id="export-dropdown">
           <:trigger>
             <span class="flex items-center gap-2">
-              <.icon name="lucide-download" class="size-4" /> Export
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="size-4"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line
+                  x1="12"
+                  x2="12"
+                  y1="15"
+                  y2="3"
+                />
+              </svg>
+              Export
             </span>
           </:trigger>
           <.dropdown_item :for={format <- @formats}>
             <button type="button" phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}>
-              <.icon name="lucide-download" class="size-4" /> Export as {String.upcase(to_string(format))}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="size-4"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line
+                  x1="12"
+                  x2="12"
+                  y1="15"
+                  y2="3"
+                />
+              </svg>
+              Export as {String.upcase(to_string(format))}
             </button>
           </.dropdown_item>
         </.dropdown_menu>

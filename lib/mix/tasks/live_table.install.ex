@@ -73,7 +73,7 @@ defmodule Mix.Tasks.LiveTable.Install do
       false ->
         config_content = """
         config :live_table,
-          app: :#{inspect(app_atom)},
+          app: #{inspect(app_atom)},
           repo: #{inspect(repo_module)},
           pubsub: #{inspect(pubsub_module)}
         """
