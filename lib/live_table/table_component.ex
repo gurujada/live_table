@@ -155,7 +155,7 @@ defmodule LiveTable.TableComponent do
                   }
                   class="btn btn-outline"
                 >
-                  <.icon name="lucide-filter" class="size-4" />
+                  <.icon name="lucide-list-filter" class="size-4" />
                   <span id="filter-show-text">Show Filters</span>
                   <span id="filter-hide-text" class="hidden">Hide Filters</span>
                 </button>
@@ -280,7 +280,7 @@ defmodule LiveTable.TableComponent do
       defp loader(var!(assigns)) do
         ~H"""
         <div class="flex justify-center py-8">
-          <.icon name="lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
+          <.icon name="lucide-loader-circle" class="size-6 animate-spin text-muted-foreground" />
         </div>
         """
       end
@@ -458,13 +458,11 @@ defmodule LiveTable.TableComponent do
               <.icon name="lucide-download" class="size-4" /> Export
             </span>
           </:trigger>
-          <:item
-            :for={format <- @formats}
-            icon="lucide-download"
-            on_click={if(format == :csv, do: "export-csv", else: "export-pdf")}
-          >
-            Export as {String.upcase(to_string(format))}
-          </:item>
+          <.dropdown_item :for={format <- @formats}>
+            <button type="button" phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}>
+              <.icon name="lucide-download" class="size-4" /> Export as {String.upcase(to_string(format))}
+            </button>
+          </.dropdown_item>
         </.dropdown_menu>
         """
       end
