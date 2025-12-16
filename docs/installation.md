@@ -17,7 +17,7 @@ This guide walks you through setting up LiveTable in your Phoenix application.
 # mix.exs
 def deps do
   [
-    {:live_table, "~> 0.3.1"}
+    {:live_table, "~> 0.4.0"}
   ]
 end
 ```

@@ -7,7 +7,7 @@
 
 ```elixir
 # mix.exs
-{:live_table, "~> 0.3.1"}
+{:live_table, "~> 0.4.0"}
 ```
 
 ```bash

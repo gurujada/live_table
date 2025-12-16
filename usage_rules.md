@@ -57,7 +57,7 @@ end
 **NEVER** generate LiveTable code without the core dependency:
 ```elixir
 # REQUIRED in mix.exs
-{:live_table, "~> 0.3.1"}
+{:live_table, "~> 0.4.0"}
 # Add {:oban, "~> 2.19"} only if using export functionality
 ```
 
@@ -68,7 +68,7 @@ When implementing with LiveTable, ALWAYS ensure:
 ### 1. Dependencies
 ```elixir
 # In mix.exs deps function
-{:live_table, "~> 0.3.1"}
+{:live_table, "~> 0.4.0"}
 # Add {:oban, "~> 2.19"} only if using exports
 ```
 
@@ -278,7 +278,7 @@ When helping with LiveTable implementation:
 - `streams={@streams}`
 
 ### Must-Have Dependencies
-- `{:live_table, "~> 0.3.1"}` (always required)
+- `{:live_table, "~> 0.4.0"}` (always required)
 - `{:oban, "~> 2.19"}` (only if using exports)
 
 ### Must-Have Config

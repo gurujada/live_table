@@ -549,7 +549,11 @@ defmodule LiveTable.TableComponent do
             </span>
           </:trigger>
           <.dropdown_item :for={format <- @formats}>
-            <button type="button" phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}>
+            <button
+              type="button"
+              class="flex items-center gap-2"
+              phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"

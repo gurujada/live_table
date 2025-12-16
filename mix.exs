@@ -1,7 +1,7 @@
 defmodule LiveTable.MixProject do
   use Mix.Project
 
-  @version "0.3.1"
+  @version "0.4.0"
   @source_url "https://github.com/gurujada/live_table"
 
   def project do
@@ -52,7 +52,7 @@ defmodule LiveTable.MixProject do
         "GitHub" => @source_url,
         "Docs" => "https://hexdocs.pm/live_table"
       },
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE)
+      files: ~w(lib cheatsheets .formatter.exs mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
 
