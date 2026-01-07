@@ -19,7 +19,8 @@ defmodule LiveTable.TableConfig do
     search: %{
       debounce: 300,
       enabled: true,
-      placeholder: "Search..."
+      placeholder: "Search...",
+      mode: :ilike # :ilike (PostgreSQL), :like (case-sensitive), :like_lower (SQLite compatible)
     },
     mode: :table,
     use_streams: true,
@@ -37,8 +38,18 @@ defmodule LiveTable.TableConfig do
   def get_table_options(table_options) do
     app_defaults = Application.get_env(:live_table, :defaults, %{})
 
-    @default_options
+    base = @default_options
     |> deep_merge(app_defaults)
     |> deep_merge(table_options)
+
+    # allow app-level search_mode config
+    app_search_mode = Application.get_env(:live_table, :search_mode)
+
+    # apply app-level search_mode if not overridden in table_options
+    if app_search_mode && !get_in(table_options, [:search, :mode]) do
+      put_in(base, [:search, :mode], app_search_mode)
+    else
+      base
+    end
   end
 end
