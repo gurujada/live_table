@@ -187,13 +187,13 @@ defmodule LiveTable.TestResource do
   """
   def list_resources(fields_list, options, data_source \\ Product)
 
-  def list_resources(fields_list, options, {module, function, args} = _data_provider)
-      when is_atom(function) do
+  def list_resources(fields_list, options, {module, function, args} = _data_provider) when is_atom(function) do
     {regular_filters, transformers, _debug_mode} = prepare_query_context(options)
+    search_mode = get_in(TableConfig.get_table_options(table_options()), [:search, :mode]) || :ilike
 
     apply(module, function, args)
     |> join_associations(regular_filters)
-    |> apply_filters(regular_filters, fields_list)
+    |> apply_filters(regular_filters, fields_list, search_mode: search_mode)
     |> maybe_sort(fields_list, options["sort"]["sort_params"], options["sort"]["sortable?"])
     |> apply_transformers(transformers)
     |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
@@ -201,6 +201,7 @@ defmodule LiveTable.TestResource do
 
   def list_resources(fields_list, options, schema) do
     {regular_filters, transformers, _debug_mode} = prepare_query_context(options)
+    search_mode = get_in(TableConfig.get_table_options(table_options()), [:search, :mode]) || :ilike
 
     # For joined fields, we need to join associations from both filters AND fields
     field_assocs = get_field_assocs(fields_list)
@@ -220,7 +221,7 @@ defmodule LiveTable.TestResource do
 
     query_with_joins
     |> select_columns_with_assocs(fields_list)
-    |> apply_filters(regular_filters, fields_list)
+    |> apply_filters(regular_filters, fields_list, search_mode: search_mode)
     |> maybe_sort(fields_list, options["sort"]["sort_params"], options["sort"]["sortable?"])
     |> apply_transformers(transformers)
     |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
