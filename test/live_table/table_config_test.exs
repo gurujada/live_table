@@ -141,6 +141,7 @@ defmodule LiveTable.TableConfigTest do
       assert result.pagination.mode == :buttons
       assert result.pagination.sizes == [10, 25, 50]
       assert result.pagination.default_size == 10
+      assert result.pagination.max_per_page == 50
 
       assert result.sorting.enabled == true
       assert result.sorting.default_sort == [id: :asc]
@@ -284,6 +285,21 @@ defmodule LiveTable.TableConfigTest do
       assert result.custom_content == {MyModule, :render_content}
     end
 
+    test "handles max_per_page option" do
+      user_options = %{
+        pagination: %{
+          max_per_page: 100
+        }
+      }
+
+      result = TableConfig.get_table_options(user_options)
+
+      assert result.pagination.max_per_page == 100
+      # Defaults preserved
+      assert result.pagination.enabled == true
+      assert result.pagination.default_size == 10
+    end
+
     test "handles custom_footer option" do
       user_options = %{
         custom_footer: {MyModule, :render_footer}
@@ -386,7 +402,8 @@ defmodule LiveTable.TableConfigTest do
         pagination: %{
           enabled: true,
           default_size: 20,
-          sizes: [10, 20, 50]
+          sizes: [10, 20, 50],
+          max_per_page: 50
         },
         sorting: %{
           default_sort: [inserted_at: :desc]
@@ -405,6 +422,7 @@ defmodule LiveTable.TableConfigTest do
       # Verify all user options applied
       assert result.pagination.default_size == 20
       assert result.pagination.sizes == [10, 20, 50]
+      assert result.pagination.max_per_page == 50
       assert result.sorting.default_sort == [inserted_at: :desc]
       assert result.search.placeholder == "Search users..."
       assert result.exports.formats == [:csv]

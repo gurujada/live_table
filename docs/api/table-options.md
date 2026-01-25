@@ -67,7 +67,8 @@ pagination: %{
   enabled: true,              # Enable/disable pagination
   mode: :buttons,             # :buttons (default) or :infinite_scroll
   sizes: [10, 25, 50],       # Available page size options
-  default_size: 25           # Default page size
+  default_size: 25,          # Default page size
+  max_per_page: 50           # Maximum allowed records per page
 }
 ```
 
@@ -76,6 +77,7 @@ pagination: %{
 - `mode` (atom) - `:buttons` for traditional pagination, `:infinite_scroll` for infinite scroll (card mode only)
 - `sizes` (list) - Available page size options (recommended max: 50)
 - `default_size` (integer) - Default number of records per page
+- `max_per_page` (integer) - Maximum allowed records per page. If a user requests more than this (e.g., via URL manipulation), the value is capped to this limit. Defaults to 50
 
 **Examples:**
 
@@ -102,7 +104,8 @@ pagination: %{
 pagination: %{
   enabled: true,
   sizes: [10, 20],
-  default_size: 10
+  default_size: 10,
+  max_per_page: 20  # Prevent fetching too many records
 }
 ```
 
