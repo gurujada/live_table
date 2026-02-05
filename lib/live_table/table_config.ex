@@ -91,22 +91,12 @@ defmodule LiveTable.TableConfig do
   defp repo_adapter(repo), do: repo.__adapter__()
 
   defp adapter_to_mode(Ecto.Adapters.Postgres), do: :ilike
-  defp adapter_to_mode(Ecto.Adapters.SQLite3), do: :like_lower
-  defp adapter_to_mode(Ecto.Adapters.MyXQL), do: :like_lower
-  defp adapter_to_mode(Ecto.Adapters.Tds), do: :like_lower
   defp adapter_to_mode(_), do: :like_lower
 
   defp db_to_mode(db) do
     case normalize_db(db) do
       "postgres" -> :ilike
       "postgresql" -> :ilike
-      "sqlite" -> :like_lower
-      "sqlite3" -> :like_lower
-      "mysql" -> :like_lower
-      "mariadb" -> :like_lower
-      "maria" -> :like_lower
-      "mssql" -> :like_lower
-      "sqlserver" -> :like_lower
       _ -> :like_lower
     end
   end
