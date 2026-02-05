@@ -21,8 +21,8 @@ defmodule LiveTable.TableConfig do
       debounce: 300,
       enabled: true,
       placeholder: "Search...",
-      # :auto uses the repo adapter to pick a safe default
-      # :ilike (PostgreSQL), :like (case-sensitive), :like_lower (SQLite compatible)
+      # :auto uses the repo adapter to pick a default
+      # :ilike (default), :like (case-sensitive), :like_lower (SQLite compatible)
       mode: :auto
     },
     mode: :table,
@@ -90,14 +90,14 @@ defmodule LiveTable.TableConfig do
   defp repo_adapter(nil), do: nil
   defp repo_adapter(repo), do: repo.__adapter__()
 
-  defp adapter_to_mode(Ecto.Adapters.Postgres), do: :ilike
-  defp adapter_to_mode(_), do: :like_lower
+  defp adapter_to_mode(Ecto.Adapters.SQLite3), do: :like_lower
+  defp adapter_to_mode(_), do: :ilike
 
   defp db_to_mode(db) do
     case normalize_db(db) do
-      "postgres" -> :ilike
-      "postgresql" -> :ilike
-      _ -> :like_lower
+      "sqlite" -> :like_lower
+      "sqlite3" -> :like_lower
+      _ -> :ilike
     end
   end
 
