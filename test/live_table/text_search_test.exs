@@ -23,6 +23,28 @@ defmodule LiveTable.FilterTest do
       assert inspect(conditions) =~ "ilike(p.description, ^\"%search term%\")"
     end
 
+    test "supports case-sensitive like mode" do
+      fields = [
+        name: %{searchable: true}
+      ]
+
+      conditions = Filter.apply_text_search("Search Term", fields, search_mode: :like)
+
+      assert inspect(conditions) =~ "like(p.name, ^\"%Search Term%\")"
+    end
+
+    test "supports lower-like mode for case-insensitive search" do
+      fields = [
+        name: %{searchable: true}
+      ]
+
+      conditions = Filter.apply_text_search("Search Term", fields, search_mode: :like_lower)
+      inspected = inspect(conditions)
+
+      assert inspected =~ "lower(?) LIKE ?"
+      assert inspected =~ "%search term%"
+    end
+
     test "applies text search to joined query" do
       query =
         from p0 in Product,

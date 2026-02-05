@@ -171,7 +171,10 @@ Configure the global search behavior:
 search: %{
   enabled: true,                   # Enable/disable search
   debounce: 300,                  # Debounce time in milliseconds
-  placeholder: "Search..."        # Search input placeholder text
+  placeholder: "Search...",       # Search input placeholder text
+  mode: :auto,                    # :auto, :ilike, :like, :like_lower
+  # db: :postgres                 # Optional: :postgres, :sqlite, :mysql, :mssql, etc.
+  # adapter: Ecto.Adapters.SQLite3 # Optional: explicit adapter override
 }
 ```
 
@@ -179,6 +182,9 @@ search: %{
 - `enabled` (boolean) - Enable or disable global search
 - `debounce` (integer) - Delay before search executes (milliseconds)
 - `placeholder` (string) - Search input placeholder text
+- `mode` (atom) - Search mode (`:auto` uses adapter defaults, `:ilike` Postgres, `:like` case-sensitive, `:like_lower` case-insensitive via `lower(field) LIKE`)
+- `db` (atom|string) - Optional database hint used when `mode: :auto`
+- `adapter` (module) - Optional adapter override used when `mode: :auto`
 
 ### View Mode Options
 
@@ -789,7 +795,10 @@ Configure the global search behavior:
 search: %{
   enabled: true,                   # Enable/disable search
   debounce: 300,                  # Debounce time in milliseconds
-  placeholder: "Search..."        # Search input placeholder text
+  placeholder: "Search...",       # Search input placeholder text
+  mode: :auto,                    # :auto, :ilike, :like, :like_lower
+  # db: :postgres                 # Optional: :postgres, :sqlite, :mysql, :mssql, etc.
+  # adapter: Ecto.Adapters.SQLite3 # Optional: explicit adapter override
 }
 ```
 
@@ -797,6 +806,9 @@ search: %{
 - `enabled` (boolean) - Enable or disable global search
 - `debounce` (integer) - Delay before search executes (milliseconds)
 - `placeholder` (string) - Search input placeholder text
+- `mode` (atom) - Search mode (`:auto` uses adapter defaults, `:ilike` Postgres, `:like` case-sensitive, `:like_lower` case-insensitive via `lower(field) LIKE`)
+- `db` (atom|string) - Optional database hint used when `mode: :auto`
+- `adapter` (module) - Optional adapter override used when `mode: :auto`
 
 ### View Mode Options
 

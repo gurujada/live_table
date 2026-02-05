@@ -49,7 +49,7 @@ defmodule LiveTable.Filter do
     dynamic([p], fragment("lower(?) LIKE ?", field(p, ^field), ^pattern))
   end
 
-    # Build search condition for associated table fields
+  # Build search condition for associated table fields
   defp build_assoc_condition(table_name, field, search_term, :ilike) do
     pattern = "%#{search_term}%"
     dynamic([{^table_name, p}], ilike(field(p, ^field), ^pattern))
@@ -85,7 +85,8 @@ defmodule LiveTable.Filter do
   def apply_filters(query, filters, fields, opts \\ [])
 
   # Skip filtering if only an empty search parameter is present
-  def apply_filters(query, %{"search" => ""} = filters, _, _opts) when map_size(filters) == 1, do: query
+  def apply_filters(query, %{"search" => ""} = filters, _, _opts) when map_size(filters) == 1,
+    do: query
 
   # Applies both text search and custom filters to the query
   # Combines all conditions with AND operations

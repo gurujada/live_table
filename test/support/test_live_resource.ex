@@ -187,9 +187,10 @@ defmodule LiveTable.TestResource do
   """
   def list_resources(fields_list, options, data_source \\ Product)
 
-  def list_resources(fields_list, options, {module, function, args} = _data_provider) when is_atom(function) do
+  def list_resources(fields_list, options, {module, function, args} = _data_provider)
+      when is_atom(function) do
     {regular_filters, transformers, _debug_mode} = prepare_query_context(options)
-    search_mode = get_in(TableConfig.get_table_options(table_options()), [:search, :mode]) || :ilike
+    search_mode = TableConfig.get_search_mode(table_options())
 
     apply(module, function, args)
     |> join_associations(regular_filters)
@@ -201,7 +202,7 @@ defmodule LiveTable.TestResource do
 
   def list_resources(fields_list, options, schema) do
     {regular_filters, transformers, _debug_mode} = prepare_query_context(options)
-    search_mode = get_in(TableConfig.get_table_options(table_options()), [:search, :mode]) || :ilike
+    search_mode = TableConfig.get_search_mode(table_options())
 
     # For joined fields, we need to join associations from both filters AND fields
     field_assocs = get_field_assocs(fields_list)

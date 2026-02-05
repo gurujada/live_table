@@ -241,7 +241,10 @@ Configure global search behavior.
 search: %{
   enabled: true,                    # Enable/disable search
   debounce: 300,                   # Debounce time in milliseconds
-  placeholder: "Search records..."  # Search input placeholder
+  placeholder: "Search records...", # Search input placeholder
+  mode: :auto,                     # :auto, :ilike, :like, :like_lower
+  # db: :postgres                  # Optional: :postgres, :sqlite, :mysql, :mssql, etc.
+  # adapter: Ecto.Adapters.SQLite3 # Optional: explicit adapter override
 }
 ```
 
@@ -249,6 +252,9 @@ search: %{
 - `enabled` (boolean) - Enable or disable global text search
 - `debounce` (integer) - Delay before search executes (milliseconds)
 - `placeholder` (string) - Placeholder text for search input
+- `mode` (atom) - Search mode (`:auto` uses adapter defaults, `:ilike` Postgres, `:like` case-sensitive, `:like_lower` case-insensitive via `lower(field) LIKE`)
+- `db` (atom|string) - Optional database hint used when `mode: :auto`
+- `adapter` (module) - Optional adapter override used when `mode: :auto`
 
 **Examples:**
 
@@ -269,6 +275,12 @@ search: %{
 
 # Disable search
 search: %{enabled: false}
+
+# SQLite case-insensitive search
+search: %{mode: :auto, db: :sqlite}
+
+# Force case-sensitive search everywhere
+search: %{mode: :like}
 ```
 
 ### Display Mode Options

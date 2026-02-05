@@ -40,7 +40,8 @@ defmodule LiveTable.LiveResource do
 
       defoverridable fields: 0, filters: 0, table_options: 0, actions: 0
 
-      def list_resources(fields, options, {module, function, args} = _data_provider) when is_atom(function) do
+      def list_resources(fields, options, {module, function, args} = _data_provider)
+          when is_atom(function) do
         {regular_filters, transformers, debug_mode} = prepare_query_context(options)
         search_mode = get_search_mode()
 
@@ -69,9 +70,7 @@ defmodule LiveTable.LiveResource do
       end
 
       defp get_search_mode do
-        get_merged_table_options()
-        |> get_in([:search, :mode])
-        |> Kernel.||(:ilike)
+        TableConfig.get_search_mode(table_options(), @repo)
       end
 
       def stream_resources(
