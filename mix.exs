@@ -37,7 +37,7 @@ defmodule LiveTable.MixProject do
       {:oban, "~> 2.20"},
       {:oban_web, "~> 2.11"},
       {:postgrex, ">= 0.0.0"},
-      {:igniter, "~> 0.7.0"},
+      {:igniter, "~> 0.7.0", optional: true},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.13"},
       {:sutra_ui, "~> 0.1.0"}

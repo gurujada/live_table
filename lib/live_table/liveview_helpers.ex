@@ -226,12 +226,14 @@ defmodule LiveTable.LiveViewHelpers do
         do: get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
 
       defp validate_per_page(n) when is_binary(n) do
+        max_per_page = get_in(unquote(opts[:table_options]), [:pagination, :max_per_page])
+
         try do
           num = String.to_integer(n)
 
           cond do
-            num > 0 and num <= 50 -> n
-            true -> "50"
+            num > 0 and num <= max_per_page -> n
+            true -> max_per_page |> to_string()
           end
         rescue
           ArgumentError ->

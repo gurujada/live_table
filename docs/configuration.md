@@ -32,7 +32,8 @@ config :live_table,
     search: %{
       enabled: true,
       debounce: 300,
-      placeholder: "Search..."
+      placeholder: "Search...",
+      mode: :auto
     },
     mode: :table,
     use_streams: true
@@ -83,13 +84,17 @@ Control how pagination behaves in your tables:
 ```elixir
 pagination: %{
   enabled: true,           # Enable/disable pagination
-  sizes: [10, 25, 50]     # Available page size options
+  sizes: [10, 25, 50],     # Available page size options
+  default_size: 10,        # Default page size
+  max_per_page: 50         # Maximum allowed records per page
 }
 ```
 
 **Options:**
 - `enabled` (boolean) - Enable or disable pagination entirely
 - `sizes` (list) - Available page size options
+- `default_size` (integer) - Default number of records per page
+- `max_per_page` (integer) - Maximum allowed records per page (caps user requests)
 
 **Examples:**
 
@@ -97,10 +102,11 @@ pagination: %{
 # Disable pagination (show all records)
 pagination: %{enabled: false}
 
-# Custom page sizes
+# Custom page sizes with max limit
 pagination: %{
   enabled: true,
-  sizes: [5, 15, 30]
+  sizes: [5, 15, 30],
+  max_per_page: 30
 }
 ```
 
@@ -642,7 +648,9 @@ config :live_table,
   defaults: %{
     pagination: %{
       enabled: true,
-      sizes: [10, 25, 50]
+      sizes: [10, 25, 50],
+      default_size: 10,
+      max_per_page: 50
     },
     sorting: %{
       enabled: true,
@@ -1191,34 +1199,4 @@ defmodule YourAppWeb.ProductLive.Index do
     }
   end
 end
-```
-
-## Complete Configuration Reference
-
-Based on the actual table configuration, here are all available options:
-
-```elixir
-# All available configuration options
-config :live_table,
-  defaults: %{
-    pagination: %{
-      enabled: true,
-      sizes: [10, 25, 50]
-    },
-    sorting: %{
-      enabled: true,
-      default_sort: [id: :asc]
-    },
-    exports: %{
-      enabled: true,
-      formats: [:csv, :pdf]
-    },
-    search: %{
-      enabled: true,
-      debounce: 300,
-      placeholder: "Search..."
-    },
-    mode: :table,
-    use_streams: true
-  }
 ```

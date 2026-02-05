@@ -6,7 +6,8 @@ defmodule LiveTable.TableConfig do
       enabled: true,
       mode: :buttons,
       sizes: [10, 25, 50],
-      default_size: 10
+      default_size: 10,
+      max_per_page: 50
     },
     sorting: %{
       enabled: true,
