@@ -37,7 +37,7 @@ price: %{label: "Price", sortable: true}
 ```
 
 #### `searchable` (boolean)
-Whether the column is included in global text search using the configured search mode (defaults to `:auto`, which uses `:ilike` except for SQLite where it uses `:like_lower`).
+Whether the column is included in global text search. The search mode is auto-detected from your database adapter (`:ilike` for PostgreSQL, `:like_lower` for all others), or can be set explicitly via `search: %{mode: :like_lower}` in `table_options`.
 
 ```elixir
 name: %{label: "Name", searchable: true}

@@ -2,19 +2,19 @@ defmodule LiveTable.Filter do
   @moduledoc false
   import Ecto.Query
 
-  def apply_text_search(search_term, fields, opts \\ [])
+  @doc """
+  Builds a dynamic query for text search across multiple fields.
+  Supports different search modes:
+    - :ilike - PostgreSQL case-insensitive (uses native ILIKE operator)
+    - :like_lower - Universal case-insensitive (uses lower() function, works on any DB)
+  """
+  def apply_text_search(search_term, fields, search_mode \\ :ilike)
 
   # Returns true for empty search terms to avoid unnecessary filtering
-  def apply_text_search("", _, _opts) do
-    true
-  end
+  def apply_text_search("", _, _), do: true
 
-  # Builds a dynamic query for text search across multiple fields
-  # Handles both direct table fields and associated table fields
-  # Supports different search modes: :ilike (PostgreSQL), :like (case-sensitive), :like_lower (SQLite)
-  def apply_text_search(search_term, fields, opts) do
+  def apply_text_search(search_term, fields, search_mode) do
     searchable_fields = get_searchable_fields(fields)
-    search_mode = Keyword.get(opts, :search_mode, :ilike)
 
     Enum.reduce(searchable_fields, nil, fn
       field, nil when is_atom(field) ->
@@ -39,11 +39,6 @@ defmodule LiveTable.Filter do
     dynamic([p], ilike(field(p, ^field), ^pattern))
   end
 
-  defp build_field_condition(field, search_term, :like) do
-    pattern = "%#{search_term}%"
-    dynamic([p], like(field(p, ^field), ^pattern))
-  end
-
   defp build_field_condition(field, search_term, :like_lower) do
     pattern = "%#{String.downcase(search_term)}%"
     dynamic([p], fragment("lower(?) LIKE ?", field(p, ^field), ^pattern))
@@ -53,11 +48,6 @@ defmodule LiveTable.Filter do
   defp build_assoc_condition(table_name, field, search_term, :ilike) do
     pattern = "%#{search_term}%"
     dynamic([{^table_name, p}], ilike(field(p, ^field), ^pattern))
-  end
-
-  defp build_assoc_condition(table_name, field, search_term, :like) do
-    pattern = "%#{search_term}%"
-    dynamic([{^table_name, p}], like(field(p, ^field), ^pattern))
   end
 
   defp build_assoc_condition(table_name, field, search_term, :like_lower) do
@@ -81,21 +71,23 @@ defmodule LiveTable.Filter do
     end)
   end
 
-  # Function head declares the default parameter for opts
-  def apply_filters(query, filters, fields, opts \\ [])
+  @doc """
+  Applies filters to a query. The search_mode determines how text search works.
+  """
+  def apply_filters(query, filters, fields, search_mode \\ :ilike)
 
   # Skip filtering if only an empty search parameter is present
-  def apply_filters(query, %{"search" => ""} = filters, _, _opts) when map_size(filters) == 1,
+  def apply_filters(query, %{"search" => ""} = filters, _, _) when map_size(filters) == 1,
     do: query
 
   # Applies both text search and custom filters to the query
   # Combines all conditions with AND operations
-  def apply_filters(query, filters, fields, opts) do
+  def apply_filters(query, filters, fields, search_mode) do
     conditions =
       filters
       |> Enum.reduce(true, fn
         {"search", search_term}, acc ->
-          text_search_condition = apply_text_search(search_term, fields, opts)
+          text_search_condition = apply_text_search(search_term, fields, search_mode)
           dynamic(^acc and ^text_search_condition)
 
         {_filter_key, filter}, acc ->

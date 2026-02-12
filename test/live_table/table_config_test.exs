@@ -437,25 +437,25 @@ defmodule LiveTable.TableConfigTest do
   end
 
   describe "get_search_mode/2" do
-    test "defaults to adapter-based mode when set to auto" do
+    test "auto-detects :ilike for PostgreSQL adapter" do
       assert TableConfig.get_search_mode(%{}, LiveTable.Repo) == :ilike
     end
 
-    test "uses explicit mode from table options" do
-      assert TableConfig.get_search_mode(%{search: %{mode: :like}}, LiveTable.Repo) == :like
+    test "auto-detects :ilike when mode is explicitly :auto" do
+      assert TableConfig.get_search_mode(%{search: %{mode: :auto}}, LiveTable.Repo) == :ilike
     end
 
-    test "uses db setting when mode is auto" do
-      assert TableConfig.get_search_mode(%{search: %{mode: :auto, db: :sqlite}}, LiveTable.Repo) ==
+    test "uses explicit :ilike mode" do
+      assert TableConfig.get_search_mode(%{search: %{mode: :ilike}}, LiveTable.Repo) == :ilike
+    end
+
+    test "uses explicit :like_lower mode" do
+      assert TableConfig.get_search_mode(%{search: %{mode: :like_lower}}, LiveTable.Repo) ==
                :like_lower
     end
 
-    test "uses adapter setting when mode is auto" do
-      assert TableConfig.get_search_mode(
-               %{search: %{adapter: Ecto.Adapters.SQLite3}},
-               LiveTable.Repo
-             ) ==
-               :like_lower
+    test "defaults to :ilike when no search config present" do
+      assert TableConfig.get_search_mode(%{}) == :ilike
     end
   end
 end

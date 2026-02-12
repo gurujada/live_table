@@ -74,6 +74,9 @@ defmodule LiveTable.Select do
       end
     ```
 
+    > **Note:** The `ilike` function is PostgreSQL-specific. For SQLite or other databases,
+    > use `like` with `lower()` instead: `where([c], like(lower(c.name), ^"%\#{String.downcase(text)}%"))`.
+
     You could write your function to have other args passed to it as well. Just make sure the first arg is the text.
 
   ## Return Format Contract

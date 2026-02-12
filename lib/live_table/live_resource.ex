@@ -47,7 +47,7 @@ defmodule LiveTable.LiveResource do
 
         apply(module, function, args)
         |> join_associations(regular_filters)
-        |> apply_filters(regular_filters, fields, search_mode: search_mode)
+        |> apply_filters(regular_filters, fields, search_mode)
         |> maybe_sort(fields, options["sort"]["sort_params"], options["sort"]["sortable?"])
         |> apply_transformers(transformers)
         |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
@@ -62,7 +62,7 @@ defmodule LiveTable.LiveResource do
         |> from(as: :resource)
         |> join_associations(regular_filters)
         |> select_columns(fields)
-        |> apply_filters(regular_filters, fields, search_mode: search_mode)
+        |> apply_filters(regular_filters, fields, search_mode)
         |> maybe_sort(fields, options["sort"]["sort_params"], options["sort"]["sortable?"])
         |> apply_transformers(transformers)
         |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])

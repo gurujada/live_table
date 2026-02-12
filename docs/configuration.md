@@ -178,9 +178,7 @@ search: %{
   enabled: true,                   # Enable/disable search
   debounce: 300,                  # Debounce time in milliseconds
   placeholder: "Search...",       # Search input placeholder text
-  mode: :auto,                    # :auto (default), :ilike, :like, :like_lower
-  # db: :sqlite                   # Optional: db hint for :auto (SQLite -> :like_lower; others -> :ilike)
-  # adapter: Ecto.Adapters.SQLite3 # Optional: adapter override for :auto
+  mode: :auto                     # :auto (default), :ilike, :like_lower
 }
 ```
 
@@ -188,9 +186,10 @@ search: %{
 - `enabled` (boolean) - Enable or disable global search
 - `debounce` (integer) - Delay before search executes (milliseconds)
 - `placeholder` (string) - Search input placeholder text
-- `mode` (atom) - Search mode (`:auto` uses adapter/db hints; defaults to `:ilike`, uses `:like_lower` for SQLite)
-- `db` (atom|string) - Optional database hint for `mode: :auto` (for example, `:sqlite`)
-- `adapter` (module) - Optional adapter override for `mode: :auto`
+- `mode` (atom) - Search mode:
+  - `:auto` (default) - Automatically detects database adapter and chooses the best mode
+  - `:ilike` - Uses PostgreSQL's native ILIKE operator (fastest on PG)
+  - `:like_lower` - Uses portable lower() function (works on all databases including SQLite, MySQL, etc.)
 
 ### View Mode Options
 

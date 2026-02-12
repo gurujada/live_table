@@ -194,7 +194,7 @@ defmodule LiveTable.TestResource do
 
     apply(module, function, args)
     |> join_associations(regular_filters)
-    |> apply_filters(regular_filters, fields_list, search_mode: search_mode)
+    |> apply_filters(regular_filters, fields_list, search_mode)
     |> maybe_sort(fields_list, options["sort"]["sort_params"], options["sort"]["sortable?"])
     |> apply_transformers(transformers)
     |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
@@ -222,7 +222,7 @@ defmodule LiveTable.TestResource do
 
     query_with_joins
     |> select_columns_with_assocs(fields_list)
-    |> apply_filters(regular_filters, fields_list, search_mode: search_mode)
+    |> apply_filters(regular_filters, fields_list, search_mode)
     |> maybe_sort(fields_list, options["sort"]["sort_params"], options["sort"]["sortable?"])
     |> apply_transformers(transformers)
     |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
