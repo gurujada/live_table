@@ -152,6 +152,7 @@ defmodule LiveTable.TableConfigTest do
       assert result.search.enabled == true
       assert result.search.debounce == 300
       assert result.search.placeholder == "Search..."
+      assert result.search.mode == :auto
 
       assert result.mode == :table
       assert result.use_streams == true
@@ -432,6 +433,29 @@ defmodule LiveTable.TableConfigTest do
       assert result.sorting.enabled == true
       assert result.search.debounce == 300
       assert result.mode == :table
+    end
+  end
+
+  describe "get_search_mode/2" do
+    test "defaults to adapter-based mode when set to auto" do
+      assert TableConfig.get_search_mode(%{}, LiveTable.Repo) == :ilike
+    end
+
+    test "uses explicit mode from table options" do
+      assert TableConfig.get_search_mode(%{search: %{mode: :like}}, LiveTable.Repo) == :like
+    end
+
+    test "uses db setting when mode is auto" do
+      assert TableConfig.get_search_mode(%{search: %{mode: :auto, db: :sqlite}}, LiveTable.Repo) ==
+               :like_lower
+    end
+
+    test "uses adapter setting when mode is auto" do
+      assert TableConfig.get_search_mode(
+               %{search: %{adapter: Ecto.Adapters.SQLite3}},
+               LiveTable.Repo
+             ) ==
+               :like_lower
     end
   end
 end

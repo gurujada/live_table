@@ -37,7 +37,7 @@ price: %{label: "Price", sortable: true}
 ```
 
 #### `searchable` (boolean)
-Whether the column is included in global text search using ILIKE matching.
+Whether the column is included in global text search using the configured search mode (defaults to `:auto`, which uses `:ilike` except for SQLite where it uses `:like_lower`).
 
 ```elixir
 name: %{label: "Name", searchable: true}

@@ -43,10 +43,11 @@ defmodule LiveTable.LiveResource do
       def list_resources(fields, options, {module, function, args} = _data_provider)
           when is_atom(function) do
         {regular_filters, transformers, debug_mode} = prepare_query_context(options)
+        search_mode = get_search_mode()
 
         apply(module, function, args)
         |> join_associations(regular_filters)
-        |> apply_filters(regular_filters, fields)
+        |> apply_filters(regular_filters, fields, search_mode: search_mode)
         |> maybe_sort(fields, options["sort"]["sort_params"], options["sort"]["sortable?"])
         |> apply_transformers(transformers)
         |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
@@ -55,16 +56,21 @@ defmodule LiveTable.LiveResource do
 
       def list_resources(fields, options, schema) do
         {regular_filters, transformers, debug_mode} = prepare_query_context(options)
+        search_mode = get_search_mode()
 
         schema
         |> from(as: :resource)
         |> join_associations(regular_filters)
         |> select_columns(fields)
-        |> apply_filters(regular_filters, fields)
+        |> apply_filters(regular_filters, fields, search_mode: search_mode)
         |> maybe_sort(fields, options["sort"]["sort_params"], options["sort"]["sortable?"])
         |> apply_transformers(transformers)
         |> maybe_paginate(options["pagination"], options["pagination"]["paginate?"])
         |> debug_pipeline(debug_mode)
+      end
+
+      defp get_search_mode do
+        TableConfig.get_search_mode(table_options(), @repo)
       end
 
       def stream_resources(

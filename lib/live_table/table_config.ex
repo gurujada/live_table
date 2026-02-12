@@ -20,7 +20,10 @@ defmodule LiveTable.TableConfig do
     search: %{
       debounce: 300,
       enabled: true,
-      placeholder: "Search..."
+      placeholder: "Search...",
+      # :auto uses the repo adapter to pick a default
+      # :ilike (default), :like (case-sensitive), :like_lower (SQLite compatible)
+      mode: :auto
     },
     mode: :table,
     use_streams: true,
@@ -38,8 +41,67 @@ defmodule LiveTable.TableConfig do
   def get_table_options(table_options) do
     app_defaults = Application.get_env(:live_table, :defaults, %{})
 
-    @default_options
-    |> deep_merge(app_defaults)
-    |> deep_merge(table_options)
+    base =
+      @default_options
+      |> deep_merge(app_defaults)
+      |> deep_merge(table_options)
+
+    # allow app-level search_mode config
+    app_search_mode = Application.get_env(:live_table, :search_mode)
+
+    # apply app-level search_mode if not overridden in table_options
+    if app_search_mode && !get_in(table_options, [:search, :mode]) do
+      put_in(base, [:search, :mode], app_search_mode)
+    else
+      base
+    end
   end
+
+  def get_search_mode(table_options, repo \\ Application.get_env(:live_table, :repo)) do
+    table_options
+    |> get_table_options()
+    |> Map.get(:search, %{})
+    |> resolve_search_mode(repo)
+  end
+
+  def resolve_search_mode(search_opts, repo) do
+    mode = Map.get(search_opts, :mode, :auto)
+    adapter = Map.get(search_opts, :adapter)
+    db = Map.get(search_opts, :db) || Map.get(search_opts, :database)
+
+    cond do
+      mode in [:ilike, :like, :like_lower] ->
+        mode
+
+      adapter ->
+        adapter_to_mode(adapter)
+
+      db ->
+        db_to_mode(db)
+
+      mode in [:auto, nil] ->
+        repo_adapter(repo) |> adapter_to_mode()
+
+      true ->
+        :like_lower
+    end
+  end
+
+  defp repo_adapter(nil), do: nil
+  defp repo_adapter(repo), do: repo.__adapter__()
+
+  defp adapter_to_mode(Ecto.Adapters.SQLite3), do: :like_lower
+  defp adapter_to_mode(_), do: :ilike
+
+  defp db_to_mode(db) do
+    case normalize_db(db) do
+      "sqlite" -> :like_lower
+      "sqlite3" -> :like_lower
+      _ -> :ilike
+    end
+  end
+
+  defp normalize_db(db) when is_atom(db), do: db |> Atom.to_string() |> String.downcase()
+  defp normalize_db(db) when is_binary(db), do: String.downcase(db)
+  defp normalize_db(_), do: nil
 end
