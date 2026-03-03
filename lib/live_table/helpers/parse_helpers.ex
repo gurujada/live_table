@@ -7,7 +7,7 @@ defmodule LiveTable.ParseHelpers do
     end)
   end
 
-  def parse_filters(params, socket) do
+  def parse_filters(params, socket, filters) do
     raw_filters = Map.get(params, "filters", %{})
     initial_load? = not Map.has_key?(socket.assigns, :options)
 
@@ -19,26 +19,26 @@ defmodule LiveTable.ParseHelpers do
           Map.put(acc, "search", search_term)
 
         {key, %{"min" => min, "max" => max}}, acc ->
-          parse_range_filter(key, min, max, acc)
+          parse_range_filter(key, min, max, acc, filters)
 
         {key, %{"id" => id}}, acc ->
-          parse_select_filter(key, id, acc)
+          parse_select_filter(key, id, acc, filters)
 
         {key, custom_data}, acc when is_map(custom_data) ->
-          parse_custom_filter(key, custom_data, acc)
+          parse_custom_filter(key, custom_data, acc, filters)
 
         {k, _}, acc ->
           key = k |> String.to_existing_atom()
-          Map.put(acc, key, get_filter(k))
+          Map.put(acc, key, get_filter(k, filters))
       end)
 
     if raw_filters == %{} and initial_load?,
-      do: apply_default_filters(parsed),
+      do: apply_default_filters(parsed, filters),
       else: parsed
   end
 
-  def apply_default_filters(parsed) do
-    Enum.reduce(filters(), parsed, fn
+  def apply_default_filters(parsed, filters) do
+    Enum.reduce(filters, parsed, fn
       {key, %LiveTable.Boolean{options: %{default: true}} = filter}, acc ->
         Map.put(acc, key, filter)
 
@@ -47,8 +47,8 @@ defmodule LiveTable.ParseHelpers do
     end)
   end
 
-  def parse_range_filter(key, min, max, acc) do
-    filter = get_filter(key)
+  def parse_range_filter(key, min, max, acc, filters) do
+    filter = get_filter(key, filters)
     {min_val, max_val} = parse_range_values(filter.options, min, max)
 
     updated_filter =
@@ -62,8 +62,8 @@ defmodule LiveTable.ParseHelpers do
     Map.put(acc, String.to_atom(key), updated_filter)
   end
 
-  def parse_select_filter(key, id, acc) do
-    filter = %LiveTable.Select{} = get_filter(key)
+  def parse_select_filter(key, id, acc, filters) do
+    filter = %LiveTable.Select{} = get_filter(key, filters)
     id = Enum.map(id, &coerce_select_value/1)
     filter = %{filter | options: Map.update!(filter.options, :selected, &(&1 ++ id))}
     Map.put(acc, String.to_existing_atom(key), filter)
@@ -78,8 +78,8 @@ defmodule LiveTable.ParseHelpers do
 
   def coerce_select_value(val), do: val
 
-  def parse_custom_filter(key, custom_data, acc) do
-    filter = get_filter(key)
+  def parse_custom_filter(key, custom_data, acc, filters) do
+    filter = get_filter(key, filters)
 
     case filter do
       %LiveTable.Transformer{} ->
@@ -93,6 +93,28 @@ defmodule LiveTable.ParseHelpers do
       _ ->
         Map.put(acc, String.to_existing_atom(key), filter)
     end
+  end
+
+  def get_filter(key, filters) when is_binary(key) do
+    key
+    |> String.to_atom()
+    |> get_filter(filters)
+  end
+
+  def get_filter(key, filters) when is_atom(key) do
+    Keyword.get(filters, key)
+  end
+
+  def parse_range_values(%{step: step}, min, max) when is_integer(step) do
+    {min_int, _} = Integer.parse(min)
+    {max_int, _} = Integer.parse(max)
+    {min_int, max_int}
+  end
+
+  def parse_range_values(%{step: _step}, min, max) do
+    {min_float, _} = Float.parse(min)
+    {max_float, _} = Float.parse(max)
+    {min_float, max_float}
   end
 
   def build_options(sort_params, filters, params, table_options) do

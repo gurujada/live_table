@@ -159,7 +159,7 @@ defmodule LiveTable.TableComponent do
                 
         <!-- Filter toggle -->
                 <button
-                  :if={length(@filters) > get_in(@table_options, [:max_filters])}
+                  :if={length(@filters) > (get_in(@table_options, [:max_filters]) || 3)}
                   type="button"
                   phx-click={
                     JS.toggle(to: "#filters-container")
@@ -196,7 +196,7 @@ defmodule LiveTable.TableComponent do
         <!-- Filters section -->
             <div
               id="filters-container"
-              class={["", length(@filters) > get_in(@table_options, [:max_filters]) && "hidden"]}
+              class={["", length(@filters) > (get_in(@table_options, [:max_filters]) || 3) && "hidden"]}
             >
               <.filters filters={@filters} applied_filters={@options["filters"]} />
             </div>

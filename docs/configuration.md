@@ -191,6 +191,29 @@ search: %{
   - `:ilike` - Uses PostgreSQL's native ILIKE operator (fastest on PG)
   - `:like_lower` - Uses portable lower() function (works on all databases including SQLite, MySQL, etc.)
 
+### Filter Display Options
+
+Control how filters are displayed in the table:
+
+```elixir
+max_filters: 3  # Show up to 3 filters directly, hide if more than 3 behind "Show Filters" button
+```
+
+**Options:**
+- `max_filters` (integer) - Maximum number of filters to show directly before hiding behind a toggle button. Default is 3. Set to a high number (like 5) to show all filters always.
+
+**Examples:**
+
+```elixir
+# Show all filters always (no toggle button)
+max_filters: 999
+
+# Hide all filters behind toggle button
+max_filters: 0
+```
+
+When a table has more filters than `max_filters`, the filters are hidden by default and users can click "Show Filters" to reveal them. This helps keep the UI clean when you have many filter options.
+
 ### View Mode Options
 
 Configure table display modes:
@@ -691,6 +714,7 @@ config :live_table,
       debounce: 300,
       placeholder: "Search..."
     },
+    max_filters: 3,
     mode: :table,
     use_streams: true
   }

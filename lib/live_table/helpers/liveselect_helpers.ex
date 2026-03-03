@@ -1,15 +1,15 @@
 defmodule LiveTable.LiveSelectHelpers do
-  import LiveTable.ParseHelpers, only: [get_filter: 1, coerce_select_value: 1]
-  
-  defp prepare_live_select_updates(params, socket) do
+  import Phoenix.LiveView
+
+  def prepare_live_select_updates(params, socket, filters) do
     already_restored = Map.get(socket.assigns, :live_select_restored, MapSet.new())
 
     live_select_updates =
       Map.get(params, "filters", %{})
       |> Enum.filter(fn {_key, val} -> match?(%{"id" => _}, val) end)
       |> Enum.map(fn {key, %{"id" => ids}} ->
-        filter = get_filter(key)
-        ids = Enum.map(ids, &coerce_select_value/1)
+        filter = LiveTable.ParseHelpers.get_filter(key, filters)
+        ids = Enum.map(ids, &LiveTable.ParseHelpers.coerce_select_value/1)
         {filter.key, ids}
       end)
       |> Enum.reject(fn {key, _ids} -> MapSet.member?(already_restored, key) end)
@@ -17,7 +17,7 @@ defmodule LiveTable.LiveSelectHelpers do
     {live_select_updates, already_restored}
   end
 
-  defp track_restored_keys(already_restored, live_select_updates) do
+  def track_restored_keys(already_restored, live_select_updates) do
     newly_restored_keys =
       live_select_updates
       |> Enum.map(fn {key, _ids} -> key end)
@@ -26,11 +26,11 @@ defmodule LiveTable.LiveSelectHelpers do
     MapSet.union(already_restored, newly_restored_keys)
   end
 
-  defp restore_live_select_from_params([]), do: :ok
+  def restore_live_select_from_params([], _filters), do: :ok
 
-  defp restore_live_select_from_params(updates) do
+  def restore_live_select_from_params(updates, filters) do
     for {key, ids} <- updates do
-      filter = get_filter(key)
+      filter = LiveTable.ParseHelpers.get_filter(key, filters)
 
       options =
         case filter.options do

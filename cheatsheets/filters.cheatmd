@@ -360,6 +360,13 @@ end
 | `:field` | Simple schema field |
 | `{:alias, :field}` | Joined table field |
 
+### Table Options
+{: .col-2}
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_filters` | integer | 3 | Max filters to show before hiding behind toggle |
+
 ### Common Gotchas
 {: .col-2}
 

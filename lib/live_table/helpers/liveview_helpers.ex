@@ -3,9 +3,6 @@ defmodule LiveTable.LiveViewHelpers do
   defmacro __using__(opts) do
     quote do
       use LiveTable.ExportHelpers, schema: unquote(opts[:schema])
-      import LiveTable.LiveSelectHelpers
-      import LiveTable.ParseHelpers
-      import LiveTable.ResourceLoader
 
       @impl true
       def handle_params(params, url, socket) do
@@ -14,13 +11,21 @@ defmodule LiveTable.LiveViewHelpers do
         table_options = unquote(opts[:table_options])
         data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
 
-        sort_params = parse_sort_params(params, default_sort)
-        {live_select_updates, already_restored} = prepare_live_select_updates(params, socket)
-        filters = parse_filters(params, socket)
-        options = build_options(sort_params, filters, params, table_options)
+        sort_params = LiveTable.ParseHelpers.parse_sort_params(params, default_sort)
+        current_filters = filters()
+
+        {live_select_updates, already_restored} =
+          LiveTable.LiveSelectHelpers.prepare_live_select_updates(params, socket, current_filters)
+
+        parsed_filters = LiveTable.ParseHelpers.parse_filters(params, socket, current_filters)
+
+        options =
+          LiveTable.ParseHelpers.build_options(sort_params, parsed_filters, params, table_options)
 
         {resources, updated_options} = fetch_resources(options, data_provider)
-        updated_restored = track_restored_keys(already_restored, live_select_updates)
+
+        updated_restored =
+          LiveTable.LiveSelectHelpers.track_restored_keys(already_restored, live_select_updates)
 
         socket =
           socket
@@ -30,13 +35,15 @@ defmodule LiveTable.LiveViewHelpers do
           |> assign(:live_select_restored, updated_restored)
           |> maybe_assign_infinite_scroll(table_options)
 
-        restore_live_select_from_params(live_select_updates)
+        LiveTable.LiveSelectHelpers.restore_live_select_from_params(
+          live_select_updates,
+          current_filters
+        )
 
         {:noreply, socket}
       end
 
       @impl true
-      # Handles all LiveTable related events like sort, paginate and filter
       def handle_event("sort", %{"clear_filters" => "true"}, socket) do
         current_path = socket.assigns.current_path
 
@@ -52,7 +59,6 @@ defmodule LiveTable.LiveViewHelpers do
           |> Map.take(~w(page per_page sort_params))
           |> Map.reject(fn {_, v} -> v == "" || is_nil(v) end)
 
-        # Clear all LiveSelect components when clearing filters
         for {_filter_key, filter} <- filters() do
           case filter do
             %LiveTable.Select{} ->
@@ -103,9 +109,6 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
-      # Handle range_change events from Sutra's range_slider
-      # Payload format: %{"key_min" => val, "key_max" => val}
-      # Transforms to: %{"filters" => %{key => %{"min" => val, "max" => val}}}
       def handle_event("range_change", params, socket) do
         {key, min, max} = extract_range_params(params)
 

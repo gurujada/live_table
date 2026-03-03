@@ -40,7 +40,7 @@ defmodule LiveTable.MixProject do
       {:igniter, "~> 0.7.0", optional: true},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.13"},
-      {:sutra_ui, path: "../sutra_ui"}
+      {:sutra_ui, "~> 0.2.0", optional: true}
     ]
   end
 
