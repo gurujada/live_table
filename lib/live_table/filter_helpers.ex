@@ -18,86 +18,54 @@ defmodule LiveTable.FilterHelpers do
         existing_filters = Map.get(map, "filters", %{})
 
         updated_params =
-          params
-          |> Enum.reduce(existing_filters, fn
+          Enum.reduce(params, existing_filters, fn
             {k, "true"}, acc ->
               %{field: _, key: key} = get_filter(k)
               Map.put(acc, k, key)
 
-            {key, %{"max" => max, "min" => min}}, acc ->
-              Map.put(acc, key, min: min, max: max)
-
             {k, "false"}, acc ->
               Map.delete(acc, k)
 
-            # Handle SutraUI.LiveSelect single mode: JSON string like "{\"label\":\"X\",\"value\":[1,\"desc\"]}"
-            {key, "{" <> _ = json}, acc ->
+            {key, %{"max" => max, "min" => min}}, acc ->
+              Map.put(acc, key, min: min, max: max)
+
+            # LiveSelect single mode — cleared
+            {key, %{"value" => ""}}, acc ->
+              Map.delete(acc, key)
+
+            # LiveSelect single mode — structured value from form or pushEvent
+            # Also handles Transformer filters that use %{"value" => ...} shape
+            {key, %{"value" => value} = data}, acc ->
+              case get_filter(key) do
+                %LiveTable.Select{} -> Map.put(acc, key, %{id: [value]})
+                %LiveTable.Transformer{} -> Map.put(acc, key, data)
+                _ -> acc
+              end
+
+            # LiveSelect tags mode — id list from form, URL params, or pushEvent
+            {key, %{"id" => ids}}, acc when is_list(ids) ->
               case get_filter(key) do
                 %LiveTable.Select{} ->
-                  case Jason.decode(json) do
-                    {:ok, %{"value" => [id | _]}} ->
-                      Map.put(acc, key, %{id: [id]})
+                  filtered = Enum.reject(ids, &(&1 == ""))
 
-                    {:ok, %{"value" => id}} when not is_list(id) ->
-                      Map.put(acc, key, %{id: [id]})
-
-                    _ ->
-                      acc
-                  end
+                  if filtered == [],
+                    do: Map.delete(acc, key),
+                    else: Map.put(acc, key, %{id: filtered})
 
                 _ ->
                   acc
               end
 
-            # Handle SutraUI.LiveSelect tags mode: list of JSON strings like ["{\"label\":\"X\",\"value\":[1,\"desc\"]}"]
-            {key, values}, acc when is_list(values) ->
+            # Transformer custom data
+            {key, data}, acc when is_map(data) ->
               case get_filter(key) do
-                %LiveTable.Select{} ->
-                  ids =
-                    values
-                    |> Enum.map(fn
-                      # SutraUI.LiveSelect format: {"label": "...", "value": [id, desc]} or {"label": "...", "value": id}
-                      "{" <> _ = json ->
-                        case Jason.decode(json) do
-                          {:ok, %{"value" => [id | _]}} -> id
-                          {:ok, %{"value" => id}} when not is_list(id) -> id
-                          _ -> nil
-                        end
-
-                      # Legacy live_select format: "[id, desc]"
-                      "[" <> _ = json ->
-                        case Jason.decode(json) do
-                          {:ok, [id | _]} -> id
-                          _ -> nil
-                        end
-
-                      # Empty string (cleared selection)
-                      "" ->
-                        nil
-
-                      _ ->
-                        nil
-                    end)
-                    |> Enum.reject(&is_nil/1)
-
-                  if ids == [] do
-                    Map.delete(acc, key)
-                  else
-                    Map.put(acc, key, %{id: ids})
-                  end
-
-                _ ->
-                  acc
+                %LiveTable.Transformer{} -> Map.put(acc, key, data)
+                _ -> acc
               end
 
-            {key, custom_data}, acc when is_map(custom_data) ->
-              case get_filter(key) do
-                %LiveTable.Transformer{} ->
-                  Map.put(acc, key, custom_data)
-
-                _ ->
-                  acc
-              end
+            # Cleared field
+            {key, ""}, acc ->
+              Map.delete(acc, key)
 
             _, acc ->
               acc

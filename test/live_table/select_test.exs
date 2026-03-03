@@ -250,4 +250,81 @@ defmodule LiveTable.SelectTest do
       assert inspect(query) =~ "where: ^true and p0.id in ^[1, 2, 3]"
     end
   end
+
+  describe "Select filter with non-ID fields" do
+    test "filters by non-ID field on base table (e.g., :name)" do
+      filter = Select.new(:name, "product_name", %{selected: ["Laptop", "Book"]})
+
+      result = Select.apply(true, filter)
+
+      query = from(p in "products", where: ^result)
+      assert is_struct(result, Ecto.Query.DynamicExpr)
+    end
+
+    test "filters by non-ID field on joined table (e.g., :name)" do
+      filter =
+        Select.new({:categories, :name}, "category_name", %{
+          selected: ["Electronics", "Books"]
+        })
+
+      result = Select.apply(true, filter)
+
+      query =
+        from(p in Product,
+          join: c in Category,
+          as: :categories,
+          on: c.id == p.category_id,
+          where: ^result
+        )
+
+      assert is_struct(result, Ecto.Query.DynamicExpr)
+    end
+  end
+
+  describe "Select filter with string values" do
+    test "applies filter with string values on base table" do
+      filter = Select.new(:name, "names", %{selected: ["Laptop"]})
+
+      result = Select.apply(true, filter)
+
+      query = from(p in "products", where: ^result)
+      assert is_struct(result, Ecto.Query.DynamicExpr)
+    end
+
+    test "applies filter with string values on joined table" do
+      filter = Select.new({:categories, :name}, "category", %{selected: ["Electronics"]})
+
+      result = Select.apply(true, filter)
+
+      query =
+        from(p in Product,
+          join: c in Category,
+          as: :categories,
+          on: c.id == p.category_id,
+          where: ^result
+        )
+
+      assert is_struct(result, Ecto.Query.DynamicExpr)
+    end
+  end
+
+  describe "Select filter URL param coercion" do
+    test "coerces integer strings to integers" do
+      filter = Select.new(:id, "test", %{selected: []})
+
+      result =
+        LiveTable.Select.apply(true, filter)
+
+      assert is_struct(result, Ecto.Query.DynamicExpr)
+    end
+
+    test "keeps non-integer strings as strings" do
+      filter = Select.new(:name, "name_filter", %{selected: []})
+
+      result =
+        LiveTable.Select.apply(true, filter)
+
+      assert is_struct(result, Ecto.Query.DynamicExpr)
+    end
+  end
 end

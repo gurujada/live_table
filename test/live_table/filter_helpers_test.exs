@@ -179,64 +179,40 @@ defmodule LiveTable.FilterHelpersTest do
     end
   end
 
-  describe "update_filter_params/2 with select filter params (SutraUI.LiveSelect JSON format)" do
-    test "handles single selection JSON with value array" do
-      # SutraUI.LiveSelect sends: {"label": "Category 1", "value": [1, "desc"]}
-      json = ~s({"label": "Category 1", "value": [1, "desc"]})
+  describe "update_filter_params/2 with select filter params (structured format)" do
+    test "handles single selection (structured map with value)" do
+      # LiveSelect single mode sends: %{"value" => "1", "label" => "Category 1"}
       initial_map = %{}
 
-      result = update_filter_params(initial_map, %{"category" => json})
+      result =
+        update_filter_params(initial_map, %{
+          "category" => %{"value" => "1", "label" => "Category 1"}
+        })
 
-      assert result["filters"]["category"] == %{id: [1]}
+      assert result["filters"]["category"] == %{id: ["1"]}
     end
 
-    test "handles single selection JSON with simple value" do
-      # Sometimes value is just the id: {"label": "Category 1", "value": 1}
-      json = ~s({"label": "Category 1", "value": 1})
+    test "handles tags mode (structured map with id list)" do
+      # LiveSelect tags mode sends: %{"id" => ["1", "2"]}
       initial_map = %{}
 
-      result = update_filter_params(initial_map, %{"category" => json})
+      result = update_filter_params(initial_map, %{"category" => %{"id" => ["1", "2"]}})
 
-      assert result["filters"]["category"] == %{id: [1]}
+      assert result["filters"]["category"] == %{id: ["1", "2"]}
     end
 
-    test "handles multiple selections (tags mode) with JSON list" do
-      # List of JSON strings for multi-select
-      json_list = [
-        ~s({"label": "Cat 1", "value": [1, "desc"]}),
-        ~s({"label": "Cat 2", "value": [2, "desc"]})
-      ]
+    test "removes select filter when tags id list is empty strings" do
+      initial_map = %{"filters" => %{"category" => %{id: ["1", "2"]}}}
 
-      initial_map = %{}
-
-      result = update_filter_params(initial_map, %{"category" => json_list})
-
-      assert result["filters"]["category"] == %{id: [1, 2]}
-    end
-
-    test "handles legacy live_select format with array strings" do
-      # Legacy format: ["[1, \"desc\"]", "[2, \"desc\"]"]
-      legacy_list = [~s([1, "desc"]), ~s([2, "desc"])]
-      initial_map = %{}
-
-      result = update_filter_params(initial_map, %{"category" => legacy_list})
-
-      assert result["filters"]["category"] == %{id: [1, 2]}
-    end
-
-    test "removes select filter when list is empty strings" do
-      # Cleared selection sends empty strings
-      initial_map = %{"filters" => %{"category" => %{id: [1, 2]}}}
-
-      result = update_filter_params(initial_map, %{"category" => ["", ""]})
+      result = update_filter_params(initial_map, %{"category" => %{"id" => [""]}})
 
       refute Map.has_key?(result["filters"], "category")
     end
 
-    test "removes select filter when list is empty" do
-      initial_map = %{"filters" => %{"category" => %{id: [1, 2]}}}
+    test "removes select filter when cleared with empty string" do
+      initial_map = %{"filters" => %{"category" => %{id: ["1", "2"]}}}
 
-      result = update_filter_params(initial_map, %{"category" => []})
+      result = update_filter_params(initial_map, %{"category" => ""})
 
       refute Map.has_key?(result["filters"], "category")
     end

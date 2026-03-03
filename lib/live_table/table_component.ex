@@ -159,7 +159,7 @@ defmodule LiveTable.TableComponent do
                 
         <!-- Filter toggle -->
                 <button
-                  :if={length(@filters) > 3}
+                  :if={length(@filters) > get_in(@table_options, [:max_filters])}
                   type="button"
                   phx-click={
                     JS.toggle(to: "#filters-container")
@@ -194,7 +194,10 @@ defmodule LiveTable.TableComponent do
             </div>
             
         <!-- Filters section -->
-            <div id="filters-container" class={["", length(@filters) > 3 && "hidden"]}>
+            <div
+              id="filters-container"
+              class={["", length(@filters) > get_in(@table_options, [:max_filters]) && "hidden"]}
+            >
               <.filters filters={@filters} applied_filters={@options["filters"]} />
             </div>
           </div>
@@ -288,6 +291,9 @@ defmodule LiveTable.TableComponent do
           phx-throttle="1000"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
+          <div id="empty-placeholder" class="hidden only:block col-span-full">
+            <.render_empty_state table_options={@table_options} />
+          </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
             {@table_options.card_component.(%{record: record})}
           </div>
@@ -329,6 +335,9 @@ defmodule LiveTable.TableComponent do
       defp content_section(%{table_options: %{mode: :card, use_streams: false}} = var!(assigns)) do
         ~H"""
         <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div :if={@streams == []} class="col-span-full">
+            <.render_empty_state table_options={@table_options} />
+          </div>
           <div :for={record <- @streams}>
             {@table_options.card_component.(%{record: record})}
           </div>
@@ -339,6 +348,9 @@ defmodule LiveTable.TableComponent do
       defp content_section(%{table_options: %{mode: :card, use_streams: true}} = var!(assigns)) do
         ~H"""
         <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div id="card-empty-placeholder" class="hidden only:block col-span-full">
+            <.render_empty_state table_options={@table_options} />
+          </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
             {@table_options.card_component.(%{record: record})}
           </div>

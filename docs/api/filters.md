@@ -216,7 +216,48 @@ Range.new(field, key, %{
 
 ## Select Filters
 
-Select filters provide dropdown selection with static or dynamic options.
+Select filters provide dropdown selection with static or dynamic options. The filter uses the `field` parameter to determine which database column to filter on, making it flexible enough to filter by ID, string values, or any other column type.
+
+### Filtering by Non-ID Fields
+
+The Select filter now supports filtering by any database field, not just IDs. The `field` parameter directly determines which column is used in the WHERE clause.
+
+```elixir
+def filters do
+  [
+    # Filter by status enum/string on the base table
+    status: Select.new(:status, "status", %{
+      label: "Status",
+      options: [
+        %{label: "Active", value: "active"},
+        %{label: "Draft", value: "draft"},
+        %{label: "Archived", value: "archived"}
+      ]
+    }),
+
+    # Filter by name on a joined table (not just ID)
+    category: Select.new({:categories, :name}, "category_name", %{
+      label: "Category Name",
+      options_source: {YourApp.Catalog, :search_category_names, []}
+    }),
+
+    # Filter by any column on the base table
+    priority: Select.new(:priority, "priority", %{
+      label: "Priority",
+      options: [
+        %{label: "Low", value: "low"},
+        %{label: "Medium", value: "medium"},
+        %{label: "High", value: "high"}
+      ]
+    })
+  ]
+end
+```
+
+**How it works:**
+- The `field` parameter (`:status`, `{:categories, :name}`, etc.) is used directly in the query's WHERE clause
+- Integer IDs and string values are both supported
+- URL params are automatically coerced (integer strings become integers, others stay as strings)
 
 ### Static Options
 

@@ -183,6 +183,30 @@ status: Select.new(:status, "status", %{
 })
 ```
 
+### For Non-ID Fields
+
+The Select filter can filter by any column, not just IDs:
+
+```elixir
+# Filter by string/enum column on base table
+status: Select.new(:status, "status", %{
+  label: "Status",
+  options: [
+    %{label: "Active", value: "active"},
+    %{label: "Draft", value: "draft"}
+  ]
+})
+
+# Filter by name column on joined table (not just ID)
+category: Select.new({:categories, :name}, "category_name", %{
+  label: "Category",
+  options: [
+    %{label: "Electronics", value: "Electronics"},
+    %{label: "Clothing", value: "Clothing"}
+  ]
+})
+```
+
 ### For Joined Tables
 {: .col-2}
 

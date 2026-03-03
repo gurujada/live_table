@@ -255,14 +255,13 @@ defmodule LiveTable.Select do
   end
 
   @doc false
-  def apply(acc, %__MODULE__{field: {table, _field}, options: %{selected: values}}) do
-    dynamic([{^table, t}], ^acc and t.id in ^values)
+  def apply(acc, %__MODULE__{field: {table, field}, options: %{selected: values}}) do
+    dynamic([{^table, t}], ^acc and field(t, ^field) in ^values)
   end
 
-  # update to dynamically take primary key. not always id.
   @doc false
-  def apply(acc, %__MODULE__{field: _field, options: %{selected: values}}) do
-    dynamic([p], ^acc and p.id in ^values)
+  def apply(acc, %__MODULE__{field: field, options: %{selected: values}}) when is_atom(field) do
+    dynamic([p], ^acc and field(p, ^field) in ^values)
   end
 
   @doc false
@@ -282,6 +281,7 @@ defmodule LiveTable.Select do
         max_selectable={@filter.options[:max_selectable] || 0}
         user_defined_options={@filter.options[:user_defined_options] || false}
         debounce={@filter.options[:debounce]}
+        options={@filter.options[:options] || []}
         class="live-table-select"
       >
         <:option :let={option}>

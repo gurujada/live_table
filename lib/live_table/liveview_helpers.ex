@@ -3,6 +3,9 @@ defmodule LiveTable.LiveViewHelpers do
   defmacro __using__(opts) do
     quote do
       use LiveTable.ExportHelpers, schema: unquote(opts[:schema])
+      import LiveTable.LiveSelectHelpers
+      import LiveTable.ParseHelpers
+      import LiveTable.ResourceLoader
 
       @impl true
       def handle_params(params, url, socket) do
@@ -13,7 +16,7 @@ defmodule LiveTable.LiveViewHelpers do
 
         sort_params = parse_sort_params(params, default_sort)
         {live_select_updates, already_restored} = prepare_live_select_updates(params, socket)
-        filters = parse_filters(params)
+        filters = parse_filters(params, socket)
         options = build_options(sort_params, filters, params, table_options)
 
         {resources, updated_options} = fetch_resources(options, data_provider)
@@ -32,218 +35,8 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
-      defp parse_sort_params(params, default_sort) do
-        Map.get(params, "sort_params", default_sort)
-        |> Enum.map(fn
-          {k, v} when is_atom(k) and is_atom(v) -> {k, v}
-          {k, v} -> {String.to_existing_atom(k), String.to_existing_atom(v)}
-        end)
-      end
-
-      defp prepare_live_select_updates(params, socket) do
-        already_restored = Map.get(socket.assigns, :live_select_restored, MapSet.new())
-
-        live_select_updates =
-          Map.get(params, "filters", %{})
-          |> Enum.filter(fn {_key, val} -> match?(%{"id" => _}, val) end)
-          |> Enum.map(fn {key, %{"id" => ids}} ->
-            filter = get_filter(key)
-            ids = Enum.map(ids, &String.to_integer/1)
-            {filter.key, ids}
-          end)
-          |> Enum.reject(fn {key, _ids} -> MapSet.member?(already_restored, key) end)
-
-        {live_select_updates, already_restored}
-      end
-
-      defp parse_filters(params) do
-        Map.get(params, "filters", %{})
-        |> Map.put("search", params["search"] || "")
-        |> Enum.reduce(%{}, fn
-          {"search", search_term}, acc ->
-            Map.put(acc, "search", search_term)
-
-          {key, %{"min" => min, "max" => max}}, acc ->
-            parse_range_filter(key, min, max, acc)
-
-          {key, %{"id" => id}}, acc ->
-            parse_select_filter(key, id, acc)
-
-          {key, custom_data}, acc when is_map(custom_data) ->
-            parse_custom_filter(key, custom_data, acc)
-
-          {k, _}, acc ->
-            key = k |> String.to_existing_atom()
-            Map.put(acc, key, get_filter(k))
-        end)
-      end
-
-      defp parse_range_filter(key, min, max, acc) do
-        filter = get_filter(key)
-        {min_val, max_val} = parse_range_values(filter.options, min, max)
-
-        updated_filter =
-          filter
-          |> Map.update!(:options, fn options ->
-            options
-            |> Map.put(:current_min, min_val)
-            |> Map.put(:current_max, max_val)
-          end)
-
-        Map.put(acc, String.to_atom(key), updated_filter)
-      end
-
-      defp parse_select_filter(key, id, acc) do
-        filter = %LiveTable.Select{} = get_filter(key)
-        id = id |> Enum.map(&String.to_integer/1)
-        filter = %{filter | options: Map.update!(filter.options, :selected, &(&1 ++ id))}
-        Map.put(acc, String.to_existing_atom(key), filter)
-      end
-
-      defp parse_custom_filter(key, custom_data, acc) do
-        filter = get_filter(key)
-
-        case filter do
-          %LiveTable.Transformer{} ->
-            updated_filter = %{
-              filter
-              | options: Map.put(filter.options, :applied_data, custom_data)
-            }
-
-            Map.put(acc, String.to_existing_atom(key), updated_filter)
-
-          _ ->
-            Map.put(acc, String.to_existing_atom(key), filter)
-        end
-      end
-
-      defp build_options(sort_params, filters, params, table_options) do
-        %{
-          "sort" => %{
-            "sortable?" => get_in(table_options, [:sorting, :enabled]),
-            "sort_params" => sort_params
-          },
-          "pagination" => %{
-            "paginate?" => get_in(table_options, [:pagination, :enabled]),
-            "page" => params["page"] |> validate_page_num(),
-            "per_page" => params["per_page"] |> validate_per_page()
-          },
-          "filters" => filters
-        }
-      end
-
-      defp fetch_resources(options, data_provider) do
-        case stream_resources(fields(), options, data_provider) do
-          {resources, overflow} ->
-            has_next_page = length(overflow) > 0
-            updated_options = put_in(options["pagination"][:has_next_page], has_next_page)
-            {resources, updated_options}
-
-          resources when is_list(resources) ->
-            {resources, options}
-        end
-      end
-
-      defp track_restored_keys(already_restored, live_select_updates) do
-        newly_restored_keys =
-          live_select_updates
-          |> Enum.map(fn {key, _ids} -> key end)
-          |> MapSet.new()
-
-        MapSet.union(already_restored, newly_restored_keys)
-      end
-
-      defp restore_live_select_from_params([]), do: :ok
-
-      defp restore_live_select_from_params(updates) do
-        for {key, ids} <- updates do
-          filter = get_filter(key)
-
-          options =
-            case filter.options do
-              %{options: opts} when is_list(opts) and opts != [] ->
-                opts
-
-              %{options_source: {module, function, args}} ->
-                apply(module, function, ["" | args])
-
-              _ ->
-                []
-            end
-
-          selection =
-            Enum.map(ids, fn id ->
-              Enum.find(options, fn
-                %{value: [opt_id | _]} -> opt_id == id
-                %{value: opt_id} -> opt_id == id
-                {_label, [opt_id | _]} -> opt_id == id
-                {_label, opt_id} -> opt_id == id
-                _ -> false
-              end) || %{label: to_string(id), value: id}
-            end)
-
-          send_update(SutraUI.LiveSelect, id: key, restore_selection: selection)
-        end
-      end
-
-      defp assign_to_socket(socket, resources, %{use_streams: true}) do
-        stream(socket, :resources, resources,
-          dom_id: fn resource ->
-            "resource-#{Ecto.UUID.generate()}"
-          end,
-          reset: true
-        )
-      end
-
-      defp assign_to_socket(socket, resources, %{use_streams: false}) do
-        assign(socket, :resources, resources)
-      end
-
-      defp maybe_assign_infinite_scroll(socket, %{
-             pagination: %{mode: :infinite_scroll}
-           }) do
-        assign(socket, :infinite_scroll_page, 1)
-      end
-
-      defp maybe_assign_infinite_scroll(socket, _table_options), do: socket
-
-      defp validate_page_num(nil), do: "1"
-
-      defp validate_page_num(n) when is_binary(n) do
-        try do
-          num = String.to_integer(n)
-
-          cond do
-            num > 0 -> n
-            true -> "1"
-          end
-        rescue
-          ArgumentError -> "1"
-        end
-      end
-
-      defp validate_per_page(nil),
-        do: get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
-
-      defp validate_per_page(n) when is_binary(n) do
-        max_per_page = get_in(unquote(opts[:table_options]), [:pagination, :max_per_page])
-
-        try do
-          num = String.to_integer(n)
-
-          cond do
-            num > 0 and num <= max_per_page -> n
-            true -> max_per_page |> to_string()
-          end
-        rescue
-          ArgumentError ->
-            get_in(unquote(opts[:table_options]), [:pagination, :default_size]) |> to_string()
-        end
-      end
-
       @impl true
       # Handles all LiveTable related events like sort, paginate and filter
-
       def handle_event("sort", %{"clear_filters" => "true"}, socket) do
         current_path = socket.assigns.current_path
 
@@ -302,7 +95,6 @@ defmodule LiveTable.LiveViewHelpers do
           |> update_filter_params(filter_params)
           |> Map.take(~w(page per_page search sort_params filters))
           |> Map.reject(fn {_, v} -> v == "" || is_nil(v) end)
-          |> remove_unused_keys()
 
         socket =
           socket
@@ -394,19 +186,38 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
-      def remove_unused_keys(map) when is_map(map) do
-        map
-        |> Map.reject(fn {key, _value} ->
-          key_string = to_string(key)
-          String.starts_with?(key_string, "_unused")
-        end)
-        |> Enum.map(fn {key, value} ->
-          {key, remove_unused_keys(value)}
-        end)
-        |> Enum.into(%{})
+      def assign_to_socket(socket, resources, %{use_streams: true}) do
+        stream(socket, :resources, resources,
+          dom_id: fn _resource ->
+            "resource-#{Ecto.UUID.generate()}"
+          end,
+          reset: true
+        )
       end
 
-      def remove_unused_keys(value), do: value
+      def assign_to_socket(socket, resources, %{use_streams: false}) do
+        assign(socket, :resources, resources)
+      end
+
+      def maybe_assign_infinite_scroll(socket, %{
+            pagination: %{mode: :infinite_scroll}
+          }) do
+        assign(socket, :infinite_scroll_page, 1)
+      end
+
+      def maybe_assign_infinite_scroll(socket, _table_options), do: socket
+
+      def fetch_resources(options, data_provider) do
+        case stream_resources(fields(), options, data_provider) do
+          {resources, overflow} ->
+            has_next_page = length(overflow) > 0
+            updated_options = put_in(options["pagination"][:has_next_page], has_next_page)
+            {resources, updated_options}
+
+          resources when is_list(resources) ->
+            {resources, options}
+        end
+      end
     end
   end
 end

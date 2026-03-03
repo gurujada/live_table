@@ -29,7 +29,8 @@ defmodule LiveTable.TableConfig do
     mode: :table,
     use_streams: true,
     fixed_header: false,
-    debug: :off
+    debug: :off,
+    max_filters: 3
   }
 
   def deep_merge(left, right) do

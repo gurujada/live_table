@@ -522,6 +522,33 @@ With custom components, you have complete control over:
 
 The college counselling example shows how you can create a completely custom interface that still benefits from LiveTable's transformer system, URL persistence, and efficient data handling.
 
+## Lifecycle Hooks
+
+LiveTable owns the `handle_params/3` callback. If you need to run custom logic on URL changes, use Phoenix's `attach_hook/4` in your `mount/3`:
+
+```elixir
+defmodule YourAppWeb.ProductLive.Index do
+  use YourAppWeb, :live_view
+  use LiveTable.LiveResource, schema: Product
+
+  def mount(_params, _session, socket) do
+    socket =
+      socket
+      |> assign(:data_provider, {Products, :list_products, []})
+      |> attach_hook(:my_params, :handle_params, fn params, _url, socket ->
+        # Runs BEFORE LiveTable's handle_params
+        {:cont, assign(socket, :tab, params["tab"] || "all")}
+      end)
+
+    {:ok, socket}
+  end
+end
+```
+
+The hook returns `{:cont, socket}` to continue to LiveTable's `handle_params`, or `{:halt, socket}` to skip it entirely. Multiple hooks run in attachment order.
+
+LiveTable does **not** define `mount/3` — that callback is fully yours.
+
 ## Environment-specific Configuration
 
 Configure different settings per environment:
