@@ -64,7 +64,15 @@ defmodule LiveTable.ParseHelpers do
 
   def parse_select_filter(key, id, acc, filters) do
     filter = %LiveTable.Select{} = get_filter(key, filters)
-    id = Enum.map(id, &coerce_select_value/1)
+
+    id =
+      id
+      |> Enum.flat_map(fn
+        "" -> []
+        values when is_list(values) -> Enum.map(values, &coerce_select_value/1)
+        value -> [coerce_select_value(value)]
+      end)
+
     filter = %{filter | options: Map.update!(filter.options, :selected, &(&1 ++ id))}
     Map.put(acc, String.to_existing_atom(key), filter)
   end

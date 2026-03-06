@@ -1,7 +1,7 @@
 defmodule LiveTable.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.4.1"
   @source_url "https://github.com/gurujada/live_table"
 
   def project do
@@ -40,7 +40,7 @@ defmodule LiveTable.MixProject do
       {:igniter, "~> 0.7.0", optional: true},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.13"},
-      {:sutra_ui, "~> 0.2.0", optional: true}
+      {:sutra_ui, "~> 0.3.0", optional: true}
     ]
   end
 

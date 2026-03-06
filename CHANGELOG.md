@@ -5,6 +5,28 @@ All notable changes to LiveTable will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-03-06
+
+### Added
+
+- **Filter limits**: Added `table_options.filters.max_filters` to cap how many filters can be active at once.
+- **Pagination config**: Added `pagination.max_per_page` support for safer per-page bounds.
+- **Search compatibility**: Added configurable text search mode for database compatibility (including SQLite-safe behavior).
+- **Internal helper modules**: Split helper logic into focused modules (`FilterHelpers`, `ParseHelpers`, `LiveSelectHelpers`, `LiveViewHelpers`, `SortHelpers`, `ExportHelpers`) with dedicated tests.
+
+### Changed
+
+- Updated `sutra_ui` dependency from `~> 0.2.0` to `~> 0.3.0`.
+- Updated installation/version snippets from `0.4.0` to `0.4.1` in docs and usage rules.
+- Made `igniter` optional in dependency setup.
+- Refined text search implementation after introducing configurable modes to reduce unnecessary complexity.
+
+### Fixed
+
+- Fixed Select filters for non-ID fields so filtering by string fields works correctly.
+- Fixed Select/LiveSelect parsing for structured payloads where option values are nested lists (for example `[["1"]]`), preventing false "0 records" results.
+- Fixed structured single-select value mapping so string payloads (for example `"open"`) are normalized back to typed option values (for example `:open`) before query filtering.
+
 ## [0.4.0] - 2024-12-15
 
 ### Breaking Changes

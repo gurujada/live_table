@@ -25,7 +25,7 @@ A Phoenix LiveView component library for building dynamic, interactive data tabl
 
 ```elixir
 # mix.exs
-{:live_table, "~> 0.4.0"}
+{:live_table, "~> 0.4.1"}
 ```
 
 **2. Install:**

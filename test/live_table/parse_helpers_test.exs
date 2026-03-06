@@ -106,6 +106,47 @@ defmodule LiveTable.ParseHelpersTest do
 
       assert result[:boolean_with_default] == nil
     end
+
+    test "flattens nested select values from structured live_select payload" do
+      params = %{"filters" => %{"category" => %{"id" => [["1"], ["2"]]}}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, filters())
+
+      assert result[:category].options.selected == [1, 2, 1, 2]
+    end
+
+    test "drops blank select values from structured live_select payload" do
+      params = %{"filters" => %{"category" => %{"id" => ["", ["3"]]}}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, filters())
+
+      assert result[:category].options.selected == [1, 2, 3]
+    end
+
+    test "preserves nested string select values for name-based filters" do
+      custom_filters = [stage: Select.new({:stage, :name}, "stage", %{selected: []})]
+      params = %{"filters" => %{"stage" => %{"id" => [["migration"]]}}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, custom_filters)
+
+      assert result[:stage].options.selected == ["migration"]
+    end
+
+    test "keeps structured single select values as strings" do
+      custom_filters = [
+        seat_type: Select.new({:rank_cutoff, :seat_type}, "seat_type_select", %{selected: []})
+      ]
+
+      params = %{"filters" => %{"seat_type" => %{"id" => ["open"]}}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, custom_filters)
+
+      assert result[:seat_type].options.selected == ["open"]
+    end
   end
 
   describe "get_filter/2" do
