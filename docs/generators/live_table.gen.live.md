@@ -13,6 +13,12 @@ This generator wraps `mix phx.gen.live` and enhances the generated index LiveVie
 
 ## Usage
 
+This task requires the optional `:igniter` dependency in your app:
+
+```elixir
+{:igniter, "~> 0.7", only: :dev, runtime: false}
+```
+
 ```bash
 mix live_table.gen.live Context Schema table_name field:type field:type ...
 ```

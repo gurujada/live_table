@@ -4,6 +4,12 @@ Installs and configures LiveTable in your Phoenix application.
 
 ## Usage
 
+This task requires the optional `:igniter` dependency in your app:
+
+```elixir
+{:igniter, "~> 0.7", only: :dev, runtime: false}
+```
+
 ```bash
 mix live_table.install
 ```

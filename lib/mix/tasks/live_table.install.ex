@@ -1,81 +1,64 @@
-defmodule Mix.Tasks.LiveTable.Install do
-  @moduledoc """
-  Installs and configures LiveTable in your Phoenix application.
+if Code.ensure_loaded?(Igniter.Mix.Task) do
+  defmodule Mix.Tasks.LiveTable.Install do
+    @moduledoc """
+    Installs and configures LiveTable in your Phoenix application.
 
-  This task configures all necessary files for LiveTable to work properly:
-  - Adds LiveTable configuration to config/config.exs
-  - Optionally configures Oban for CSV/PDF exports
+    ## Usage
 
-  ## Usage
+        $ mix live_table.install
 
-      $ mix live_table.install
+    With Oban for exports:
 
-  With Oban for exports:
+        $ mix live_table.install --oban
 
-      $ mix live_table.install --oban
+    ## Requirements
 
-  This task assumes LiveTable dependency is already added to mix.exs.
+    This task requires the `:igniter` dependency:
 
-  ## Runtime Hooks
+        {:igniter, "~> 0.7", only: :dev, runtime: false}
 
-  LiveTable uses Phoenix 1.8+ runtime colocated hooks which require no JavaScript
-  configuration. The hooks are automatically registered when components render.
-  """
+    For manual installation without Igniter, see:
+    https://hexdocs.pm/live_table/installation.html
+    """
 
-  use Igniter.Mix.Task
+    use Igniter.Mix.Task
 
-  @shortdoc "Installs and configures LiveTable in your Phoenix application"
+    @shortdoc "Installs and configures LiveTable in your Phoenix application"
 
-  @impl Igniter.Mix.Task
-  def info(_argv, _composing_task) do
-    %Igniter.Mix.Task.Info{
-      group: :live_table,
-      example: "mix live_table.install",
-      schema: [
-        oban: :boolean
-      ]
-    }
-  end
+    @impl Igniter.Mix.Task
+    def info(_argv, _composing_task) do
+      %Igniter.Mix.Task.Info{
+        group: :live_table,
+        example: "mix live_table.install",
+        schema: [oban: :boolean]
+      }
+    end
 
-  @impl Igniter.Mix.Task
-  def igniter(igniter) do
-    app_name = Igniter.Project.Module.module_name_prefix(igniter)
+    @impl Igniter.Mix.Task
+    def igniter(igniter) do
+      app_name = Igniter.Project.Module.module_name_prefix(igniter)
 
-    igniter
-    |> configure_live_table_config(app_name)
-    |> maybe_configure_oban(app_name)
-    |> Igniter.add_notice("LiveTable has been successfully configured!")
-    |> Igniter.add_notice("")
-    |> Igniter.add_notice("Next steps:")
-    |> Igniter.add_notice("1. Restart your Phoenix server")
-    |> Igniter.add_notice("2. Create your first LiveTable by following the Quick Start guide")
-    |> add_oban_next_steps(app_name)
-  end
+      igniter
+      |> configure_live_table(app_name)
+      |> maybe_configure_oban(app_name)
+      |> add_notices(app_name)
+    end
 
-  defp configure_live_table_config(igniter, app_module) do
-    repo_module = Module.concat([app_module, "Repo"])
-    pubsub_module = Module.concat([app_module, "PubSub"])
-
-    app_atom =
-      app_module
-      |> Module.split()
-      |> List.last()
-      |> Macro.underscore()
-      |> String.to_atom()
-
-    has_config? =
-      Igniter.Project.Config.configures_root_key?(igniter, "config.exs", :live_table)
-
-    case has_config? do
-      true ->
+    defp configure_live_table(igniter, app_module) do
+      if Igniter.Project.Config.configures_root_key?(igniter, "config/config.exs", :live_table) do
         igniter
+      else
+        repo = Module.concat([app_module, "Repo"])
+        pubsub = Module.concat([app_module, "PubSub"])
 
-      false ->
-        config_content = """
+        app_atom =
+          app_module |> Module.split() |> List.last() |> Macro.underscore() |> String.to_atom()
+
+        config = """
         config :live_table,
           app: #{inspect(app_atom)},
-          repo: #{inspect(repo_module)},
-          pubsub: #{inspect(pubsub_module)}
+          repo: #{inspect(repo)},
+          pubsub: #{inspect(pubsub)}
         """
 
         igniter
@@ -83,19 +66,61 @@ defmodule Mix.Tasks.LiveTable.Install do
         |> Igniter.update_file("config/config.exs", fn source ->
           content = Rewrite.Source.get(source, :content)
 
-          updated_content =
-            case String.contains?(content, "config :live_table") do
-              true -> content
-              false -> content <> "\n" <> config_content <> "\n"
-            end
-
-          Rewrite.Source.update(source, :content, updated_content)
+          if Regex.match?(~r/config\s+:live_table\b/, content) do
+            source
+          else
+            Rewrite.Source.update(source, :content, content <> "\n" <> config <> "\n")
+          end
         end)
+      end
     end
-  end
 
-  defp safe_add_oban_dep(igniter) do
-    try do
+    defp maybe_configure_oban(igniter, app_module) do
+      if oban_wanted?(igniter) do
+        configure_oban(igniter, app_module)
+      else
+        igniter
+      end
+    end
+
+    defp oban_wanted?(igniter) do
+      opts = igniter.args.options
+
+      cond do
+        Keyword.has_key?(opts, :oban) -> opts[:oban]
+        opts[:yes] -> false
+        true -> Igniter.Util.IO.yes?("Configure Oban for exports now?")
+      end
+    end
+
+    defp configure_oban(igniter, app_module) do
+      repo = Module.concat([app_module, "Repo"])
+
+      app_atom =
+        app_module |> Module.split() |> List.last() |> Macro.underscore() |> String.to_atom()
+
+      config = """
+      config :#{app_atom}, Oban,
+        repo: #{inspect(repo)},
+        plugins: [Oban.Plugins.Pruner],
+        queues: [exports: 10]
+      """
+
+      igniter
+      |> safe_add_oban_dep()
+      |> Igniter.include_or_create_file("config/config.exs", "import Config\n")
+      |> Igniter.update_file("config/config.exs", fn source ->
+        content = Rewrite.Source.get(source, :content)
+
+        if String.contains?(content, "config :#{app_atom}, Oban") do
+          source
+        else
+          Rewrite.Source.update(source, :content, content <> "\n" <> config <> "\n")
+        end
+      end)
+    end
+
+    defp safe_add_oban_dep(igniter) do
       igniter
       |> Igniter.Project.Deps.add_dep({:oban, "~> 2.19"}, on_exists: :skip, yes?: true)
       |> Igniter.apply_and_fetch_dependencies(yes: true, fetch?: true)
@@ -103,105 +128,79 @@ defmodule Mix.Tasks.LiveTable.Install do
       _ ->
         Igniter.add_warning(
           igniter,
-          "Could not modify mix.exs to add Oban. Please add {:oban, \"~> 2.19\"} manually and run mix deps.get"
+          "Could not add Oban. Please add {:oban, \"~> 2.19\"} manually."
         )
     end
-  end
 
-  defp oban_wanted?(igniter) do
-    opts = igniter.args.options
-
-    cond do
-      Keyword.has_key?(opts, :oban) ->
-        opts[:oban]
-
-      # In auto-yes mode, do not prompt; default to no unless explicitly set
-      opts[:yes] ->
-        false
-
-      # Prompt regardless of TTY so it can be covered in IO-captured tests
-      true ->
-        Igniter.Util.IO.yes?("Configure Oban for exports now?")
+    defp add_notices(igniter, app_module) do
+      igniter
+      |> Igniter.add_notice("LiveTable has been successfully configured!")
+      |> Igniter.add_notice("")
+      |> Igniter.add_notice("Next steps:")
+      |> Igniter.add_notice("1. Restart your Phoenix server")
+      |> Igniter.add_notice("2. Create your first LiveTable by following the Quick Start guide")
+      |> maybe_add_oban_notice(app_module)
     end
-  end
 
-  defp maybe_configure_oban(igniter, app_module) do
-    if oban_wanted?(igniter), do: configure_oban(igniter, app_module), else: igniter
-  end
+    defp maybe_add_oban_notice(igniter, app_module) do
+      app_atom =
+        app_module |> Module.split() |> List.last() |> Macro.underscore() |> String.to_atom()
 
-  defp configure_oban(igniter, app_module) do
-    repo_module = Module.concat([app_module, "Repo"])
-
-    app_atom =
-      app_module
-      |> Module.split()
-      |> List.last()
-      |> Macro.underscore()
-      |> String.to_atom()
-
-    oban_config = """
-    config :#{app_atom}, Oban,
-      repo: #{inspect(repo_module)},
-      plugins: [Oban.Plugins.Pruner],
-      queues: [exports: 10]
-    """
-
-    igniter
-    |> safe_add_oban_dep()
-    |> Igniter.include_or_create_file("config/config.exs", "import Config\n")
-    |> Igniter.update_file("config/config.exs", fn source ->
-      content = Rewrite.Source.get(source, :content)
-
-      updated =
-        if String.contains?(content, "config :#{app_atom}, Oban"),
-          do: content,
-          else: content <> "\n" <> oban_config <> "\n"
-
-      Rewrite.Source.update(source, :content, updated)
-    end)
-  end
-
-  defp oban_configured?(igniter, app_module) do
-    app_atom =
-      app_module
-      |> Module.split()
-      |> List.last()
-      |> Macro.underscore()
-      |> String.to_atom()
-
-    igniter =
-      if Igniter.exists?(igniter, "config/config.exs") do
-        Igniter.include_existing_file(igniter, "config/config.exs")
+      if oban_configured?(igniter, app_atom) do
+        igniter
+        |> Igniter.add_notice("3. Start Oban by adding it to your supervision tree:")
+        |> Igniter.add_notice(
+          "   children = [..., {Oban, Application.fetch_env!(:#{app_atom}, Oban)}]"
+        )
       else
         igniter
       end
+    end
 
-    case igniter.rewrite |> Rewrite.source("config/config.exs") do
-      {:ok, source} ->
-        content = Rewrite.Source.get(source, :content)
-        String.contains?(content, "config :#{app_atom}, Oban")
+    defp oban_configured?(igniter, app_atom) do
+      case Rewrite.source(igniter.rewrite, "config/config.exs") do
+        {:ok, source} ->
+          source |> Rewrite.Source.get(:content) |> String.contains?("config :#{app_atom}, Oban")
 
-      _ ->
-        false
+        _ ->
+          false
+      end
     end
   end
+else
+  defmodule Mix.Tasks.LiveTable.Install do
+    @moduledoc """
+    Installs and configures LiveTable in your Phoenix application.
 
-  defp add_oban_next_steps(igniter, app_module) do
-    if oban_configured?(igniter, app_module) do
-      app_atom =
-        app_module
-        |> Module.split()
-        |> List.last()
-        |> Macro.underscore()
-        |> String.to_atom()
+    Requires the `:igniter` dependency. Add to your mix.exs:
 
-      igniter
-      |> Igniter.add_notice("3. Start Oban by adding it to your supervision tree:")
-      |> Igniter.add_notice(
-        "   children = [..., {Oban, Application.fetch_env!(:#{app_atom}, Oban)}]"
-      )
-    else
-      igniter
+        {:igniter, "~> 0.7", only: :dev, runtime: false}
+
+    Then run `mix deps.get` and retry.
+
+    For manual installation, see: https://hexdocs.pm/live_table/installation.html
+    """
+
+    use Mix.Task
+
+    @shortdoc "Installs and configures LiveTable (requires :igniter)"
+
+    @impl Mix.Task
+    def run(_argv) do
+      Mix.raise("""
+      mix live_table.install requires the :igniter dependency.
+
+      Add to your mix.exs:
+
+          {:igniter, "~> 0.7", only: :dev, runtime: false}
+
+      Then run:
+
+          mix deps.get
+          mix live_table.install
+
+      Or configure manually: https://hexdocs.pm/live_table/installation.html
+      """)
     end
   end
 end

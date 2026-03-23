@@ -28,6 +28,16 @@ mix deps.get
 
 ### Step 2: Run Installer
 
+If you want to use installer/generator tasks, add the optional Igniter dependency first:
+
+```elixir
+{:igniter, "~> 0.7", only: :dev, runtime: false}
+```
+
+```bash
+mix deps.get
+```
+
 ```bash
 mix live_table.install
 ```
