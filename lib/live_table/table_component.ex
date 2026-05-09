@@ -616,7 +616,16 @@ defmodule LiveTable.TableComponent do
 
       defp render_cell(true, _field, _record), do: "Yes"
       defp render_cell(false, _field, _record), do: "No"
-      defp render_cell(value, _field, _record), do: Phoenix.HTML.Safe.to_iodata(value)
+      defp render_cell(value, _field, _record), do: safe_cell_value(value)
+
+      defp safe_cell_value(value) do
+        Phoenix.HTML.Safe.to_iodata(value)
+      rescue
+        Protocol.UndefinedError ->
+          value
+          |> to_string()
+          |> Phoenix.HTML.Safe.to_iodata()
+      end
 
       defoverridable live_table: 1,
                      render_header: 1,

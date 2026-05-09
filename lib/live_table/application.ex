@@ -5,7 +5,11 @@ defmodule LiveTable.TestApplication do
   def start(_type, _args) do
     children =
       if Application.get_env(:live_table, :env) == :test do
-        [LiveTable.Repo]
+        [
+          LiveTable.Repo,
+          {Phoenix.PubSub, name: LiveTable.TestPubSub},
+          LiveTable.TestEndpoint
+        ]
       else
         []
       end

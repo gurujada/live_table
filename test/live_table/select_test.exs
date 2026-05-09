@@ -257,7 +257,7 @@ defmodule LiveTable.SelectTest do
 
       result = Select.apply(true, filter)
 
-      query = from(p in "products", where: ^result)
+      _query = from(p in "products", where: ^result)
       assert is_struct(result, Ecto.Query.DynamicExpr)
     end
 
@@ -269,7 +269,7 @@ defmodule LiveTable.SelectTest do
 
       result = Select.apply(true, filter)
 
-      query =
+      _query =
         from(p in Product,
           join: c in Category,
           as: :categories,
@@ -287,7 +287,7 @@ defmodule LiveTable.SelectTest do
 
       result = Select.apply(true, filter)
 
-      query = from(p in "products", where: ^result)
+      _query = from(p in "products", where: ^result)
       assert is_struct(result, Ecto.Query.DynamicExpr)
     end
 
@@ -296,7 +296,7 @@ defmodule LiveTable.SelectTest do
 
       result = Select.apply(true, filter)
 
-      query =
+      _query =
         from(p in Product,
           join: c in Category,
           as: :categories,
