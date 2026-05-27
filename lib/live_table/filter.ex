@@ -2,18 +2,10 @@ defmodule LiveTable.Filter do
   @moduledoc false
   import Ecto.Query
 
-  @doc """
-  Builds a dynamic query for text search across multiple fields.
-  Supports different search modes:
-    - :ilike - PostgreSQL case-insensitive (uses native ILIKE operator)
-    - :like_lower - Universal case-insensitive (uses lower() function, works on any DB)
-  """
-  def apply_text_search(search_term, fields, search_mode \\ :ilike)
-
   # Returns true for empty search terms to avoid unnecessary filtering
-  def apply_text_search("", _, _), do: true
+  defp apply_text_search("", _, _), do: true
 
-  def apply_text_search(search_term, fields, search_mode) do
+  defp apply_text_search(search_term, fields, search_mode) do
     searchable_fields = get_searchable_fields(fields)
 
     Enum.reduce(searchable_fields, nil, fn

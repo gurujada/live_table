@@ -839,10 +839,9 @@ end
 ### Debugging Configuration
 
 ```elixir
-# Check effective configuration
+# Check table-specific configuration
 def mount(_params, _session, socket) do
-  effective_config = get_merged_table_options()
-  IO.inspect(effective_config, label: "Table Config")
+  IO.inspect(table_options(), label: "Table Options")
   {:ok, socket}
 end
 

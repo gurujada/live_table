@@ -8,7 +8,7 @@ defmodule LiveTable.Sorting do
     sort(query, fields, sort_params)
   end
 
-  def sort(query, fields, sort_params) do
+  defp sort(query, fields, sort_params) do
     sorts =
       Enum.reduce(sort_params, [], fn
         {sort_by, sort_order}, acc ->

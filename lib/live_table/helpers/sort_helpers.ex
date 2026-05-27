@@ -71,8 +71,8 @@ defmodule LiveTable.SortHelpers do
     """
   end
 
-  def next_sort_order("asc"), do: "desc"
-  def next_sort_order("desc"), do: "asc"
+  defp next_sort_order("asc"), do: "desc"
+  defp next_sort_order("desc"), do: "asc"
 
   def update_sort_params(map, nil, _), do: map
 
@@ -99,7 +99,7 @@ defmodule LiveTable.SortHelpers do
     |> Map.put("sort_params", p)
   end
 
-  def merge_lists(list1, list2) do
+  defp merge_lists(list1, list2) do
     list2_map = Enum.into(list2, %{})
 
     list1

@@ -439,7 +439,7 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      def filters(var!(assigns)) do
+      defp filters(var!(assigns)) do
         filter_count = length(var!(assigns).filters)
         cols = min(filter_count, 3)
         var!(assigns) = assign(var!(assigns), :cols, cols)
@@ -499,7 +499,7 @@ defmodule LiveTable.TableComponent do
         end
       end
 
-      def paginate(var!(assigns)) do
+      defp paginate(var!(assigns)) do
         ~H"""
         <nav class="flex items-center justify-between px-4 py-3 sm:px-6" aria-label="Pagination">
           <div class="hidden sm:block">
@@ -532,7 +532,7 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      def exports(var!(assigns)) do
+      defp exports(var!(assigns)) do
         ~H"""
         <.dropdown_menu id="export-dropdown">
           <:trigger>
@@ -632,7 +632,7 @@ defmodule LiveTable.TableComponent do
                      render_content: 1,
                      render_footer: 1
 
-      def render_actions(var!(assigns)) do
+      defp render_actions(var!(assigns)) do
         ~H"""
         <div class="flex">
           <%= for {_key, component} <- actions_items(@actions) do %>
@@ -646,13 +646,13 @@ defmodule LiveTable.TableComponent do
       defp actions_items(%{items: items}) when is_list(items), do: items
       defp actions_items(_), do: []
 
-      def has_actions([]), do: false
-      def has_actions(actions) when is_list(actions), do: true
-      def has_actions(%{items: items}) when is_list(items), do: length(items) > 0
-      def has_actions(_), do: false
+      defp has_actions([]), do: false
+      defp has_actions(actions) when is_list(actions), do: true
+      defp has_actions(%{items: items}) when is_list(items), do: length(items) > 0
+      defp has_actions(_), do: false
 
-      def actions_label(%{label: label}), do: label
-      def actions_label(_), do: "Actions"
+      defp actions_label(%{label: label}), do: label
+      defp actions_label(_), do: "Actions"
 
       defp visible_fields(fields) do
         Enum.reject(fields, fn {_key, field} -> Map.get(field, :hidden, false) end)

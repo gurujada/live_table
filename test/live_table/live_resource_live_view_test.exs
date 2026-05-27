@@ -3,8 +3,6 @@ defmodule LiveTable.LiveResourceLiveViewTest do
 
   import LiveTable.Fixtures
 
-  alias LiveTable.Catalog.Product
-
   describe "LiveResource LiveView lifecycle" do
     setup do
       alpha =
@@ -45,6 +43,20 @@ defmodule LiveTable.LiveResourceLiveViewTest do
 
       assert view |> element("tbody#resources-stream[phx-update='stream']") |> has_element?()
       assert render(view) =~ "Page <span class=\"font-medium text-foreground\">1</span>"
+    end
+
+    test "schema data source renders selected fields without schema metadata columns", %{
+      conn: conn
+    } do
+      {:ok, view, html} = live(conn, "/products")
+
+      assert html =~ "Alpha"
+      assert html =~ "100.00"
+      assert view |> element("th", "Name") |> has_element?()
+      refute html =~ "__meta__"
+      refute html =~ "category_id"
+      refute html =~ "inserted_at"
+      refute html =~ "updated_at"
     end
 
     test "search params filter rows and preserve URL-backed state", %{conn: conn} do
@@ -159,27 +171,6 @@ defmodule LiveTable.LiveResourceLiveViewTest do
 
       assert html =~ "Matched"
       refute html =~ "Unmatched"
-    end
-
-    test "schema data source returns selected maps, not raw schemas" do
-      product_fixture(%{name: "Selected"})
-
-      options = %{
-        "sort" => %{"sortable?" => true, "sort_params" => [name: :asc]},
-        "pagination" => %{"paginate?" => false, "page" => "1", "per_page" => "10"},
-        "filters" => %{}
-      }
-
-      [result] =
-        LiveTable.TestProductLive.list_resources(
-          LiveTable.TestProductLive.fields(),
-          options,
-          Product
-        )
-        |> Repo.all()
-
-      assert %{name: "Selected", price: %Decimal{}} = result
-      refute Map.has_key?(result, :__meta__)
     end
   end
 end

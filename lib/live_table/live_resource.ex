@@ -40,8 +40,8 @@ defmodule LiveTable.LiveResource do
 
       defoverridable fields: 0, filters: 0, table_options: 0, actions: 0
 
-      def list_resources(fields, options, {module, function, args} = _data_provider)
-          when is_atom(function) do
+      defp list_resources(fields, options, {module, function, args} = _data_provider)
+           when is_atom(function) do
         {regular_filters, transformers, debug_mode} = prepare_query_context(options)
         search_mode = get_search_mode()
 
@@ -54,7 +54,7 @@ defmodule LiveTable.LiveResource do
         |> debug_pipeline(debug_mode)
       end
 
-      def list_resources(fields, options, schema) do
+      defp list_resources(fields, options, schema) do
         {regular_filters, transformers, debug_mode} = prepare_query_context(options)
         search_mode = get_search_mode()
 
@@ -73,11 +73,11 @@ defmodule LiveTable.LiveResource do
         TableConfig.get_search_mode(table_options(), @repo)
       end
 
-      def stream_resources(
-            fields,
-            %{"pagination" => %{"paginate?" => true}} = options,
-            data_source
-          ) do
+      defp stream_resources(
+             fields,
+             %{"pagination" => %{"paginate?" => true}} = options,
+             data_source
+           ) do
         per_page = options["pagination"]["per_page"] |> String.to_integer()
 
         data_source = data_source || @resource_opts[:schema]
@@ -87,18 +87,14 @@ defmodule LiveTable.LiveResource do
         |> Enum.split(per_page)
       end
 
-      def stream_resources(
-            fields,
-            %{"pagination" => %{"paginate?" => false}} = options,
-            data_source
-          ) do
+      defp stream_resources(
+             fields,
+             %{"pagination" => %{"paginate?" => false}} = options,
+             data_source
+           ) do
         data_source = data_source || @resource_opts[:schema]
 
         list_resources(fields, options, data_source) |> @repo.all()
-      end
-
-      def get_merged_table_options do
-        TableConfig.get_table_options(table_options())
       end
 
       defp prepare_query_context(options) do

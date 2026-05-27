@@ -39,7 +39,7 @@ defmodule LiveTable.SortingTest do
       query = from(p in "posts")
       sort_params = [body: :asc]
       fields = %{body: %{sortable: true}}
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [asc: p0.body]"
@@ -49,7 +49,7 @@ defmodule LiveTable.SortingTest do
       query = from(p in "posts")
       sort_params = [likes_count: :desc]
       fields = %{likes_count: %{sortable: true}}
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [desc: p0.likes_count]"
@@ -60,7 +60,7 @@ defmodule LiveTable.SortingTest do
       sort_params = [invalid: :params]
       fields = %{body: %{sortable: true}}
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: []"
@@ -73,7 +73,7 @@ defmodule LiveTable.SortingTest do
 
       fields = %{likes_count: %{sortable: true}, repost_count: %{sortable: true}}
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [desc: p0.likes_count, asc: p0.repost_count]"
@@ -109,7 +109,7 @@ defmodule LiveTable.SortingTest do
         }
       ]
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [desc: p0.price]"
@@ -128,7 +128,7 @@ defmodule LiveTable.SortingTest do
         }
       ]
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [desc: fragment(\"? * 0.58\", p0.price)]"
@@ -140,7 +140,7 @@ defmodule LiveTable.SortingTest do
       query = from(p in "products")
       sort_params = [price: :asc]
       fields = %{price: %{sortable: true}}
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [asc: p0.price]"
@@ -159,7 +159,7 @@ defmodule LiveTable.SortingTest do
       sort_params = [supplier_name: :asc]
       fields = %{supplier_name: %{sortable: true}}
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [asc: s2.name]"
@@ -195,7 +195,7 @@ defmodule LiveTable.SortingTest do
         }
       ]
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
       assert inspect(result) =~ "order_by: [asc: s1.name, desc: p0.price]"
@@ -236,7 +236,7 @@ defmodule LiveTable.SortingTest do
         }
       ]
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
 
@@ -275,7 +275,7 @@ defmodule LiveTable.SortingTest do
         }
       ]
 
-      result = Sorting.sort(query, fields, sort_params)
+      result = Sorting.maybe_sort(query, fields, sort_params, true)
 
       assert %Ecto.Query{} = result
 

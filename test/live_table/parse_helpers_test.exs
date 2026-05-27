@@ -96,6 +96,7 @@ defmodule LiveTable.ParseHelpersTest do
       result = ParseHelpers.parse_filters(params, socket, filters())
 
       assert result[:boolean_with_default] != nil
+      assert result[:under_100] == nil
     end
 
     test "does not apply defaults when filters already present" do
@@ -147,6 +148,35 @@ defmodule LiveTable.ParseHelpersTest do
 
       assert result[:seat_type].options.selected == ["open"]
     end
+
+    test "parses integer range filter values" do
+      params = %{"filters" => %{"price_range" => %{"min" => "50", "max" => "200"}}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, filters())
+
+      assert result[:price_range].options.current_min == 50
+      assert result[:price_range].options.current_max == 200
+    end
+
+    test "parses float range filter values" do
+      custom_filters = [
+        rating:
+          Range.new(:rating, "rating", %{
+            step: 0.5,
+            current_min: nil,
+            current_max: nil
+          })
+      ]
+
+      params = %{"filters" => %{"rating" => %{"min" => "10.5", "max" => "50.5"}}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, custom_filters)
+
+      assert result[:rating].options.current_min == 10.5
+      assert result[:rating].options.current_max == 50.5
+    end
   end
 
   describe "get_filter/2" do
@@ -192,26 +222,6 @@ defmodule LiveTable.ParseHelpersTest do
     end
   end
 
-  describe "parse_range_values/3" do
-    test "parses integer step values" do
-      options = %{step: 10}
-
-      {min, max} = ParseHelpers.parse_range_values(options, "50", "200")
-
-      assert min == 50
-      assert max == 200
-    end
-
-    test "parses float step values" do
-      options = %{step: 0.5}
-
-      {min, max} = ParseHelpers.parse_range_values(options, "10.5", "50.5")
-
-      assert min == 10.5
-      assert max == 50.5
-    end
-  end
-
   describe "coerce_select_value/1" do
     test "coerces integer string to integer" do
       assert ParseHelpers.coerce_select_value("42") == 42
@@ -246,65 +256,53 @@ defmodule LiveTable.ParseHelpersTest do
       assert result["pagination"]["per_page"] == "25"
       assert result["filters"] == filters
     end
-  end
 
-  describe "validate_page_num/1" do
-    test "returns 1 for nil" do
-      assert ParseHelpers.validate_page_num(nil) == "1"
+    test "defaults invalid pagination params through options building" do
+      table_options = %{
+        sorting: %{enabled: true},
+        pagination: %{enabled: true, default_size: 25, max_per_page: 50}
+      }
+
+      result =
+        ParseHelpers.build_options(
+          [],
+          %{},
+          %{"page" => "abc", "per_page" => "100"},
+          table_options
+        )
+
+      assert result["pagination"]["page"] == "1"
+      assert result["pagination"]["per_page"] == "50"
     end
 
-    test "returns page for valid page number" do
-      assert ParseHelpers.validate_page_num("5") == "5"
+    test "defaults nil pagination params through options building" do
+      table_options = %{
+        sorting: %{enabled: true},
+        pagination: %{enabled: true, default_size: 25, max_per_page: 50}
+      }
+
+      result = ParseHelpers.build_options([], %{}, %{}, table_options)
+
+      assert result["pagination"]["page"] == "1"
+      assert result["pagination"]["per_page"] == "25"
     end
 
-    test "returns 1 for invalid page number" do
-      assert ParseHelpers.validate_page_num("0") == "1"
-      assert ParseHelpers.validate_page_num("-1") == "1"
-      assert ParseHelpers.validate_page_num("abc") == "1"
-    end
-  end
+    test "keeps valid non-default pagination params through options building" do
+      table_options = %{
+        sorting: %{enabled: true},
+        pagination: %{enabled: true, default_size: 10, max_per_page: 100}
+      }
 
-  describe "validate_per_page/2" do
-    test "returns default size for nil" do
-      table_options = %{default_size: 25, max_per_page: 100}
+      result =
+        ParseHelpers.build_options(
+          [],
+          %{},
+          %{"page" => "5", "per_page" => "50"},
+          table_options
+        )
 
-      assert ParseHelpers.validate_per_page(nil, table_options) == "25"
-    end
-
-    test "returns per_page for valid value" do
-      table_options = %{default_size: 10, max_per_page: 100}
-
-      assert ParseHelpers.validate_per_page("50", table_options) == "50"
-    end
-
-    test "returns max_per_page for value over limit" do
-      table_options = %{default_size: 10, max_per_page: 50}
-
-      assert ParseHelpers.validate_per_page("100", table_options) == "50"
-    end
-
-    test "returns max_per_page for invalid value" do
-      table_options = %{default_size: 10, max_per_page: 50}
-
-      assert ParseHelpers.validate_per_page("abc", table_options) == "50"
-    end
-  end
-
-  describe "apply_default_filters/2" do
-    test "applies boolean filters with default: true" do
-      parsed = %{}
-
-      result = ParseHelpers.apply_default_filters(parsed, filters())
-
-      assert result[:boolean_with_default] != nil
-    end
-
-    test "does not apply filters without default" do
-      parsed = %{}
-
-      result = ParseHelpers.apply_default_filters(parsed, filters())
-
-      assert result[:under_100] == nil
+      assert result["pagination"]["page"] == "5"
+      assert result["pagination"]["per_page"] == "50"
     end
   end
 end

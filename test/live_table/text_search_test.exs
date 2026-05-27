@@ -2,13 +2,14 @@ defmodule LiveTable.FilterTest do
   use LiveTable.DataCase
   alias LiveTable.{Catalog.Product, Filter}
 
-  describe "apply_text_search/3" do
+  describe "apply_filters/4 text search" do
     test "returns true condition when search term is empty" do
       fields = %{name: %{searchable: true}}
+      query = from(p in "products")
 
-      conditions = Filter.apply_text_search("", fields)
+      result = Filter.apply_filters(query, %{"search" => ""}, fields)
 
-      assert conditions == true
+      assert result == query
     end
 
     test "applies text search to query in base schema" do
@@ -17,10 +18,11 @@ defmodule LiveTable.FilterTest do
         description: %{searchable: true}
       ]
 
-      conditions = Filter.apply_text_search("search term", fields)
+      query = from(p in "products")
+      result = Filter.apply_filters(query, %{"search" => "search term"}, fields)
 
-      assert inspect(conditions) =~ "ilike(p.name, ^\"%search term%\")"
-      assert inspect(conditions) =~ "ilike(p.description, ^\"%search term%\")"
+      assert inspect(result) =~ "ilike(p0.name, ^\"%search term%\")"
+      assert inspect(result) =~ "ilike(p0.description, ^\"%search term%\")"
     end
 
     test "supports lower-like mode for case-insensitive search" do
@@ -28,8 +30,9 @@ defmodule LiveTable.FilterTest do
         name: %{searchable: true}
       ]
 
-      conditions = Filter.apply_text_search("Search Term", fields, :like_lower)
-      inspected = inspect(conditions)
+      query = from(p in "products")
+      result = Filter.apply_filters(query, %{"search" => "Search Term"}, fields, :like_lower)
+      inspected = inspect(result)
 
       assert inspected =~ "lower(?) LIKE ?"
       assert inspected =~ "%search term%"
@@ -69,10 +72,11 @@ defmodule LiveTable.FilterTest do
         description: %{searchable: false}
       ]
 
-      result = Filter.apply_text_search("search term", fields)
+      query = from(p in "products")
+      result = Filter.apply_filters(query, %{"search" => "search term"}, fields)
 
-      assert inspect(result) =~ "ilike(p.name, ^\"%search term%\")"
-      refute inspect(result) =~ "ilike(p.description, ^\"%search term%\")"
+      assert inspect(result) =~ "ilike(p0.name, ^\"%search term%\")"
+      refute inspect(result) =~ "ilike(p0.description, ^\"%search term%\")"
     end
   end
 end

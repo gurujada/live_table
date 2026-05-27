@@ -189,7 +189,7 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
-      def assign_to_socket(socket, resources, %{use_streams: true}) do
+      defp assign_to_socket(socket, resources, %{use_streams: true}) do
         stream(socket, :resources, resources,
           dom_id: fn _resource ->
             "resource-#{Ecto.UUID.generate()}"
@@ -198,19 +198,19 @@ defmodule LiveTable.LiveViewHelpers do
         )
       end
 
-      def assign_to_socket(socket, resources, %{use_streams: false}) do
+      defp assign_to_socket(socket, resources, %{use_streams: false}) do
         assign(socket, :resources, resources)
       end
 
-      def maybe_assign_infinite_scroll(socket, %{
-            pagination: %{mode: :infinite_scroll}
-          }) do
+      defp maybe_assign_infinite_scroll(socket, %{
+             pagination: %{mode: :infinite_scroll}
+           }) do
         assign(socket, :infinite_scroll_page, 1)
       end
 
-      def maybe_assign_infinite_scroll(socket, _table_options), do: socket
+      defp maybe_assign_infinite_scroll(socket, _table_options), do: socket
 
-      def fetch_resources(options, data_provider) do
+      defp fetch_resources(options, data_provider) do
         case stream_resources(fields(), options, data_provider) do
           {resources, overflow} ->
             has_next_page = length(overflow) > 0

@@ -37,7 +37,7 @@ defmodule LiveTable.ParseHelpers do
       else: parsed
   end
 
-  def apply_default_filters(parsed, filters) do
+  defp apply_default_filters(parsed, filters) do
     Enum.reduce(filters, parsed, fn
       {key, %LiveTable.Boolean{options: %{default: true}} = filter}, acc ->
         Map.put(acc, key, filter)
@@ -47,7 +47,7 @@ defmodule LiveTable.ParseHelpers do
     end)
   end
 
-  def parse_range_filter(key, min, max, acc, filters) do
+  defp parse_range_filter(key, min, max, acc, filters) do
     filter = get_filter(key, filters)
     {min_val, max_val} = parse_range_values(filter.options, min, max)
 
@@ -62,7 +62,7 @@ defmodule LiveTable.ParseHelpers do
     Map.put(acc, String.to_atom(key), updated_filter)
   end
 
-  def parse_select_filter(key, id, acc, filters) do
+  defp parse_select_filter(key, id, acc, filters) do
     filter = %LiveTable.Select{} = get_filter(key, filters)
 
     id =
@@ -86,7 +86,7 @@ defmodule LiveTable.ParseHelpers do
 
   def coerce_select_value(val), do: val
 
-  def parse_custom_filter(key, custom_data, acc, filters) do
+  defp parse_custom_filter(key, custom_data, acc, filters) do
     filter = get_filter(key, filters)
 
     case filter do
@@ -113,13 +113,13 @@ defmodule LiveTable.ParseHelpers do
     Keyword.get(filters, key)
   end
 
-  def parse_range_values(%{step: step}, min, max) when is_integer(step) do
+  defp parse_range_values(%{step: step}, min, max) when is_integer(step) do
     {min_int, _} = Integer.parse(min)
     {max_int, _} = Integer.parse(max)
     {min_int, max_int}
   end
 
-  def parse_range_values(%{step: _step}, min, max) do
+  defp parse_range_values(%{step: _step}, min, max) do
     {min_float, _} = Float.parse(min)
     {max_float, _} = Float.parse(max)
     {min_float, max_float}
@@ -141,19 +141,19 @@ defmodule LiveTable.ParseHelpers do
     }
   end
 
-  def validate_page_num(nil), do: "1"
+  defp validate_page_num(nil), do: "1"
 
-  def validate_page_num(n) when is_binary(n) do
+  defp validate_page_num(n) when is_binary(n) do
     case Integer.parse(n) do
       {num, ""} when num > 0 -> n
       _ -> "1"
     end
   end
 
-  def validate_per_page(nil, table_options),
+  defp validate_per_page(nil, table_options),
     do: table_options[:default_size] |> to_string()
 
-  def validate_per_page(n, table_options) when is_binary(n) do
+  defp validate_per_page(n, table_options) when is_binary(n) do
     max_per_page = table_options[:max_per_page]
 
     case Integer.parse(n) do

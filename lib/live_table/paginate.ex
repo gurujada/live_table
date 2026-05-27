@@ -9,7 +9,7 @@ defmodule LiveTable.Paginate do
     |> paginate(paginate_params)
   end
 
-  def paginate(query, %{"per_page" => per_page, "page" => page}) do
+  defp paginate(query, %{"per_page" => per_page, "page" => page}) do
     page = page |> String.to_integer()
     per_page = per_page |> String.to_integer()
 

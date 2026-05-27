@@ -2,13 +2,13 @@ defmodule LiveTable.FilterHelpers do
   @moduledoc false
   defmacro __using__(_opts) do
     quote do
-      def get_filter(key) when is_binary(key) do
+      defp get_filter(key) when is_binary(key) do
         key
         |> String.to_atom()
         |> get_filter()
       end
 
-      def get_filter(key) when is_atom(key) do
+      defp get_filter(key) when is_atom(key) do
         filters() |> Keyword.get(key)
       end
 
@@ -74,7 +74,7 @@ defmodule LiveTable.FilterHelpers do
         Map.put(map, "filters", updated_params)
       end
 
-      def encode_filters(filters) do
+      defp encode_filters(filters) do
         Enum.reduce(filters, %{}, fn
           {k, %LiveTable.Range{options: %{current_min: min, current_max: max}}}, acc ->
             k = k |> to_string

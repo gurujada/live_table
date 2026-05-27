@@ -4,9 +4,7 @@ defmodule LiveTable.SortHelpersTest do
 
   SortHelpers provides:
     * `sort_link/1` - A Phoenix component for rendering sortable column headers
-    * `next_sort_order/1` - Toggles between "asc" and "desc"
     * `update_sort_params/3` - Updates sort params from URL/event params
-    * `merge_lists/2` - Merges keyword lists for multi-sort
 
   ## What This Tests
 
@@ -173,16 +171,6 @@ defmodule LiveTable.SortHelpersTest do
     end
   end
 
-  describe "next_sort_order/1" do
-    test "returns 'desc' for 'asc'" do
-      assert next_sort_order("asc") == "desc"
-    end
-
-    test "returns 'asc' for 'desc'" do
-      assert next_sort_order("desc") == "asc"
-    end
-  end
-
   describe "update_sort_params/3 with nil params" do
     test "returns map unchanged when params is nil" do
       map = %{"page" => "1", "sort_params" => [name: :asc]}
@@ -277,8 +265,6 @@ defmodule LiveTable.SortHelpersTest do
     end
 
     test "handles nil sort_params gracefully with shift key" do
-      # When existing sort_params is nil, merge_lists will fail
-      # This tests the actual behavior - the function throws on nil
       map = %{"sort_params" => []}
       params = ~s({"name": "asc"})
 
@@ -287,87 +273,24 @@ defmodule LiveTable.SortHelpersTest do
       # With empty list, it should work
       assert result["sort_params"][:name] == :asc
     end
-  end
 
-  describe "merge_lists/2" do
-    test "merges two keyword lists" do
-      list1 = [name: :asc, price: :desc]
-      list2 = [stock: :asc]
+    test "preserves existing sorts when shift-sort payload is empty" do
+      map = %{"sort_params" => [name: :asc, price: :desc]}
+      params = "{}"
 
-      result = merge_lists(list1, list2)
+      result = update_sort_params(map, params, true)
 
-      assert result[:name] == :asc
-      assert result[:price] == :desc
-      assert result[:stock] == :asc
+      assert result["sort_params"] == [name: :asc, price: :desc]
     end
 
-    test "updates values for existing keys from list2" do
-      list1 = [name: :asc, price: :desc]
-      list2 = [name: :desc]
+    test "does not duplicate keys when shift-sort updates existing fields" do
+      map = %{"sort_params" => [name: :asc, price: :desc]}
+      params = ~s({"name": "desc", "price": "asc"})
 
-      result = merge_lists(list1, list2)
+      result = update_sort_params(map, params, true)
 
-      # Name should be updated to desc
-      assert result[:name] == :desc
-      # Price should remain unchanged
-      assert result[:price] == :desc
-    end
-
-    test "preserves order of list1 keys" do
-      list1 = [a: 1, b: 2, c: 3]
-      list2 = [b: 20]
-
-      result = merge_lists(list1, list2)
-
-      keys = Keyword.keys(result)
-      assert Enum.slice(keys, 0, 3) == [:a, :b, :c]
-    end
-
-    test "appends new keys from list2 at the end" do
-      list1 = [a: 1, b: 2]
-      list2 = [c: 3, d: 4]
-
-      result = merge_lists(list1, list2)
-
-      keys = Keyword.keys(result)
-      # a, b from list1, then c, d from list2
-      assert keys == [:a, :b, :c, :d]
-    end
-
-    test "handles empty list1" do
-      list1 = []
-      list2 = [a: 1, b: 2]
-
-      result = merge_lists(list1, list2)
-
-      assert result == [a: 1, b: 2]
-    end
-
-    test "handles empty list2" do
-      list1 = [a: 1, b: 2]
-      list2 = []
-
-      result = merge_lists(list1, list2)
-
-      assert result == [a: 1, b: 2]
-    end
-
-    test "handles both lists empty" do
-      result = merge_lists([], [])
-
-      assert result == []
-    end
-
-    test "does not duplicate keys that exist in both" do
-      list1 = [a: 1, b: 2]
-      list2 = [a: 10, b: 20]
-
-      result = merge_lists(list1, list2)
-
-      # Should only have 2 keys, not 4
-      assert length(result) == 2
-      assert result[:a] == 10
-      assert result[:b] == 20
+      assert length(result["sort_params"]) == 2
+      assert result["sort_params"] == [name: :desc, price: :asc]
     end
   end
 
