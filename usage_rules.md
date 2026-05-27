@@ -2,6 +2,10 @@
 
 This document provides clear rules and patterns for AI assistants to help developers use the LiveTable library correctly. Follow these guidelines when generating code suggestions or helping with LiveTable implementation.
 
+## Agent Skill
+
+If this package contains `SKILL.md`, read it first. It is the canonical agent-facing guide for LiveTable usage and explicitly documents the public API surface, correct LiveView patterns, transformers, custom providers, and APIs that agents must not hallucinate or call directly.
+
 ## Core Principles
 
 ### 1. Field Key Mapping is Critical
