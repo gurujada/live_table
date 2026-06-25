@@ -8,7 +8,7 @@ defmodule LiveTable.MixProject do
     [
       app: :live_table,
       version: @version,
-      elixir: "~> 1.14",
+      elixir: "~> 1.20",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -29,7 +29,7 @@ defmodule LiveTable.MixProject do
 
   defp deps do
     [
-      {:phoenix_live_view, "~> 1.1"},
+      {:phoenix_live_view, "~> 1.2"},
       {:phoenix_html, "~> 4.3"},
       {:ecto, "~> 3.13"},
       {:jason, "~> 1.4"},

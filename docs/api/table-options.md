@@ -423,8 +423,7 @@ def table_options do
     },
     sorting: %{
       enabled: true,
-      default_sort: [featured: :desc, name: :asc],
-      multi_column: true
+      default_sort: [featured: :desc, name: :asc]
     },
     exports: %{
       enabled: true,
@@ -436,7 +435,6 @@ def table_options do
       placeholder: "Search products..."
     },
     mode: :card,
-    card_component: &product_card/1,
     card_component: &product_card/1
   }
 end
@@ -468,8 +466,7 @@ def table_options do
     },
     sorting: %{
       enabled: true,
-      default_sort: [last_sign_in_at: :desc],
-      multi_column: true
+      default_sort: [last_sign_in_at: :desc]
     },
     exports: %{
       enabled: true,
@@ -497,8 +494,7 @@ def table_options do
     },
     sorting: %{
       enabled: true,
-      default_sort: [date: :desc, revenue: :desc],
-      multi_column: true
+      default_sort: [date: :desc, revenue: :desc]
     },
     exports: %{
       enabled: true,

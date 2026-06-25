@@ -23,7 +23,7 @@ LiveTable is designed for developers who need to present complex data in an intu
 ### 🔍 Smart Filtering
 Create powerful filter interfaces with minimal configuration:
 - **Boolean filters** for toggle states (active/inactive, featured/regular)
-- **Range filters** for numeric values, dates, and times
+- **Range filters** for numeric values
 - **Select filters** with static options or dynamic database queries
 - **Transformers** for complex custom filters that can modify entire queries
 - **Full-text search** across multiple fields

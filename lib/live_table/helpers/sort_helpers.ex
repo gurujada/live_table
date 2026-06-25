@@ -5,7 +5,6 @@ defmodule LiveTable.SortHelpers do
   def sort_link(%{sortable: true} = assigns) do
     ~H"""
     <div
-      :if={@sortable}
       class="group inline-flex items-center cursor-pointer whitespace-nowrap align-middle"
       phx-click="sort"
       id={@key}

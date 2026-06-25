@@ -8,7 +8,7 @@
 | Type | Module | Use Case |
 |------|--------|----------|
 | Boolean | `LiveTable.Boolean` | Toggle on/off conditions |
-| Range | `LiveTable.Range` | Numeric/date ranges |
+| Range | `LiveTable.Range` | Numeric ranges |
 | Select | `LiveTable.Select` | Dropdown selection |
 | Transformer | `LiveTable.Transformer` | Custom query logic |
 
@@ -86,9 +86,8 @@ end
 | Option | Type | Description |
 |--------|------|-------------|
 | `label` | string | Display label |
-| `type` | atom | `:number`, `:date`, `:datetime` |
-| `min` | number/date | Minimum value |
-| `max` | number/date | Maximum value |
+| `min` | number | Minimum value |
+| `max` | number | Maximum value |
 | `step` | number | Increment step |
 
 ### Examples
@@ -102,12 +101,6 @@ price: Range.new(:price, "price", %{
   min: 0,
   max: 10000,
   step: 100
-})
-
-# Date range
-created: Range.new(:inserted_at, "created", %{
-  type: :date,
-  label: "Created Date"
 })
 
 # Quantity range

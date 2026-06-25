@@ -37,7 +37,7 @@ end
 LiveTable supports three types of filters:
 
 - **Boolean** - Checkbox filters for true/false conditions
-- **Range** - Slider filters for numeric, date, or datetime ranges
+- **Range** - Slider filters for numeric ranges
 - **Select** - Dropdown filters with static or dynamic options
 
 ## Common Filter Patterns
@@ -133,7 +133,7 @@ Boolean.new(field, key, %{
 
 ## Range Filters
 
-Range filters provide sliders for filtering numeric values, dates, or datetimes within specified ranges.
+Range filters provide sliders for filtering numeric values within specified ranges.
 
 ### Numeric Ranges
 
@@ -162,44 +162,12 @@ def filters do
 end
 ```
 
-### Date Ranges
-
-```elixir
-def filters do
-  [
-    created_date: Range.new(:inserted_at, "created_range", %{
-      type: :date,
-      label: "Created Date",
-      min: ~D[2024-01-01],
-      max: ~D[2024-12-31],
-      default_min: ~D[2024-01-01],
-      default_max: ~D[2024-12-31]
-    })
-  ]
-end
-```
-
-### DateTime Ranges
-
-```elixir
-def filters do
-  [
-    updated_time: Range.new(:updated_at, "updated_range", %{
-      type: :datetime,
-      label: "Last Updated",
-      min: ~N[2024-01-01 00:00:00],
-      max: ~N[2024-12-31 23:59:59],
-      step: 3600  # Step in seconds (1 hour)
-    })
-  ]
-end
-```
+For date, datetime, or other non-numeric range behavior, use `LiveTable.Transformer`.
 
 ### Range Options
 
 ```elixir
 Range.new(field, key, %{
-  type: :number,                    # Required: :number, :date, or :datetime
   label: "Range Label",             # Required: Display text
   min: 0,                          # Required: Minimum value
   max: 100,                        # Required: Maximum value
@@ -366,10 +334,8 @@ Select.new(field, key, %{
   options_source: {Module, :function, []}, # Dynamic options source
   option_template: &template_function/1,   # Custom option template
   placeholder: "Choose an option...",      # Placeholder text
-  loading_text: "Loading...",              # Loading state text
   css_classes: "custom-wrapper",           # CSS classes
-  label_classes: "custom-label",           # Label CSS classes
-  select_classes: "custom-select"          # Select input CSS classes
+  label_classes: "custom-label"            # Label CSS classes
 })
 ```
 
@@ -431,14 +397,6 @@ def filters do
       condition: dynamic([u], u.active == true)
     }),
     
-    # Registration date range
-    signup_date: Range.new(:inserted_at, "signup_range", %{
-      type: :date,
-      label: "Registration Date",
-      min: ~D[2020-01-01],
-      max: Date.utc_today()
-    }),
-    
     # Role selection
     role: Select.new(:role, "role", %{
       label: "User Role",
@@ -484,14 +442,6 @@ def filters do
       min: 0,
       max: 10000,
       step: 100
-    }),
-    
-    # Date range for order placement
-    order_date: Range.new(:inserted_at, "order_date_range", %{
-      type: :date,
-      label: "Order Date",
-      min: Date.add(Date.utc_today(), -365),
-      max: Date.utc_today()
     }),
     
     # High priority orders

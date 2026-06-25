@@ -101,13 +101,6 @@ defmodule YourAppWeb.UserLive.Index do
           %{label: "Manager", value: ["manager"]},
           %{label: "User", value: ["user"]}
         ]
-      }),
-
-      signup_date: Range.new(:inserted_at, "signup_range", %{
-        type: :date,
-        label: "Registration Date",
-        min: ~D[2020-01-01],
-        max: Date.utc_today()
       })
     ]
   end
@@ -583,7 +576,7 @@ end
 
 ### 3. Practical Filters
 - Boolean filters for status toggles
-- Range filters for numeric and date fields
+- Range filters for numeric fields; use transformers for date ranges
 - Select filters for enumerated values
 
 ### 4. Sensible Defaults

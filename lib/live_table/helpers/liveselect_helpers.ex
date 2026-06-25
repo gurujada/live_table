@@ -60,7 +60,7 @@ defmodule LiveTable.LiveSelectHelpers do
   end
 
   defp values_match?(opt_id, id) when is_atom(opt_id) and is_binary(id) do
-    opt_id == id or Atom.to_string(opt_id) == id
+    Atom.to_string(opt_id) == id
   end
 
   defp values_match?(opt_id, id), do: opt_id == id

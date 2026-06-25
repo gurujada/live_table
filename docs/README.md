@@ -91,7 +91,7 @@ LiveTable uses a three-tier architecture that separates concerns and maximizes f
 
 ### Advanced Filtering
 - **Boolean Filters** - Toggle states with custom dynamic queries
-- **Range Filters** - Numeric, date, and datetime ranges with sliders
+- **Range Filters** - Numeric ranges with sliders
 - **Select Filters** - Static options or dynamic database queries
 - **Transformers** - Ultimate power for complex, stateful filtering
 - **Full-text Search** - Search across multiple fields simultaneously
