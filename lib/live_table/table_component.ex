@@ -2,7 +2,7 @@ defmodule LiveTable.TableComponent do
   @moduledoc false
   defmacro __using__(opts) do
     quote do
-      use Phoenix.Component
+      import Phoenix.Component
       import LiveTable.SortHelpers
       import SutraUI.DropdownMenu
       import SutraUI.InputGroup
@@ -156,8 +156,8 @@ defmodule LiveTable.TableComponent do
                     label={to_string(size)}
                   />
                 </.select>
-                
-        <!-- Filter toggle -->
+
+                <!-- Filter toggle -->
                 <button
                   :if={length(@filters) > (get_in(@table_options, [:max_filters]) || 3)}
                   type="button"
@@ -192,8 +192,8 @@ defmodule LiveTable.TableComponent do
                 <.exports formats={get_in(@table_options, [:exports, :formats])} />
               </div>
             </div>
-            
-        <!-- Filters section -->
+
+            <!-- Filters section -->
             <div
               id="filters-container"
               class={["", length(@filters) > (get_in(@table_options, [:max_filters]) || 3) && "hidden"]}
@@ -347,7 +347,7 @@ defmodule LiveTable.TableComponent do
 
       defp content_section(%{table_options: %{mode: :card, use_streams: true}} = var!(assigns)) do
         ~H"""
-        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="resources-stream" phx-update="stream" class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div id="card-empty-placeholder" class="hidden only:block col-span-full">
             <.render_empty_state table_options={@table_options} />
           </div>
