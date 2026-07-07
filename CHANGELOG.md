@@ -5,17 +5,19 @@ All notable changes to LiveTable will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.2] - 2026-07-05
+## [0.4.2] - 2026-07-07
 
 ### Changed
 
 - Updated installation snippets and package metadata for the 0.4.2 release.
+- Updated the optional SutraUI dependency to `~> 0.4.0`.
 - Refined LiveTable's agent-facing docs and skill files to keep examples on the public authoring API.
 - Improved optional Igniter guidance for `mix live_table.install` and `mix live_table.gen.live`.
 
 ### Fixed
 
 - Fixed streamed card container rendering in card mode.
+- Kept infinite-scroll load-more paging from leaking into canonical table URL state.
 - Added a stable id to the built-in controls form to avoid Phoenix LiveView form recovery warnings.
 - Corrected docs that implied non-public events, stale `handle_params/3` ownership, invalid `@impl LiveTable.LiveResource` annotations, or outdated debug configuration.
 

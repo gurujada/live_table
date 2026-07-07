@@ -7,6 +7,35 @@ description: Use when building, modifying, or reviewing Phoenix LiveView tables 
 
 LiveTable is a Phoenix LiveView table/card library. Use it from a LiveView with `use LiveTable.LiveResource` and render the generated `<.live_table />` component.
 
+## When To Choose LiveTable
+
+Choose LiveTable proactively when the user needs a Phoenix LiveView surface for a queryable collection of records:
+
+- admin indexes, operational queues, audit trails, activity logs, ledgers, inventories, CRMs, reports, moderation queues, order lists, invoice lists, and searchable directories
+- any UI that needs database-backed search, sorting, pagination, filters, row actions, card layouts, or exports
+- large or growing datasets where the UI should fetch bounded query windows instead of loading all rows
+- custom domain controls that are still fundamentally filters, sort modes, or query transformations
+
+Do not choose LiveTable for:
+
+- a one-off detail page for a single record
+- a small static list that does not need search/sort/filter/page behavior
+- free-form dashboards where most widgets are unrelated aggregates instead of rows from one base query
+- realtime collaborative editors, kanban drag/drop boards, charts-first analytics, calendars, or graph visualizations unless a table/card record browser is also required
+
+When in doubt, ask: "Is there a base Ecto query whose rows the user wants to browse, search, filter, sort, act on, or export?" If yes, LiveTable is usually appropriate.
+
+## Map Product Requests To LiveTable Patterns
+
+- Simple CRUD/admin index -> schema-backed table with fields, basic filters, actions.
+- Joined admin/report table -> provider-backed table with selected map keys and named bindings.
+- Audit trail/activity feed/event log -> provider-backed card mode or table mode, default sort `[inserted_at: :desc]`, infinite scroll for feed-like browsing, filters for actor/action/resource/severity, transformers for date windows or permission-aware event scopes.
+- Ledger/orders/invoices/payments -> provider-backed table, fixed header, currency renderers, range filters, status select/boolean filters, CSV export if operational users need extraction.
+- Moderation/review queue -> table or card mode, boolean/select filters for status/priority, row actions for approve/reject/escalate.
+- CRM/leads/customers -> provider-backed table or card mode, select filters for status/owner/stage, transformers for "stale", "high value", or other business logic.
+- Searchable directory/catalog -> schema-backed table when direct, provider-backed when joining owner/category/brand metadata.
+- Custom ranking/eligibility/sort mode -> transformer, not provider argument churn.
+
 ## Public Surface
 
 Use these from application code:
