@@ -39,6 +39,20 @@ defmodule LiveTable.RangeTest do
       assert range.options.default_max == 500
     end
 
+    test "uses configured min and max as defaults when default bounds are omitted" do
+      range =
+        Range.new(:price, "price_range", %{
+          min: 500,
+          max: 50_000,
+          step: 500
+        })
+
+      assert range.options.min == 500
+      assert range.options.max == 50_000
+      assert range.options.default_min == 500
+      assert range.options.default_max == 50_000
+    end
+
     test "creates a range filter with float step" do
       options = %{
         min: 0.0,

@@ -245,6 +245,7 @@ defmodule LiveTable.TableComponentTest do
       assert html =~ "phx-value-page=\"1\""
       # Next page
       assert html =~ "phx-value-page=\"3\""
+      assert html =~ "type=\"button\""
       assert html =~ "per_page"
     end
 

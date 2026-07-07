@@ -56,7 +56,7 @@ defmodule LiveTable.Select do
   ### 2. Dynamic Options via `options_source`
 
   Load options dynamically using a function or module. Used for fetching new options based on typed input.
-  Uses `apply/3` under the hood to apply the function. Uses [`live-select-change`](https://github.com/gurujada/live_table/blob/master/lib/live_table/liveview_helpers.ex#L109) event to update the options.
+  Uses `apply/3` under the hood to apply the function. Uses the `live_select_change` event to update the options.
 
     ```elixir
       # Point to your custom function

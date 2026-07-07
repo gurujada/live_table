@@ -190,31 +190,26 @@ condition: dynamic([p], p.active == true)  # Right: double ==
 ```elixir
 # ✅ Correct option format
 options: [
-  %{label: "Active", value: ["active"]},    # Value must be array
-  %{label: "Inactive", value: ["inactive"]} # Even for single values
+  %{label: "Active", value: "active"},
+  %{label: "Inactive", value: "inactive"}
 ]
 
-# ❌ Incorrect format
+# ✅ Also valid when you need extra option metadata
 options: [
-  %{label: "Active", value: "active"}       # String won't work
+  %{label: "Active", value: ["active", "Currently active"]}
 ]
 ```
 
-3. **Range Filter Type Mismatch**
+3. **Range Filter Field Mismatch**
 ```elixir
-# ✅ Match field type
+# ✅ Range filters are for numeric fields
 price_range: Range.new(:price, "price_range", %{
-  type: :number,  # Field is numeric
   min: 0,
   max: 1000
 })
 
-# ❌ Wrong type for field
-created_range: Range.new(:inserted_at, "created_range", %{
-  type: :number,  # Wrong: inserted_at is datetime
-  min: 0,
-  max: 100
-})
+# ❌ Do not use Range for datetime fields.
+# Use a Transformer for date windows or custom date-range logic.
 ```
 
 ## Performance Issues
@@ -471,16 +466,17 @@ cat exports/products_2024-01-01.csv | head -5
 
 **Solutions:**
 
-1. **Implement handle_params**
+1. **Avoid overriding LiveTable's handle_params**
 ```elixir
-def handle_params(params, _url, socket) do
-  # LiveTable needs this to handle URL parameters
-  {:noreply, apply_action(socket, socket.assigns.live_action, params)}
-end
+def mount(_params, _session, socket) do
+  socket =
+    attach_hook(socket, :inspect_params, :handle_params, fn params, _url, socket ->
+      # Runs before LiveTable handles URL parameters
+      IO.inspect(params, label: "LiveTable params")
+      {:cont, socket}
+    end)
 
-def apply_action(socket, :index, _params) do
-  socket
-  |> assign(:page_title, "Products")
+  {:ok, socket}
 end
 ```
 
@@ -527,17 +523,25 @@ config :logger, :console,
   format: "[$level] $message\n"
 
 # See LiveTable internal operations
-config :live_table,
-  debug: true
+def table_options do
+  %{
+    debug: :query
+  }
+end
 ```
 
 ### Inspect Socket State
 
 ```elixir
-def handle_params(params, _url, socket) do
-  IO.inspect(socket.assigns, label: "Socket Assigns")
-  IO.inspect(params, label: "URL Params")
-  {:noreply, socket}
+def mount(_params, _session, socket) do
+  socket =
+    attach_hook(socket, :inspect_params, :handle_params, fn params, _url, socket ->
+      IO.inspect(socket.assigns, label: "Socket Assigns")
+      IO.inspect(params, label: "URL Params")
+      {:cont, socket}
+    end)
+
+  {:ok, socket}
 end
 ```
 

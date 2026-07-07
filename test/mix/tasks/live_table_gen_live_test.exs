@@ -139,7 +139,6 @@ defmodule Mix.Tasks.LiveTable.Gen.LiveTest do
 
       assert entry =~ "age_range:"
       assert entry =~ "Range.new(:age"
-      assert entry =~ "type: :number"
       assert entry =~ "label: \"Age Range\""
       assert entry =~ "min: 0"
       assert entry =~ "max: 1000"
@@ -150,7 +149,6 @@ defmodule Mix.Tasks.LiveTable.Gen.LiveTest do
 
       assert entry =~ "price_range:"
       assert entry =~ "Range.new(:price"
-      assert entry =~ "type: :number"
     end
 
     test "generates Range filter for float fields" do
@@ -295,7 +293,6 @@ defmodule Mix.Tasks.LiveTable.Gen.LiveTest do
 
     ~s"""
     #{name}_range: Range.new(:#{name}, "#{name}_range", %{
-      type: :number,
       label: "#{label} Range",
       min: 0,
       max: 1000

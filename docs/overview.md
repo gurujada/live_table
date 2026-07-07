@@ -218,8 +218,7 @@ def fields do
     name: %{label: "Product", sortable: true, searchable: true},
     category: %{label: "Category", sortable: true},
     price: %{label: "Price", sortable: true, renderer: &currency/1},
-    stock: %{label: "Stock", sortable: true, renderer: &stock_status/2},
-    actions: %{label: "Actions", renderer: &product_actions/2}
+    stock: %{label: "Stock", sortable: true, renderer: &stock_status/2}
   ]
 end
 ```

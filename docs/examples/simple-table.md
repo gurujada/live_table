@@ -30,7 +30,6 @@ defmodule YourAppWeb.ProductLive.Index do
       }),
 
       price_range: Range.new(:price, "price_range", %{
-        type: :number,
         label: "Price Range",
         min: 0,
         max: 1000
@@ -182,7 +181,6 @@ defmodule YourAppWeb.OrderLive.Index do
       }),
 
       order_total: Range.new(:total_amount, "total_range", %{
-        type: :number,
         label: "Order Total",
         min: 0,
         max: 5000
@@ -344,7 +342,6 @@ defmodule YourAppWeb.InventoryLive.Index do
       }),
 
       stock_range: Range.new(:stock_quantity, "stock_range", %{
-        type: :number,
         label: "Stock Quantity",
         min: 0,
         max: 1000

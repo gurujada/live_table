@@ -662,32 +662,24 @@ Override the default table header:
 ```elixir
 def table_options do
   %{
-    components: %{
-      header: &custom_header/1
-    }
+    custom_header: {__MODULE__, :custom_header}
   }
 end
 
-defp custom_header(assigns) do
+def custom_header(assigns) do
   ~H"""
-  <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-lg">
-    <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Product Inventory</h2>
-      <div class="flex gap-2">
-        <button class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">
-          Bulk Actions
-        </button>
-        <button class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">
-          Import
-        </button>
-      </div>
-    </div>
+  <div class="mb-4 border-b pb-4">
+    <h2 class="text-xl font-semibold">Product Inventory</h2>
 
-    <div class="mt-2 text-blue-100 text-sm">
-      Total Products: <%= @total_count %> |
-      Active: <%= @active_count %> |
-      Low Stock: <%= @low_stock_count %>
-    </div>
+    <.form for={%{}} id="product-header-controls" phx-change="sort" class="mt-3">
+      <input
+        type="text"
+        name="search"
+        value={@options["filters"]["search"]}
+        placeholder={@table_options.search.placeholder}
+        phx-debounce={@table_options.search.debounce}
+      />
+    </.form>
   </div>
   """
 end
@@ -709,11 +701,11 @@ end
 
 # A 1-arity function component that receives assigns
 # with :fields, :filters, :options, and :table_options
-# Wire events to LiveTable using phx-change="sort" and phx-click handlers
-# like "toggle_filters" the same way the built-in controls do.
+# Wire search, per-page, and filters to LiveTable using phx-change="sort".
+# Use Phoenix.LiveView.JS for client-side toggles.
 defp my_controls(assigns) do
   ~H"""
-  <.form for={%{}} phx-change="sort">
+  <.form for={%{}} id="my-live-table-controls" phx-change="sort">
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center gap-2">
         <div class="flex items-center gap-3">
@@ -753,9 +745,18 @@ defp my_controls(assigns) do
         </div>
 
         <!-- Filter toggle -->
-        <button :if={length(@filters) > 3} type="button" phx-click="toggle_filters" class="btn">
+        <button
+          :if={length(@filters) > 3}
+          type="button"
+          phx-click={Phoenix.LiveView.JS.toggle(to: "#my-filter-controls")}
+          class="btn"
+        >
           Filters
         </button>
+      </div>
+
+      <div id="my-filter-controls" class="hidden">
+        <.filters filters={@filters} applied_filters={@options["filters"]} />
       </div>
     </div>
   </.form>
@@ -765,7 +766,8 @@ end
 
 Notes:
 - Precedence: if `custom_header` is provided, it replaces the entire header and `custom_controls` is ignored.
-- Events: use `phx-change="sort"` for forms and `phx-click` events like `toggle_filters` to integrate with LiveTable state.
+- Events: use `phx-change="sort"` for forms and `phx-click="sort"` with supported values such as `phx-value-clear_filters="true"` for LiveTable state changes.
+- UI-only toggles should use client-side JS commands such as `Phoenix.LiveView.JS.toggle/1`.
 - Assigns: you receive `:fields`, `:filters`, `:options`, and `:table_options` to build your controls.
 
 ## Performance Considerations

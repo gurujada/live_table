@@ -463,7 +463,12 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
             
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
               <div>
-                <.form for={%{}} phx-debounce={get_in(@table_options, [:search, :debounce])} phx-change="sort">
+                <.form
+                  for={%{}}
+                  id="rank-filter-form"
+                  phx-debounce={get_in(@table_options, [:search, :debounce])}
+                  phx-change="sort"
+                >
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Your JEE Rank <span class="text-xs text-gray-500">(Saved automatically, filters all pages)</span>
                   </label>
@@ -501,7 +506,12 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
           <!-- Search and filtering controls -->
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <div>
-              <.form for={%{}} phx-debounce={get_in(@table_options, [:search, :debounce])} phx-change="sort">
+              <.form
+                for={%{}}
+                id="college-search-form"
+                phx-debounce={get_in(@table_options, [:search, :debounce])}
+                phx-change="sort"
+              >
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Search Colleges <span class="text-xs text-gray-500">(By name or location)</span>
                 </label>
@@ -524,7 +534,12 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
 
             <!-- NIRF Ranking filter (transformer) -->
             <div>
-              <.form for={%{}} phx-debounce={get_in(@table_options, [:search, :debounce])} phx-change="sort">
+              <.form
+                for={%{}}
+                id="nirf-ranking-form"
+                phx-debounce={get_in(@table_options, [:search, :debounce])}
+                phx-change="sort"
+              >
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   NIRF Ranking
                 </label>
@@ -547,7 +562,12 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
 
             <!-- Sort transformer -->
             <div>
-              <.form for={%{}} phx-debounce={get_in(@table_options, [:search, :debounce])} phx-change="sort">
+              <.form
+                for={%{}}
+                id="sort-mode-form"
+                phx-debounce={get_in(@table_options, [:search, :debounce])}
+                phx-change="sort"
+              >
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Sort By <span class="text-xs text-gray-500">(Change display order)</span>
                 </label>
@@ -562,7 +582,12 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
 
           <!-- Boolean filters for institution types -->
           <div class="mb-4">
-            <.form for={%{}} phx-debounce={get_in(@table_options, [:search, :debounce])} phx-change="sort">
+            <.form
+              for={%{}}
+              id="institution-type-form"
+              phx-debounce={get_in(@table_options, [:search, :debounce])}
+              phx-change="sort"
+            >
               <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Institution Type <span class="text-xs text-gray-500">(IIT = Premier institutes, NIT = National institutes, IIIT = Information technology, GFTI = Government funded)</span>
               </span>
@@ -836,6 +861,6 @@ end
 **State not persisting:**
 - Verify transformer key is included in URL parameters
 - Check that form field names match expected data structure
-- Ensure LiveView handle_params processes transformer data
+- Ensure the LiveView uses the LiveResource macro and does not override LiveTable's generated `handle_params/3`
 
 Transformers provide unlimited flexibility for complex filtering scenarios while maintaining the simplicity and URL persistence that makes LiveTable powerful.

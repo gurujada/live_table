@@ -159,15 +159,16 @@ defmodule LiveTable.LiveViewHelpers do
 
       def handle_event("load_more", _params, socket) do
         next_page = socket.assigns.infinite_scroll_page + 1
+        options = socket.assigns.options
 
-        options =
-          socket.assigns.options
+        fetch_options =
+          options
           |> put_in(["pagination", "page"], to_string(next_page))
 
         data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
 
         {resources, has_next_page} =
-          case stream_resources(fields(), options, data_provider) do
+          case stream_resources(fields(), fetch_options, data_provider) do
             {resources, overflow} ->
               {resources, length(overflow) > 0}
 

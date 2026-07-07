@@ -152,6 +152,10 @@ discount: %{
 #### `computed` (dynamic query)
 Define calculated fields using Ecto dynamic expressions.
 
+For schema-backed tables, LiveTable includes computed fields in its generated
+`select`. For custom data providers, select the computed value in your provider
+query; use `computed` only when LiveTable also needs the expression for sorting.
+
 ```elixir
 total_value: %{
   label: "Total Value",
@@ -270,11 +274,11 @@ def fields do
       )
     },
     
-    # Using joined tables (for custom queries)
+    # Sorting a computed value from a custom provider query
     category_product_count: %{
       label: "Products in Category",
       sortable: true,
-      assoc: {:categories, :name},  # Must match your query alias
+      # The provider query must already have the :categories named binding.
       computed: dynamic([r, categories: c], 
         fragment("(SELECT COUNT(*) FROM products WHERE category_id = ?)", c.id)
       )
@@ -590,9 +594,9 @@ end
 
 ### For Custom Queries
 1. Use the LiveResource (no schema)
-2. Assign `:data_provider` in mount/handle_params
+2. Assign `:data_provider` before LiveTable handles URL params, usually in `mount/3`
 3. Field keys must match your query's select keys
-4. Use `assoc: {:alias_name, :field}` only for sorting joined fields
+4. Use `assoc: {:alias_name, :field}` for sortable or searchable joined fields
 5. The alias_name must match your query's `as:` alias
 
 ### Troubleshooting
@@ -608,7 +612,7 @@ end
 **Search not finding results?**
 - Verify `searchable: true` is set
 - Search only works on text/string fields
-- For custom queries: searchable fields must be in your select clause
+- For custom queries: searchable joined fields need `assoc: {:alias, :field}` with a matching named binding
 
 ## Actions
 

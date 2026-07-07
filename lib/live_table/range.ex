@@ -13,8 +13,8 @@ defmodule LiveTable.Range do
   - `:min` - Minimum value of the range
   - `:max` - Maximum value of the range
   - `:step` - Step increment (integer for integers, float for decimals)
-  - `:default_min` - Default minimum selected value
-  - `:default_max` - Default maximum selected value
+  - `:default_min` - Default minimum selected value (defaults to `:min`)
+  - `:default_max` - Default maximum selected value (defaults to `:max`)
   - `:pips` - Show scale markers (boolean)
   - `:css_classes` - CSS classes for the main container
   - `:slider_classes` - CSS classes for the slider element
@@ -86,6 +86,14 @@ defmodule LiveTable.Range do
     complete_options =
       @default_options
       |> deep_merge(options)
+      |> Map.put(
+        :default_min,
+        Map.get(options, :default_min, Map.get(options, :min, @default_options.min))
+      )
+      |> Map.put(
+        :default_max,
+        Map.get(options, :default_max, Map.get(options, :max, @default_options.max))
+      )
 
     %__MODULE__{field: field, key: key, options: complete_options}
   end

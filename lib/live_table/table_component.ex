@@ -90,7 +90,7 @@ defmodule LiveTable.TableComponent do
 
       defp common_controls(var!(assigns)) do
         ~H"""
-        <.form for={%{}} phx-change="sort">
+        <.form for={%{}} id="live-table-controls-form" phx-change="sort">
           <div class="space-y-4">
             <!-- Search and controls bar -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -347,7 +347,11 @@ defmodule LiveTable.TableComponent do
 
       defp content_section(%{table_options: %{mode: :card, use_streams: true}} = var!(assigns)) do
         ~H"""
-        <div id="resources-stream" phx-update="stream" class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          id="resources-stream"
+          phx-update="stream"
+          class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
           <div id="card-empty-placeholder" class="hidden only:block col-span-full">
             <.render_empty_state table_options={@table_options} />
           </div>
@@ -509,6 +513,7 @@ defmodule LiveTable.TableComponent do
           </div>
           <div class="flex flex-1 justify-between sm:justify-end">
             <button
+              type="button"
               phx-click="sort"
               phx-value-page={String.to_integer(@current_page) - 1}
               class={[
@@ -520,6 +525,7 @@ defmodule LiveTable.TableComponent do
               Previous
             </button>
             <button
+              type="button"
               phx-click="sort"
               phx-value-page={String.to_integer(@current_page) + 1}
               class={["btn-outline ml-3", !@has_next_page && "opacity-50 cursor-not-allowed"]}

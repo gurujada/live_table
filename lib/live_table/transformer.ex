@@ -77,10 +77,16 @@ defmodule LiveTable.Transformer do
 
   @doc false
   def render(assigns) do
+    applied_data =
+      case Map.get(assigns.applied_filters, assigns.key) do
+        %__MODULE__{options: %{applied_data: data}} -> data
+        _ -> Map.get(assigns.filter.options, :applied_data, %{})
+      end
+
     render_assigns = %{
       key: assigns.filter.key,
       label: Map.get(assigns.filter.options, :label),
-      value: Map.get(assigns.filter.options, :applied_data, %{})
+      value: applied_data
     }
 
     assigns.filter.options.render.(render_assigns)

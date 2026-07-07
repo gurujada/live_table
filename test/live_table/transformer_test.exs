@@ -68,6 +68,49 @@ defmodule LiveTable.TransformerTest do
     end
   end
 
+  describe "Transformer.render/1" do
+    test "passes applied filter data to custom render function" do
+      transformer =
+        Transformer.new("custom", %{
+          query_transformer: fn q, _data -> q end,
+          applied_data: %{"old" => "value"},
+          render: fn assigns -> assigns.value end
+        })
+
+      applied_transformer = %{
+        transformer
+        | options: Map.put(transformer.options, :applied_data, %{"current" => "value"})
+      }
+
+      rendered =
+        Transformer.render(%{
+          key: :custom,
+          filter: transformer,
+          applied_filters: %{custom: applied_transformer}
+        })
+
+      assert rendered == %{"current" => "value"}
+    end
+
+    test "falls back to configured applied_data when filter is not applied" do
+      transformer =
+        Transformer.new("custom", %{
+          query_transformer: fn q, _data -> q end,
+          applied_data: %{"configured" => "value"},
+          render: fn assigns -> assigns.value end
+        })
+
+      rendered =
+        Transformer.render(%{
+          key: :custom,
+          filter: transformer,
+          applied_filters: %{}
+        })
+
+      assert rendered == %{"configured" => "value"}
+    end
+  end
+
   describe "Transformer.apply/2 with function transformer" do
     test "applies function transformer to query" do
       transformer =

@@ -90,7 +90,6 @@ For numeric fields like `age:integer`, `price:decimal`:
 
 ```elixir
 age_range: Range.new(:age, "age_range", %{
-  type: :number,
   label: "Age Range",
   min: 0,
   max: 1000
@@ -124,7 +123,7 @@ defmodule MyAppWeb.UserLive.Index do
   alias MyApp.Accounts
   alias MyApp.Accounts.User
 
-  # ... mount, handle_params, etc.
+  # ... mount, handle_event, and other generated callbacks
 end
 ```
 
@@ -134,7 +133,6 @@ defmodule MyAppWeb.UserLive.Index do
   use MyAppWeb, :live_view
   use LiveTable.LiveResource, schema: MyApp.Accounts.User
 
-  @impl LiveTable.LiveResource
   def fields do
     [
       name: %{label: "Name", sortable: true, searchable: true},
@@ -144,11 +142,9 @@ defmodule MyAppWeb.UserLive.Index do
     ]
   end
 
-  @impl LiveTable.LiveResource
   def filters do
     [
       age_range: Range.new(:age, "age_range", %{
-        type: :number,
         label: "Age Range",
         min: 0,
         max: 1000
@@ -163,7 +159,7 @@ defmodule MyAppWeb.UserLive.Index do
   alias MyApp.Accounts
   alias MyApp.Accounts.User
 
-  # ... mount, handle_params, etc.
+  # ... mount, handle_event, and other generated callbacks
 end
 ```
 
@@ -243,7 +239,6 @@ end
 def filters do
   [
     price_range: Range.new(:price, "price_range", %{
-      type: :number,
       label: "Price Range",
       min: 0,
       max: 10000,  # Adjust max value

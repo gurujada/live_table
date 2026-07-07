@@ -15,7 +15,6 @@ def filters do
     }),
     
     price_range: Range.new(:price, "price_range", %{
-      type: :number,
       label: "Price Range",
       min: 0,
       max: 1000
@@ -141,7 +140,6 @@ Range filters provide sliders for filtering numeric values within specified rang
 def filters do
   [
     price_range: Range.new(:price, "price_range", %{
-      type: :number,
       label: "Price Range",
       unit: "$",
       min: 0,
@@ -152,7 +150,6 @@ def filters do
     }),
     
     age_range: Range.new(:age, "age_range", %{
-      type: :number,
       label: "Age",
       min: 18,
       max: 65,
@@ -172,13 +169,16 @@ Range.new(field, key, %{
   min: 0,                          # Required: Minimum value
   max: 100,                        # Required: Maximum value
   step: 1,                         # Optional: Step increment
-  default_min: 0,                  # Optional: Default minimum
-  default_max: 100,                # Optional: Default maximum
+  default_min: 0,                  # Optional: Default minimum (defaults to min)
+  default_max: 100,                # Optional: Default maximum (defaults to max)
   unit: "$",                       # Optional: Unit display
   css_classes: "custom-wrapper",   # Optional: CSS classes
+  label_classes: "custom-label",   # Optional: Label CSS classes
   slider_classes: "custom-slider", # Optional: Slider CSS classes
   pips: true,                      # Optional: Show slider markers
-  event_type: "change"             # Optional: JS event type
+  pips_mode: "positions",          # Optional: positions, count, values, steps
+  pips_values: [0, 25, 50, 75, 100],
+  slider_options: %{tooltips: true}
 })
 ```
 
@@ -334,6 +334,11 @@ Select.new(field, key, %{
   options_source: {Module, :function, []}, # Dynamic options source
   option_template: &template_function/1,   # Custom option template
   placeholder: "Choose an option...",      # Placeholder text
+  mode: :tags,                             # :single, :tags, or :quick_tags
+  allow_clear: false,                      # Single mode clear button
+  max_selectable: 0,                       # 0 = unlimited
+  user_defined_options: false,             # Allow typed custom values
+  debounce: 100,                           # Search debounce in ms
   css_classes: "custom-wrapper",           # CSS classes
   label_classes: "custom-label"            # Label CSS classes
 })
@@ -354,7 +359,6 @@ def filters do
     
     # Price range slider
     price_range: Range.new(:price, "price_range", %{
-      type: :number,
       label: "Price Range",
       unit: "$",
       min: 0,
@@ -436,7 +440,6 @@ def filters do
     
     # Order value range
     order_total: Range.new(:total_amount, "total_range", %{
-      type: :number,
       label: "Order Total",
       unit: "$",
       min: 0,
@@ -535,4 +538,4 @@ CREATE INDEX idx_orders_inserted_at ON orders(inserted_at);
 ### URL Parameters Not Persisting
 - Verify each filter has a unique `key` parameter
 - Check that keys don't conflict with other URL parameters
-- Ensure LiveView handle_params is properly set up
+- Ensure the LiveView uses the LiveResource macro and does not override LiveTable's generated `handle_params/3`

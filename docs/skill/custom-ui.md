@@ -24,7 +24,12 @@ defmodule MyAppWeb.CollegeLive.CustomHeader do
 
   def custom_header(assigns) do
     ~H"""
-    <.form for={%{}} phx-change="sort" phx-debounce={@table_options.search.debounce}>
+    <.form
+      for={%{}}
+      id="college-controls-form"
+      phx-change="sort"
+      phx-debounce={@table_options.search.debounce}
+    >
       <input
         type="text"
         name="search"

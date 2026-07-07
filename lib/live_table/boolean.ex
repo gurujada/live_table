@@ -7,7 +7,7 @@ defmodule LiveTable.Boolean do
     filtering scenarios with customizable options and conditions.
 
     Similar to all filters in LiveTable, Boolean filters can be created using the `new/3` function,
-    which takes the `key`, `field`, and an `options` map.
+    which takes the `field`, `key`, and an `options` map.
     The key will be used to reference the filter in the URL params.
 
 

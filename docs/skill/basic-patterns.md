@@ -166,6 +166,8 @@ name: %{
 
 Use `assoc` only when the provider query has the matching named binding. Use `renderer/1` for value-only formatting, `renderer/2` when the full record is needed, `component/1` for `%{value: value, record: record}` assigns, and `component/2` for `(value, record)`.
 
+For schema-backed tables, `computed` values are included in LiveTable's generated select. For provider tables, select the computed value in the provider query; use `computed` only when LiveTable needs the expression for sorting.
+
 ## Actions
 
 Actions render row-level controls. Handle their events in the LiveView.

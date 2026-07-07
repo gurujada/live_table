@@ -17,7 +17,7 @@ This guide walks you through setting up LiveTable in your Phoenix application.
 # mix.exs
 def deps do
   [
-    {:live_table, "~> 0.4.1"}
+    {:live_table, "~> 0.4.2"}
   ]
 end
 ```
@@ -188,7 +188,8 @@ Visit `/test` - you should see a working table!
 
 ### Exports failing
 
-- Verify Oban is running: check `Oban.check_queue(:exports)`
+- Verify Oban is started in your supervision tree
+- Verify your Oban config includes the `exports` queue
 - Ensure `exports` is in your static paths
 - Check server logs for detailed error messages
 

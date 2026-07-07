@@ -146,9 +146,10 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
     File.cd!(tmp_dir)
     setup_fake_phoenix_project()
 
-    output =
-      capture_io("y\ny\n", fn ->
-        Mix.Tasks.LiveTable.Install.run([])
+    messages =
+      run_with_process_shell(fn ->
+        send(self(), {:mix_shell_input, :prompt, "y"})
+        run_install_igniter_directly()
       end)
 
     # Adds Oban config
@@ -158,7 +159,10 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
     assert config_content =~ "queues: [exports: 10]"
 
     # Shows Oban start instruction
-    assert output =~ "children = [..., {Oban, Application.fetch_env!(:test_app, Oban)}]"
+    assert shell_messages_contain?(
+             messages,
+             "children = [..., {Oban, Application.fetch_env!(:test_app, Oban)}]"
+           )
   end
 
   @tag :tmp_dir
@@ -166,13 +170,59 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
     File.cd!(tmp_dir)
     setup_fake_phoenix_project()
 
-    _output =
-      capture_io("n\ny\n", fn ->
-        Mix.Tasks.LiveTable.Install.run([])
-      end)
+    run_with_process_shell(fn ->
+      send(self(), {:mix_shell_input, :prompt, "n"})
+      run_install_igniter_directly()
+    end)
 
     config_content = File.read!("config/config.exs")
     refute config_content =~ "config :test_app, Oban"
+  end
+
+  defp run_with_process_shell(fun) do
+    original_shell = Mix.shell()
+    Mix.shell(Mix.Shell.Process)
+    Mix.Shell.Process.flush()
+
+    try do
+      fun.()
+      collect_mix_shell_messages()
+    after
+      Mix.Shell.Process.flush()
+      Mix.shell(original_shell)
+    end
+  end
+
+  defp collect_mix_shell_messages(acc \\ []) do
+    receive do
+      {:mix_shell, _, _} = message -> collect_mix_shell_messages([message | acc])
+    after
+      0 -> Enum.reverse(acc)
+    end
+  end
+
+  defp shell_messages_contain?(messages, expected) do
+    Enum.any?(messages, fn
+      {:mix_shell, _, parts} ->
+        parts
+        |> List.wrap()
+        |> Enum.any?(&(is_binary(&1) and String.contains?(&1, expected)))
+
+      _ ->
+        false
+    end)
+  end
+
+  defp run_install_igniter_directly do
+    args = Mix.Tasks.LiveTable.Install.parse_argv([])
+
+    igniter =
+      Igniter.new()
+      |> Map.put(:task, Mix.Task.task_name(Mix.Tasks.LiveTable.Install))
+      |> Map.put(:args, args)
+      |> Mix.Tasks.LiveTable.Install.igniter()
+
+    Igniter.do_or_dry_run(igniter, yes: true)
   end
 
   defp setup_fake_phoenix_project do

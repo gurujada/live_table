@@ -89,7 +89,6 @@ defmodule YourAppWeb.ProductLive.Index do
       
       # Range filter for price
       price_range: Range.new(:price, "price_range", %{
-        type: :number,
         label: "Price Range",
         unit: "$",
         min: 0,
@@ -290,7 +289,6 @@ defmodule YourAppWeb.OrderReportLive.Index do
       }),
       
       amount_range: Range.new(:total_amount, "amount_range", %{
-        type: :number,
         label: "Order Amount",
         min: 0,
         max: 5000
@@ -357,7 +355,7 @@ end
 
 defp my_controls(assigns) do
   ~H"""
-  <.form for={%{}} phx-change="sort">
+  <.form for={%{}} id="my-live-table-controls" phx-change="sort">
     <!-- your controls here -->
   </.form>
   """

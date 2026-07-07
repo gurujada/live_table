@@ -48,7 +48,6 @@ defmodule YourAppWeb.OrderReportLive.Index do
       }),
       
       order_value: Range.new(:total_amount, "order_value", %{
-        type: :number,
         label: "Order Value",
         min: 0,
         max: 10000,
@@ -191,7 +190,6 @@ defmodule YourAppWeb.ProductAnalyticsLive.Index do
       }),
       
       revenue_range: Range.new(:revenue, "revenue_range", %{
-        type: :number,
         label: "Revenue Range",
         min: 0,
         max: 100000,
@@ -627,7 +625,6 @@ defmodule YourAppWeb.CustomerLtvLive.Index do
       }),
       
       ltv_range: Range.new(:predicted_ltv, "ltv_range", %{
-        type: :number,
         label: "Predicted LTV",
         min: 0,
         max: 50000,
@@ -846,7 +843,7 @@ end
 ## Key Patterns for Complex Queries
 
 ### 1. Data Provider Assignment
-- Assign `:data_provider` in `mount/3` or `handle_params/3`
+- Assign `:data_provider` before LiveTable handles URL params, usually in `mount/3`
 - Use `{Module, :function, [args]}` tuple format
 - Pass parameters dynamically based on route or user input
 

@@ -287,7 +287,6 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       ~s"""
       #{name}_range: Range.new(:#{name}, "#{name}_range", %{
-        type: :number,
         label: "#{label} Range",
         min: 0,
         max: 1000

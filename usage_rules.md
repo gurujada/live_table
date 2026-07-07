@@ -61,7 +61,7 @@ end
 **NEVER** generate LiveTable code without the core dependency:
 ```elixir
 # REQUIRED in mix.exs
-{:live_table, "~> 0.4.1"}
+{:live_table, "~> 0.4.2"}
 # Add {:oban, "~> 2.19"} only if using export functionality
 ```
 
@@ -72,7 +72,7 @@ When implementing with LiveTable, ALWAYS ensure:
 ### 1. Dependencies
 ```elixir
 # In mix.exs deps function
-{:live_table, "~> 0.4.1"}
+{:live_table, "~> 0.4.2"}
 # Add {:oban, "~> 2.19"} only if using exports
 ```
 
@@ -191,7 +191,6 @@ Boolean.new(:field_name, "param_name", %{
 ### Range Filter
 ```elixir
 Range.new(:field_name, "param_name", %{
-  type: :number,  # or :date
   label: "Range Label",
   min: 0,
   max: 1000
@@ -282,7 +281,7 @@ When helping with LiveTable implementation:
 - `streams={@streams}`
 
 ### Must-Have Dependencies
-- `{:live_table, "~> 0.4.1"}` (always required)
+- `{:live_table, "~> 0.4.2"}` (always required)
 - `{:oban, "~> 2.19"}` (only if using exports)
 
 ### Must-Have Config

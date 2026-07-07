@@ -396,7 +396,12 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
               <!-- Transformer input for rank filtering -->
               <div>
-                <.form for={%{}} phx-debounce={get_in(@table_options, [:search, :debounce])} phx-change="sort">
+                <.form
+                  for={%{}}
+                  id="rank-filter-form"
+                  phx-debounce={get_in(@table_options, [:search, :debounce])}
+                  phx-change="sort"
+                >
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Your JEE Rank <span class="text-xs text-gray-500">(Saved automatically)</span>
                   </label>
@@ -433,7 +438,7 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <!-- Search -->
             <div>
-              <.form for={%{}} phx-change="sort">
+              <.form for={%{}} id="college-search-form" phx-change="sort">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Search Colleges
                 </label>
@@ -454,7 +459,7 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
 
             <!-- NIRF Ranking transformer -->
             <div>
-              <.form for={%{}} phx-change="sort">
+              <.form for={%{}} id="nirf-ranking-form" phx-change="sort">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   NIRF Ranking
                 </label>
@@ -477,7 +482,7 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
 
             <!-- Sort transformer -->
             <div>
-              <.form for={%{}} phx-change="sort">
+              <.form for={%{}} id="sort-mode-form" phx-change="sort">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Sort By
                 </label>
@@ -492,7 +497,7 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
 
           <!-- Boolean filters for institution types -->
           <div class="mb-4">
-            <.form for={%{}} phx-change="sort">
+            <.form for={%{}} id="institution-type-form" phx-change="sort">
               <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Institution Type
               </span>
