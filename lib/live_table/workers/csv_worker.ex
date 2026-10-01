@@ -6,7 +6,7 @@ defmodule LiveTable.Workers.CsvExportWorker do
   def perform(%Oban.Job{
         args: %{"header_data" => header_data, "query" => query, "topic" => topic}
       }) do
-    case LiveTable.CsvGenerator.generate_csv(query, header_data) do
+    case LiveTable.CsvGenerator.generate_csv(LiveTable.Export.decode_query(query), header_data) do
       {:ok, file_path} ->
         Phoenix.PubSub.broadcast(
           Application.fetch_env!(:live_table, :pubsub),

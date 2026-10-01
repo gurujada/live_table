@@ -11,7 +11,7 @@ defmodule LiveTable.PdfGenerator do
   def generate_pdf(query, header_data) do
     timestamp = LiveTable.ExportHelpers.generate_export_timestamp()
     temp_path = Path.join(System.tmp_dir!(), "export-#{timestamp}.typ")
-    query = LiveTable.CsvGenerator.get_query(query) |> limit(10_000)
+    query = limit(query, 10_000)
 
     case generate_typst_file(query, temp_path, header_data) do
       {:ok, path} -> compile_typst_to_pdf(path)

@@ -1,5 +1,6 @@
 defmodule LiveTable.CsvGeneratorTest do
   use LiveTable.DataCase
+  import Ecto.Query
   alias LiveTable.CsvGenerator
   alias LiveTable.Catalog.Product
   alias LiveTable.Repo
@@ -34,7 +35,9 @@ defmodule LiveTable.CsvGeneratorTest do
   describe "generate_csv/2" do
     test "successfully generates CSV file with correct headers and data" do
       query =
-        "from p in #{Product}, select: %{name: p.name, price: p.price, stock_quantity: p.stock_quantity}"
+        from(p in Product,
+          select: %{name: p.name, price: p.price, stock_quantity: p.stock_quantity}
+        )
 
       header_data = [["name", "price", "stock_quantity"], ["Name", "Price", "Stock Quantity"]]
 
@@ -61,7 +64,7 @@ defmodule LiveTable.CsvGeneratorTest do
 
     test "handles empty result set" do
       Repo.delete_all(Product)
-      query = "from p in #{Product}, select: %{name: p.name, price: p.price}"
+      query = from(p in Product, select: %{name: p.name, price: p.price})
       header_data = [["name", "price"], ["Name", "Price"]]
 
       {:ok, file_path} = CsvGenerator.generate_csv(query, header_data)
@@ -91,8 +94,8 @@ defmodule LiveTable.CsvGeneratorTest do
 
       Repo.insert_all(Product, products)
 
-      query_string =
-        "#Ecto.Query<from p in \"products\", select: %{name: p.name, price: p.price, stock: p.stock_quantity}>"
+      query =
+        from(p in "products", select: %{name: p.name, price: p.price, stock: p.stock_quantity})
 
       headers_labels = ["Name", "Price", "Stock Quantity"]
 
@@ -102,7 +105,7 @@ defmodule LiveTable.CsvGeneratorTest do
       chunk_spy = spawn(fn -> chunk_monitor() end)
       Process.register(chunk_spy, :chunk_monitor)
 
-      {:ok, file_path} = CsvGenerator.generate_csv(query_string, header_data)
+      {:ok, file_path} = CsvGenerator.generate_csv(query, header_data)
       chunks = get_chunks()
 
       content = File.read!(file_path)
@@ -141,15 +144,15 @@ defmodule LiveTable.CsvGeneratorTest do
     end
 
     test "verifies headers align with correct data columns" do
-      query_string =
-        "#Ecto.Query<from p in \"products\", select: %{name: p.name, price: p.price, stock: p.stock_quantity}>"
+      query =
+        from(p in "products", select: %{name: p.name, price: p.price, stock: p.stock_quantity})
 
       headers_labels = ["Name", "Price", "Stock Quantity"]
 
       headers_keys = ["name", "price", "stock"]
       header_data = [headers_keys, headers_labels]
 
-      {:ok, csv_path} = CsvGenerator.generate_csv(query_string, header_data)
+      {:ok, csv_path} = CsvGenerator.generate_csv(query, header_data)
 
       rows =
         csv_path
@@ -162,50 +165,57 @@ defmodule LiveTable.CsvGeneratorTest do
     end
   end
 
-  describe "get_query/1" do
-    test "successfully converts query string to Ecto query" do
-      query_string = "from p in #{Product}, select: %{name: p.name, price: p.price}"
-      result = CsvGenerator.get_query(query_string)
+  describe "the export query codec" do
+    test "round-trips a query exactly" do
+      query =
+        from(p in Product,
+          where: p.price > ^Decimal.new("20.00"),
+          select: %{name: p.name, price: p.price},
+          order_by: [desc: p.price]
+        )
 
-      assert %Ecto.Query{} = result
+      decoded = query |> LiveTable.Export.encode_query() |> LiveTable.Export.decode_query()
+
+      assert decoded == query
+
+      # And it still produces the same SQL and params.
+      repo = LiveTable.Repo
+
+      assert Ecto.Adapters.SQL.to_sql(:all, repo, decoded) ==
+               Ecto.Adapters.SQL.to_sql(:all, repo, query)
     end
 
-    test "handles complex queries with conditions" do
-      query_string = """
-      from p in #{Product},
-        where: p.price > 20.00,
-        select: %{name: p.name, price: p.price, stock_quantity: p.stock_quantity}
-      """
+    test "round-trips a large pinned list, as a Select filter produces" do
+      values = Enum.to_list(1..200)
+      query = from(p in Product, where: p.id in ^values)
 
-      result = CsvGenerator.get_query(query_string)
+      decoded = query |> LiveTable.Export.encode_query() |> LiveTable.Export.decode_query()
 
-      assert %Ecto.Query{} = result
-
-      # Verify the query returns expected results
-      data = Repo.all(result)
-      assert length(data) == 1
-      product = hd(data)
-      assert product.name == "Test Product 2"
-      assert Decimal.compare(product.price, Decimal.new("20.00")) == :gt
-    end
-  end
-
-  describe "error handling" do
-    test "handles invalid query string" do
-      import ExUnit.CaptureIO
-
-      # Capture stderr to suppress the "undefined function" error from Code.eval_string
-      capture_io(:stderr, fn ->
-        assert_raise ArgumentError, "Invalid Ecto query string", fn ->
-          CsvGenerator.get_query("invalid query string")
-        end
-      end)
+      assert decoded == query
     end
 
-    test "handles valid query string" do
-      valid_query = "#Ecto.Query<from p in \"products\", select: {p.name, p.price}>"
-      result = CsvGenerator.get_query(valid_query)
-      assert %Ecto.Query{} = result
+    test "does not eval anything: the payload is opaque" do
+      encoded = from(p in Product) |> LiveTable.Export.encode_query()
+
+      refute encoded =~ "Ecto.Query"
+      refute encoded =~ "Product"
+
+      # A payload that is not a query is refused rather than interpreted.
+      assert_raise ArgumentError, fn ->
+        LiveTable.Export.decode_query(Base.encode64("not a query"))
+      end
+    end
+
+    test "refuses corrupt payloads" do
+      assert_raise ArgumentError, ~r/corrupt export query payload/, fn ->
+        LiveTable.Export.decode_query("!!!not base64!!!")
+      end
+    end
+
+    test "refuses a non-binary payload" do
+      assert_raise ArgumentError, ~r/expected an encoded export query/, fn ->
+        LiveTable.Export.decode_query(%{})
+      end
     end
   end
 end

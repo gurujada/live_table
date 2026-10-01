@@ -11,75 +11,53 @@ defmodule LiveTable.ExportHelpers do
 
   defmacro __using__(opts) do
     quote do
-      def handle_event("export-csv", _params, socket) do
-        {export_topic, updated_socket} = maybe_subscribe(socket)
-        header_data = extract_header_data()
-        options = socket.assigns.options |> put_in(["pagination", "paginate?"], false)
-
-        query_string =
-          list_resources(
-            fields(),
-            options,
-            Map.get(socket.assigns, :data_provider) || unquote(opts[:schema])
-          )
-          |> inspect()
-
-        {:ok, _job} =
-          %{
-            query: query_string,
-            header_data: header_data,
-            topic: export_topic
-          }
-          |> LiveTable.Workers.CsvExportWorker.new()
-          |> Oban.insert()
-
-        {:noreply, updated_socket}
+      def handle_event("export", %{"format" => format}, socket) do
+        case LiveTable.Export.fetch_format(format) do
+          {:ok, exporter} -> enqueue_export(exporter, socket)
+          :error -> {:noreply, socket}
+        end
       end
 
-      def handle_event("export-pdf", _params, socket) do
+      defp enqueue_export(exporter, socket) do
         {export_topic, updated_socket} = maybe_subscribe(socket)
 
         options = socket.assigns.options |> put_in(["pagination", "paginate?"], false)
 
-        count_query =
+        query =
           list_resources(
             fields(),
             options,
             Map.get(socket.assigns, :data_provider) || unquote(opts[:schema])
           )
 
-        case Application.get_env(:live_table, :repo).aggregate(count_query, :count) do
-          count when count > 10_000 ->
-            {:noreply,
-             put_flash(
-               updated_socket,
-               :error,
-               "Cannot export more than 10,000 records. Please apply filters to reduce the dataset."
-             )}
-
-          _ ->
-            header_data = extract_header_data()
-
-            query_string =
-              list_resources(
-                fields(),
-                options,
-                Map.get(socket.assigns, :data_provider) || unquote(opts[:schema])
-              )
-              |> inspect()
-
+        case export_limit_error(exporter, query) do
+          nil ->
             {:ok, _job} =
               %{
-                query: query_string,
-                header_data: header_data,
+                query: LiveTable.Export.encode_query(query),
+                header_data: extract_header_data(),
                 topic: export_topic
               }
-              |> LiveTable.Workers.PdfExportWorker.new()
+              |> exporter.worker.new()
               |> Oban.insert()
 
             {:noreply, updated_socket}
+
+          message ->
+            {:noreply, put_flash(updated_socket, :error, message)}
         end
       end
+
+      defp export_limit_error(%{max_records: max}, query) do
+        repo = Application.fetch_env!(:live_table, :repo)
+
+        if repo.aggregate(query, :count) > max do
+          "Cannot export more than #{max} records. " <>
+            "Please apply filters to reduce the dataset."
+        end
+      end
+
+      defp export_limit_error(_exporter, _query), do: nil
 
       # Extracts header keys and labels from fields for export
       defp extract_header_data do

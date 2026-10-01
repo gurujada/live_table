@@ -7,33 +7,9 @@ defmodule LiveTable.CsvGenerator do
   def generate_csv(query, header_data) do
     timestamp = LiveTable.ExportHelpers.generate_export_timestamp()
     temp_path = Path.join(System.tmp_dir!(), "export-#{timestamp}.csv")
-    query = get_query(query)
 
     case stream_data_to_file(query, temp_path, header_data) do
       {:ok, _} -> {:ok, temp_path}
-    end
-  end
-
-  def get_query(query) do
-    qs =
-      query
-      |> String.trim_leading("#Ecto.Query<")
-      |> String.trim_trailing(">")
-
-    try do
-      query =
-        Code.eval_string("""
-          import Ecto.Query
-          #{qs}
-        """)
-        |> elem(0)
-
-      case query do
-        %Ecto.Query{} -> query
-        _ -> raise ArgumentError, "Invalid Ecto query string"
-      end
-    rescue
-      CompileError -> raise ArgumentError, "Invalid Ecto query string"
     end
   end
 

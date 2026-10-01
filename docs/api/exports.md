@@ -8,7 +8,21 @@ LiveTable supports two export formats:
 - **CSV** - Comma-separated values for spreadsheet applications
 - **PDF** - Formatted documents using Typst typesetting engine
 
+`formats` accepts only formats LiveTable can actually produce. Any other entry raises an
+`ArgumentError` listing the supported formats, rather than rendering a button that dispatches to
+the wrong exporter.
+
 Exports include all table data (not just the current page) and respect active filters. Files are generated asynchronously and served as downloadable links.
+
+## Upgrade Notes
+
+Custom export buttons should submit `phx-click="export"` with
+`phx-value-format="csv"` or `phx-value-format="pdf"`. The previous `"export-csv"`
+and `"export-pdf"` events are no longer handled.
+
+Exports queued before this update must be re-run because the query payload format
+has changed. CSV and PDF generators now accept Ecto queries rather than query
+strings.
 
 ## Basic Setup
 
@@ -49,7 +63,7 @@ def table_options do
   %{
     exports: %{
       enabled: true,                    # Enable/disable exports
-      formats: [:csv, :pdf]            # Available formats
+      formats: [:csv, :pdf]            # Available formats: :csv, :pdf
     }
   }
 end

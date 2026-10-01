@@ -539,6 +539,8 @@ defmodule LiveTable.TableComponent do
       end
 
       defp exports(var!(assigns)) do
+        LiveTable.Export.validate_formats!(var!(assigns).formats)
+
         ~H"""
         <.dropdown_menu id="export-dropdown">
           <:trigger>
@@ -570,7 +572,8 @@ defmodule LiveTable.TableComponent do
             <button
               type="button"
               class="flex items-center gap-2"
-              phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}
+              phx-click="export"
+              phx-value-format={format}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

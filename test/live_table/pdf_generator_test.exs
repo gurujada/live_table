@@ -1,5 +1,6 @@
 defmodule LiveTable.PdfGeneratorTest do
   use LiveTable.DataCase
+  import Ecto.Query
 
   alias LiveTable.PdfGenerator
   alias LiveTable.Catalog.Product
@@ -35,7 +36,9 @@ defmodule LiveTable.PdfGeneratorTest do
   describe "generate_pdf/2" do
     test "successfully generates PDF file with correct headers and data" do
       query =
-        "from p in #{Product}, select: %{name: p.name, price: p.price, stock_quantity: p.stock_quantity}"
+        from(p in Product,
+          select: %{name: p.name, price: p.price, stock_quantity: p.stock_quantity}
+        )
 
       header_data = [["name", "price", "stock_quantity"], ["Name", "Price", "Stock Quantity"]]
 
@@ -50,7 +53,7 @@ defmodule LiveTable.PdfGeneratorTest do
 
     test "handles empty result set" do
       Repo.delete_all(Product)
-      query = "from p in #{Product}, select: %{name: p.name, price: p.price}"
+      query = from(p in Product, select: %{name: p.name, price: p.price})
       header_data = [["name", "price"], ["Name", "Price"]]
 
       {:ok, file_path} = PdfGenerator.generate_pdf(query, header_data)
@@ -69,7 +72,7 @@ defmodule LiveTable.PdfGeneratorTest do
         })
 
       query =
-        "from p in #{Product}, where: p.id == #{special_product.id}, select: %{name: p.name}"
+        from(p in Product, where: p.id == ^special_product.id, select: %{name: p.name})
 
       header_data = [["name"], ["Name"]]
 

@@ -437,9 +437,9 @@ defmodule LiveTable.TableComponentTest do
 
       assert html =~ "Export as CSV"
       assert html =~ "Export as PDF"
-      # phx-click is encoded as JSON in dropdown menu
-      assert html =~ "export-csv"
-      assert html =~ "export-pdf"
+      assert html =~ ~s(phx-click="export")
+      assert html =~ ~s(phx-value-format="csv")
+      assert html =~ ~s(phx-value-format="pdf")
     end
 
     test "respects configured export formats" do
