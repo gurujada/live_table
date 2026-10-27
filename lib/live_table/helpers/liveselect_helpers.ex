@@ -29,6 +29,10 @@ defmodule LiveTable.LiveSelectHelpers do
   def restore_live_select_from_params([], _filters), do: :ok
 
   def restore_live_select_from_params(updates, filters) do
+    if LiveTable.Components.sutra?(), do: restore_sutra_selections(updates, filters), else: :ok
+  end
+
+  defp restore_sutra_selections(updates, filters) do
     for {key, ids} <- updates do
       filter = LiveTable.ParseHelpers.get_filter(key, filters)
 

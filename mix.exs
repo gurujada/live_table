@@ -77,6 +77,7 @@ defmodule LiveTable.MixProject do
         "docs/quick-start.md",
         # Configuration
         "docs/configuration.md",
+        "docs/custom-components.md",
         # API Reference
         "docs/api/fields.md",
         "docs/api/filters.md",
@@ -102,7 +103,8 @@ defmodule LiveTable.MixProject do
           "docs/quick-start.md"
         ],
         Configuration: [
-          "docs/configuration.md"
+          "docs/configuration.md",
+          "docs/custom-components.md"
         ],
         "API Reference": [
           "docs/api/fields.md",

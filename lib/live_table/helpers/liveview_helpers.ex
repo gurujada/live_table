@@ -59,13 +59,9 @@ defmodule LiveTable.LiveViewHelpers do
           |> Map.take(~w(page per_page sort_params))
           |> Map.reject(fn {_, v} -> v == "" || is_nil(v) end)
 
-        for {_filter_key, filter} <- filters() do
-          case filter do
-            %LiveTable.Select{} ->
-              send_update(SutraUI.LiveSelect, id: filter.key, reset_value: [])
-
-            _ ->
-              :ok
+        if LiveTable.Components.sutra?() do
+          for {_filter_key, %LiveTable.Select{} = filter} <- filters() do
+            send_update(SutraUI.LiveSelect, id: filter.key, reset_value: [])
           end
         end
 

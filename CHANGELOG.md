@@ -5,6 +5,26 @@ All notable changes to LiveTable will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `:sutra_ui` is now truly optional. LiveTable renders its controls and filters through a components module (`LiveTable.Components`). With Sutra UI installed it uses `LiveTable.Components.Sutra` with no configuration; without it, set `config :live_table, components: MyAppWeb.TableComponents`. See the Custom Components guide. ([#34](https://github.com/gurujada/live_table/issues/34))
+- `use LiveTable.Components.Sutra` to override individual components and keep Sutra UI for the rest.
+- `mix live_table.install` adds `:sutra_ui`. Run `mix sutra_ui.install` afterwards, or remove it to use your own components.
+
+### Changed
+
+- Custom export controls now use the `"export"` event with a `format` value instead of `"export-csv"` or `"export-pdf"`.
+- **Upgrade note:** Exports queued before upgrading must be re-run.
+
+### Fixed
+
+- LiveTable compiles without `:sutra_ui`. Without it and without a components module, compilation fails with instructions instead of an undefined-module error. ([#34](https://github.com/gurujada/live_table/issues/34))
+- Blank or non-numeric range filter bounds fall back to the range defaults instead of crashing the LiveView.
+- Export queries preserve pinned values and filters instead of being reconstructed from their printed representation.
+- Unsupported export formats raise an error instead of exporting a PDF.
+
 ## [0.4.2] - 2026-07-07
 
 ### Changed

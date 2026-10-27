@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Note on styling: LiveTable uses DaisyUI class semantics with a Tailwind-based shim, so it looks good without DaisyUI. If DaisyUI is present, components adopt your active Daisy theme automatically.
+Note on styling: LiveTable renders its controls with [Sutra UI](https://github.com/gurujada/sutra_ui) by default. To use your own components, see [Custom Components](custom-components.md).
 
 Get up and running with LiveTable in 5 minutes! This guide assumes you've already completed the [installation](installation.md).
 
@@ -466,7 +466,8 @@ end
 
 **Styling looks wrong?**
 - Ensure your Tailwind CSS build is processing LiveTable's lib directory
-- LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for components
+- With Sutra UI, make sure `mix sutra_ui.install` has set up its CSS
+- Without Sutra UI, see [Custom Components](custom-components.md#styling-the-rest-of-the-table)
 
 ## Learn More
 

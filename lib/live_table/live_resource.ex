@@ -12,6 +12,9 @@ defmodule LiveTable.LiveResource do
   }
 
   defmacro __using__(opts) do
+    # Fail at compile time when there is neither Sutra UI nor a configured components module.
+    LiveTable.Components.impl()
+
     quote do
       import Ecto.Query
       import Sorting

@@ -44,7 +44,12 @@ mix live_table.install
 
 The installer automatically:
 - Adds LiveTable configuration to `config/config.exs`
+- Adds [Sutra UI](https://github.com/gurujada/sutra_ui), the recommended UI components
 - Optionally configures Oban for exports (use `--oban` flag or you'll be prompted)
+
+Then set up Sutra UI's CSS with `mix sutra_ui.install` (see the [Sutra UI installation guide](https://hexdocs.pm/sutra_ui/readme.html#installation)).
+
+To use your own components instead, remove `sutra_ui` from your deps and follow [Custom Components](custom-components.md).
 
 ### Step 3: Manual Steps
 
@@ -80,7 +85,8 @@ That's it! See the [Quick Start Guide](quick-start.html) to create your first ta
 
 ## Manual Configuration
 
-If the installer doesn't work for your project structure, add to `config/config.exs`:
+If the installer doesn't work for your project structure, add `{:sutra_ui, "~> 0.4.0"}` to your deps
+(or configure [your own components](custom-components.md)), and add to `config/config.exs`:
 
 ```elixir
 config :live_table,

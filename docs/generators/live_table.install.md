@@ -37,7 +37,13 @@ config :live_table,
 
 The `:app` option is required for exports to work correctly in production releases.
 
-### 2. Oban Configuration (Optional)
+### 2. Sutra UI
+
+Adds `{:sutra_ui, "~> 0.4.0"}`, the recommended UI components, to your deps. Run
+`mix sutra_ui.install` afterwards to set up its CSS. To use your own components,
+remove it and see [Custom Components](../custom-components.html).
+
+### 3. Oban Configuration (Optional)
 
 If you use the `--oban` flag (for CSV/PDF exports):
 

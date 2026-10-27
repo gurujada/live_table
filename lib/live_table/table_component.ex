@@ -4,10 +4,6 @@ defmodule LiveTable.TableComponent do
     quote do
       import Phoenix.Component
       import LiveTable.SortHelpers
-      import SutraUI.DropdownMenu
-      import SutraUI.InputGroup
-      import SutraUI.Select
-      import SutraUI.Empty
       alias Phoenix.LiveView.JS
 
       def live_table(var!(assigns)) do
@@ -104,58 +100,22 @@ defmodule LiveTable.TableComponent do
                   }
                   class="w-56"
                 >
-                  <label for="table-search" class="sr-only">Search</label>
-                  <.input_group>
-                    <:prefix type="icon">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="size-4 text-muted-foreground"
-                        aria-hidden="true"
-                      >
-                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                      </svg>
-                    </:prefix>
-                    <input
-                      type="text"
-                      name="search"
-                      autocomplete="off"
-                      id="table-search"
-                      class="input w-full pl-9"
-                      placeholder={@table_options[:search][:placeholder]}
-                      value={@options["filters"]["search"]}
-                      phx-debounce={@table_options[:search][:debounce]}
-                    />
-                  </.input_group>
+                  {LiveTable.Components.impl().search(%{
+                    value: @options["filters"]["search"],
+                    placeholder: @table_options[:search][:placeholder],
+                    debounce: @table_options[:search][:debounce]
+                  })}
                 </div>
 
-                <.select
-                  :if={
-                    @options["pagination"]["paginate?"] &&
-                      @table_options.pagination[:mode] != :infinite_scroll
-                  }
-                  id="per-page-select"
-                  name="per_page"
-                  value={to_string(@options["pagination"]["per_page"])}
-                  class="w-24"
-                  trigger_class="w-full"
-                >
-                  <:trigger>
-                    {@options["pagination"]["per_page"]}
-                  </:trigger>
-                  <.select_option
-                    :for={size <- get_in(@table_options, [:pagination, :sizes])}
-                    value={to_string(size)}
-                    label={to_string(size)}
-                  />
-                </.select>
+                <div :if={
+                  @options["pagination"]["paginate?"] &&
+                    @table_options.pagination[:mode] != :infinite_scroll
+                }>
+                  {LiveTable.Components.impl().per_page(%{
+                    value: to_string(@options["pagination"]["per_page"]),
+                    sizes: get_in(@table_options, [:pagination, :sizes])
+                  })}
+                </div>
 
                 <!-- Filter toggle -->
                 <button
@@ -367,32 +327,8 @@ defmodule LiveTable.TableComponent do
         callback.(assigns)
       end
 
-      defp render_empty_state(var!(assigns)) do
-        ~H"""
-        <.empty>
-          <:icon>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="size-12"
-              aria-hidden="true"
-            >
-              <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H14.76a2 2 0 0 1 1.74 1.1L18 14" /><path d="M6 14h12v5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5Z" /><path d="M21 14V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7" />
-            </svg>
-          </:icon>
-          <:title>No data</:title>
-          <:description>
-            No records found. Try adjusting your filters or create a new record.
-          </:description>
-        </.empty>
-        """
+      defp render_empty_state(assigns) do
+        LiveTable.Components.impl().empty_state(assigns)
       end
 
       defp render_row(%{table_options: %{use_streams: false}} = var!(assigns)) do
@@ -538,68 +474,9 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      defp exports(var!(assigns)) do
-        LiveTable.Export.validate_formats!(var!(assigns).formats)
-
-        ~H"""
-        <.dropdown_menu id="export-dropdown">
-          <:trigger>
-            <span class="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="size-4"
-                aria-hidden="true"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line
-                  x1="12"
-                  x2="12"
-                  y1="15"
-                  y2="3"
-                />
-              </svg>
-              Export
-            </span>
-          </:trigger>
-          <.dropdown_item :for={format <- @formats}>
-            <button
-              type="button"
-              class="flex items-center gap-2"
-              phx-click="export"
-              phx-value-format={format}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="size-4"
-                aria-hidden="true"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line
-                  x1="12"
-                  x2="12"
-                  y1="15"
-                  y2="3"
-                />
-              </svg>
-              Export as {String.upcase(to_string(format))}
-            </button>
-          </.dropdown_item>
-        </.dropdown_menu>
-        """
+      defp exports(assigns) do
+        LiveTable.Export.validate_formats!(assigns.formats)
+        LiveTable.Components.impl().exports(assigns)
       end
 
       defp render_cell(value, field, _record)

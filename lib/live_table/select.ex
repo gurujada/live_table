@@ -21,7 +21,9 @@ defmodule LiveTable.Select do
 
     ### LiveSelect Options
 
-    These options are passed directly to the underlying `SutraUI.LiveSelect` component:
+    With Sutra UI, these options are passed to `SutraUI.LiveSelect`. Without Sutra UI,
+    the configured `LiveTable.Components` module renders the select
+    (`options_source` search-as-you-type needs LiveSelect or your own component):
 
     - `:mode` - Selection mode (default: `:tags`)
       - `:single` - Select one option, input shows selected label
@@ -140,7 +142,7 @@ defmodule LiveTable.Select do
     ```elixir
     %{label: label, value: [id, description]}
     ```
-    The default template can be seen at [git link](https://github.com/gurujada/live_table/blob/master/lib/live_table/select.ex#L211)
+    The default template can be seen at [`LiveTable.Components.Sutra`](https://github.com/gurujada/live_table/blob/master/lib/live_table/components/sutra.ex)
 
   ### Custom Template
     Custom templates can be provided as functions that take an option map and return rendered HTML:
@@ -228,7 +230,6 @@ defmodule LiveTable.Select do
   """
   import Ecto.Query
 
-  use Phoenix.Component
   defstruct [:field, :key, :options]
 
   @default_options %{
@@ -265,57 +266,5 @@ defmodule LiveTable.Select do
   end
 
   @doc false
-  def render(assigns) do
-    ~H"""
-    <div id={"select_filter[#{@key}]"} class={@filter.options.css_classes}>
-      <label :if={@filter.options.label} class={@filter.options.label_classes}>
-        {@filter.options.label}
-      </label>
-      <.live_component
-        module={SutraUI.LiveSelect}
-        field={Phoenix.Component.to_form(%{})["filters[#{@key}]"]}
-        id={"#{@key}"}
-        placeholder={@filter.options.placeholder}
-        mode={@filter.options[:mode] || :tags}
-        allow_clear={@filter.options[:allow_clear] || false}
-        max_selectable={@filter.options[:max_selectable] || 0}
-        user_defined_options={@filter.options[:user_defined_options] || false}
-        debounce={@filter.options[:debounce]}
-        options={@filter.options[:options] || []}
-        class="live-table-select"
-      >
-        <:option :let={option}>
-          {render_option_template(@filter.options.option_template, option)}
-        </:option>
-      </.live_component>
-    </div>
-    """
-  end
-
-  defp render_option_template(nil, %{label: label, value: [id, description]}) do
-    assigns = %{label: label, id: id, description: description}
-
-    ~H"""
-    <div class="flex flex-col">
-      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
-      <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-        ID: {@id} • {@description}
-      </span>
-    </div>
-    """
-  end
-
-  # Fallback for options without the expected structure
-  defp render_option_template(nil, %{label: label}) do
-    assigns = %{label: label}
-
-    ~H"""
-    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
-    """
-  end
-
-  # Custom template provided as a function
-  defp render_option_template(template_fn, option) do
-    template_fn.(option)
-  end
+  def render(assigns), do: LiveTable.Components.render(:select_filter, assigns)
 end

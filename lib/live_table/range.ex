@@ -3,8 +3,8 @@ defmodule LiveTable.Range do
   A module for handling numeric range-based filters in LiveTable.
 
   This module provides functionality for creating and managing range filters
-  for numeric values. It supports creating range sliders with customizable
-  options and appearances using Sutra UI's range_slider component.
+  for numeric values. With Sutra UI it renders a range slider; without it, the
+  configured `LiveTable.Components` module renders it.
 
   ## Options
   The module accepts the following options:
@@ -54,9 +54,7 @@ defmodule LiveTable.Range do
   """
 
   import Ecto.Query
-  use Phoenix.Component
   import LiveTable.TableConfig, only: [deep_merge: 2]
-  import SutraUI.RangeSlider, only: [range_slider: 1]
 
   defstruct [:field, :key, :options]
 
@@ -124,34 +122,9 @@ defmodule LiveTable.Range do
       |> Map.put(:current_max, current_max)
       |> Map.put(:pips_config, build_pips_config(assigns.filter.options))
 
-    ~H"""
-    <div class={@filter.options.css_classes}>
-      <label :if={@filter.options.label} class={@filter.options.label_classes}>
-        {@filter.options.label}
-        <span :if={@filter.options.unit != ""} class="text-muted-foreground">
-          ({@filter.options.unit})
-        </span>
-      </label>
-      <div class="mt-3">
-        <.range_slider
-          name={@key}
-          id={"range_filter[#{@key}]"}
-          min={@filter.options.min}
-          max={@filter.options.max}
-          step={@filter.options.step}
-          value_min={@current_min || @filter.options.default_min}
-          value_max={@current_max || @filter.options.default_max}
-          tooltips={@filter.options.slider_options.tooltips}
-          pips={@pips_config}
-          on_change="range_change"
-          class={@filter.options.slider_classes}
-        />
-      </div>
-    </div>
-    """
+    LiveTable.Components.render(:range_filter, assigns)
   end
 
-  # Build pips config for Sutra's range_slider format
   defp build_pips_config(%{pips: false}), do: nil
 
   defp build_pips_config(%{pips: true, pips_mode: "positions", pips_values: values}) do

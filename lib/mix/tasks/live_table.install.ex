@@ -3,6 +3,9 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     @moduledoc """
     Installs and configures LiveTable in your Phoenix application.
 
+    Adds `:sutra_ui`, the recommended UI components. To use your own components
+    instead, remove it and see the Custom Components guide.
+
     ## Usage
 
         $ mix live_table.install
@@ -40,6 +43,7 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       igniter
       |> configure_live_table(app_name)
+      |> add_sutra_dep()
       |> maybe_configure_oban(app_name)
       |> add_notices(app_name)
     end
@@ -73,6 +77,16 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
           end
         end)
       end
+    end
+
+    defp add_sutra_dep(igniter) do
+      Igniter.Project.Deps.add_dep(igniter, {:sutra_ui, "~> 0.4.0"}, on_exists: :skip, yes?: true)
+    rescue
+      _ ->
+        Igniter.add_warning(
+          igniter,
+          "Could not add Sutra UI. Please add {:sutra_ui, \"~> 0.4.0\"} manually."
+        )
     end
 
     defp maybe_configure_oban(igniter, app_module) do
@@ -137,8 +151,12 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
       |> Igniter.add_notice("LiveTable has been successfully configured!")
       |> Igniter.add_notice("")
       |> Igniter.add_notice("Next steps:")
-      |> Igniter.add_notice("1. Restart your Phoenix server")
-      |> Igniter.add_notice("2. Create your first LiveTable by following the Quick Start guide")
+      |> Igniter.add_notice("1. Set up Sutra UI: mix sutra_ui.install")
+      |> Igniter.add_notice(
+        "   (or remove :sutra_ui and use your own components, see the Custom Components guide)"
+      )
+      |> Igniter.add_notice("2. Restart your Phoenix server")
+      |> Igniter.add_notice("3. Create your first LiveTable by following the Quick Start guide")
       |> maybe_add_oban_notice(app_module)
     end
 
@@ -148,7 +166,7 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       if oban_configured?(igniter, app_atom) do
         igniter
-        |> Igniter.add_notice("3. Start Oban by adding it to your supervision tree:")
+        |> Igniter.add_notice("4. Start Oban by adding it to your supervision tree:")
         |> Igniter.add_notice(
           "   children = [..., {Oban, Application.fetch_env!(:#{app_atom}, Oban)}]"
         )

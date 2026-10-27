@@ -163,13 +163,12 @@ LiveTable is designed to handle real-world application demands:
 
 ## Styling and Themes
 
-LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for its UI components and uses Tailwind CSS for styling.
+LiveTable renders its controls and filters with [Sutra UI](https://github.com/gurujada/sutra_ui), which we recommend, and uses Tailwind CSS for styling.
 
-- **SutraUI dependency**: LiveTable uses SutraUI components which provide DaisyUI-compatible semantic class names (`btn`, `select`, `input`, `dropdown`, `menu`).
-- **Tailwind-based**: Everything looks good out of the box with Tailwind CSS.
-- **DaisyUI integration**: If your app includes DaisyUI, components automatically adopt your active Daisy theme.
-- **Dark mode**: Respects Tailwind `dark:` classes and DaisyUI theme tokens.
-- **Custom UI**: If you want to use a different UI framework, you can replace the entire UI using `custom_header`, `custom_controls`, `custom_content`, and `custom_footer` options.
+- **Sutra UI by default**: With `:sutra_ui` installed, everything works with no configuration, including dark mode through Sutra UI's theme.
+- **Sutra UI is optional**: Without it, configure your own components module. See [Custom Components](custom-components.md).
+- **Change one piece**: `use LiveTable.Components.Sutra` and override just the components you want.
+- **Replace whole sections**: `custom_header`, `custom_controls`, `custom_content` and `custom_footer` replace entire parts of the table.
 
 ## Integration Requirements
 

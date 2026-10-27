@@ -16,6 +16,17 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
   end
 
   describe "mix live_table.install" do
+    test "adds Sutra UI and says how to set it up" do
+      igniter =
+        Igniter.Test.phx_test_project()
+        |> Igniter.compose_task("live_table.install", ["--yes"])
+
+      mix_exs = igniter.rewrite |> Rewrite.source!("mix.exs") |> Rewrite.Source.get(:content)
+      assert mix_exs =~ ~s({:sutra_ui, "~> 0.4.0"})
+
+      Igniter.Test.assert_has_notice(igniter, &(&1 =~ "mix sutra_ui.install"))
+    end
+
     @tag :tmp_dir
     test "installs LiveTable configuration successfully", %{tmp_dir: tmp_dir} do
       # Setup a fake Phoenix project structure

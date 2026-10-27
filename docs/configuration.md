@@ -48,6 +48,8 @@ config :live_table,
 ### Optional Configuration
 
 - **`defaults`** - Override default table options
+- **`components`** - The module that renders search, page size, export, empty state and filter widgets.
+  Defaults to `LiveTable.Components.Sutra` when Sutra UI is installed. See [Custom Components](custom-components.md).
 
 ## Per-table Configuration
 
@@ -339,7 +341,10 @@ Notes:
 
 ### Custom Components
 
-LiveTable allows complete UI customization through custom components. You can replace any section of the table interface with your own implementation while still benefiting from LiveTable's data handling, filtering, and state management.
+To change individual controls or filter widgets (search, page size, export menu, empty state, Boolean, Range, Select),
+configure a components module. See [Custom Components](custom-components.md).
+
+To replace whole sections, LiveTable allows complete UI customization through custom section components. You can replace any section of the table interface with your own implementation while still benefiting from LiveTable's data handling, filtering, and state management.
 
 ```elixir
 # Override entire sections

@@ -31,8 +31,10 @@ A Phoenix LiveView component library for building dynamic, interactive data tabl
 **2. Install:**
 
 ```bash
-mix deps.get && mix live_table.install
+mix deps.get && mix live_table.install && mix sutra_ui.install
 ```
+
+The installer adds [Sutra UI](https://github.com/gurujada/sutra_ui), the recommended UI components. Prefer your own? Remove `sutra_ui` and see [Custom Components](https://hexdocs.pm/live_table/custom-components.html).
 
 **3. Create a table:**
 

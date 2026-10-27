@@ -113,16 +113,19 @@ defmodule LiveTable.ParseHelpers do
     Keyword.get(filters, key)
   end
 
-  defp parse_range_values(%{step: step}, min, max) when is_integer(step) do
-    {min_int, _} = Integer.parse(min)
-    {max_int, _} = Integer.parse(max)
-    {min_int, max_int}
+  # Blank or non-numeric bounds (an emptied input, a hand-edited URL) fall back to the defaults.
+  defp parse_range_values(options, min, max) do
+    {parse_bound(min, options.step, options.default_min),
+     parse_bound(max, options.step, options.default_max)}
   end
 
-  defp parse_range_values(%{step: _step}, min, max) do
-    {min_float, _} = Float.parse(min)
-    {max_float, _} = Float.parse(max)
-    {min_float, max_float}
+  defp parse_bound(value, step, default) do
+    parser = if is_integer(step), do: &Integer.parse/1, else: &Float.parse/1
+
+    case parser.(to_string(value)) do
+      {number, _} -> number
+      :error -> default
+    end
   end
 
   def build_options(sort_params, filters, params, table_options) do
