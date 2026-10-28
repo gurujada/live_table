@@ -5,7 +5,7 @@ All notable changes to LiveTable will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.3] - 2026-10-28
+## [Unreleased]
 
 ### Added
 
@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- SutraUI is now a required dependency, `~> 0.4.1` (it was optional, but LiveTable imports it unconditionally).
+- SutraUI is now a required dependency (it was optional, but LiveTable imports it unconditionally). Until SutraUI 0.5.0 is on Hex it comes from GitHub (`gurujada/sutra_ui`, master); switch to a Hex requirement before publishing.
+- Works with SutraUI 0.5 (master): its select is an extracted hook, so apps merge `phoenix-colocated/sutra_ui` hooks into their LiveSocket, and the per-page select renders no inline script.
 - Select filter markup uses SutraUI tokens (`text-foreground`, `text-muted-foreground`) instead of fixed `gray` classes, so dark mode follows the theme.
 
 ## [0.4.2] - 2026-07-07

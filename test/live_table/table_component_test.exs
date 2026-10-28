@@ -93,7 +93,9 @@ defmodule LiveTable.TableComponentTest do
       assert Enum.all?(scripts, &(&1 =~ ~s(nonce="abc123")))
       assert Enum.any?(scripts, &(&1 =~ "Download"))
       assert Enum.any?(scripts, &(&1 =~ "SortableColumn"))
-      assert Enum.any?(scripts, &(&1 =~ "Select"))
+      # SutraUI 0.5's select is an extracted hook (merged into the app's LiveSocket), so it
+      # renders no inline script.
+      refute Enum.any?(scripts, &(&1 =~ "Select"))
       assert Enum.any?(scripts, &(&1 =~ "DropdownMenu"))
     end
   end

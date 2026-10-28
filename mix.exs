@@ -1,7 +1,7 @@
 defmodule LiveTable.MixProject do
   use Mix.Project
 
-  @version "0.4.3"
+  @version "0.4.2"
   @source_url "https://github.com/gurujada/live_table"
 
   def project do
@@ -40,7 +40,8 @@ defmodule LiveTable.MixProject do
       {:igniter, "~> 0.7.0", optional: true},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},
       {:ecto_sql, "~> 3.13"},
-      {:sutra_ui, "~> 0.4.1"},
+      # From GitHub until SutraUI 0.5.0 is on Hex; switch back to a Hex requirement before publishing.
+      {:sutra_ui, github: "gurujada/sutra_ui", branch: "master"},
       {:lazy_html, ">= 0.1.0", only: :test}
     ]
   end
