@@ -12,7 +12,7 @@ defmodule LiveTable.TestComponents do
     <input
       type="search"
       name="search"
-      id="table-search"
+      id={@id}
       value={@value}
       placeholder={@placeholder}
       phx-debounce={@debounce}
@@ -23,7 +23,7 @@ defmodule LiveTable.TestComponents do
   @impl true
   def per_page(assigns) do
     ~H"""
-    <select name="per_page" id="per-page-select">
+    <select name="per_page" id={@id}>
       <option :for={size <- @sizes} value={size} selected={to_string(size) == @value}>
         {size}
       </option>

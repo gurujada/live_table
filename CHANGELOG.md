@@ -12,9 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `:sutra_ui` is now truly optional. LiveTable renders its controls and filters through a components module (`LiveTable.Components`). With Sutra UI installed it uses `LiveTable.Components.Sutra` with no configuration; without it, set `config :live_table, components: MyAppWeb.TableComponents`. See the Custom Components guide. ([#34](https://github.com/gurujada/live_table/issues/34))
 - `use LiveTable.Components.Sutra` to override individual components and keep Sutra UI for the rest.
 - `mix live_table.install` adds `:sutra_ui`. Run `mix sutra_ui.install` afterwards, or remove it to use your own components.
+- `<.live_table>` accepts a `nonce` assign (default `nil`). It is set on LiveTable's inline `.Download` and `.SortableColumn` hook scripts and passed to the components module, so a nonce-based `script-src` Content-Security-Policy works without `'unsafe-inline'`.
+- `<.live_table>` accepts an `id` assign (default `"live-table"`), so several tables can share a page. Every DOM id the table renders derives from it; the default id keeps today's ids.
 
 ### Changed
 
+- Select filter markup uses Sutra UI tokens (`text-foreground`, `text-muted-foreground`) instead of fixed `gray` classes, so dark mode follows the theme.
 - Custom export controls now use the `"export"` event with a `format` value instead of `"export-csv"` or `"export-pdf"`.
 - **Upgrade note:** Exports queued before upgrading must be re-run.
 

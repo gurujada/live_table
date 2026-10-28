@@ -854,3 +854,21 @@ def table_options do
   config
 end
 ```
+
+## CSP nonce and multiple tables
+
+`<.live_table>` takes two optional assigns.
+
+```heex
+<.live_table
+  id="orders-table"
+  nonce={@csp_nonce}
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+/>
+```
+
+- `nonce` is set on LiveTable's inline hook scripts (`.Download`, `.SortableColumn`) and passed to your components module. Default `nil` renders no nonce attribute. Sutra UI 0.4's components render their own inline scripts without a nonce, so a strict nonce-based `script-src` also needs a Sutra UI release that supports it, or your own components.
+- `id` is the table root id (default `"live-table"`). Every other id the table renders is prefixed with it (`orders-table-search`, `orders-export-dropdown`, ...), so give each table on a page its own id. With the default id, ids are unchanged. Filter field ids (derived from filter keys) and stream row ids are not prefixed.

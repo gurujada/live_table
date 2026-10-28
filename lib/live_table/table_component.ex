@@ -11,14 +11,16 @@ defmodule LiveTable.TableComponent do
           var!(assigns)
           |> assign(:table_options, unquote(opts)[:table_options])
           |> assign_new(:actions, fn -> [] end)
+          |> assign_new(:id, fn -> "live-table" end)
+          |> assign_new(:nonce, fn -> nil end)
 
         ~H"""
-        <div class="w-full" id="live-table" phx-hook=".Download">
+        <div class="w-full" id={@id} phx-hook=".Download">
           <.render_header {assigns} />
           <.render_content {assigns} />
           <.render_footer {assigns} />
         </div>
-        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download" runtime>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download" runtime nonce={@nonce}>
           {
             mounted() {
               this.handleEvent("download", ({ path }) => {
@@ -43,6 +45,8 @@ defmodule LiveTable.TableComponent do
       defp render_header(var!(assigns)) do
         ~H"""
         <.header_section
+          id={@id}
+          nonce={@nonce}
           fields={@fields}
           filters={@filters}
           options={@options}
@@ -76,6 +80,8 @@ defmodule LiveTable.TableComponent do
       defp render_controls(var!(assigns)) do
         ~H"""
         <.common_controls
+          id={@id}
+          nonce={@nonce}
           fields={@fields}
           filters={@filters}
           options={@options}
@@ -86,7 +92,7 @@ defmodule LiveTable.TableComponent do
 
       defp common_controls(var!(assigns)) do
         ~H"""
-        <.form for={%{}} id="live-table-controls-form" phx-change="sort">
+        <.form for={%{}} id={"#{@id}-controls-form"} phx-change="sort">
           <div class="space-y-4">
             <!-- Search and controls bar -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -101,6 +107,7 @@ defmodule LiveTable.TableComponent do
                   class="w-56"
                 >
                   {LiveTable.Components.impl().search(%{
+                    id: dom_id(@id, "table-search"),
                     value: @options["filters"]["search"],
                     placeholder: @table_options[:search][:placeholder],
                     debounce: @table_options[:search][:debounce]
@@ -112,6 +119,8 @@ defmodule LiveTable.TableComponent do
                     @table_options.pagination[:mode] != :infinite_scroll
                 }>
                   {LiveTable.Components.impl().per_page(%{
+                    id: dom_id(@id, "per-page-select"),
+                    nonce: @nonce,
                     value: to_string(@options["pagination"]["per_page"]),
                     sizes: get_in(@table_options, [:pagination, :sizes])
                   })}
@@ -122,9 +131,9 @@ defmodule LiveTable.TableComponent do
                   :if={length(@filters) > (get_in(@table_options, [:max_filters]) || 3)}
                   type="button"
                   phx-click={
-                    JS.toggle(to: "#filters-container")
-                    |> JS.toggle(to: "#filter-show-text")
-                    |> JS.toggle(to: "#filter-hide-text")
+                    JS.toggle(to: "#" <> dom_id(@id, "filters-container"))
+                    |> JS.toggle(to: "#" <> dom_id(@id, "filter-show-text"))
+                    |> JS.toggle(to: "#" <> dom_id(@id, "filter-hide-text"))
                   }
                   class="btn btn-outline"
                 >
@@ -143,19 +152,23 @@ defmodule LiveTable.TableComponent do
                   >
                     <path d="M3 6h18" /><path d="M7 12h10" /><path d="M10 18h4" />
                   </svg>
-                  <span id="filter-show-text">Show Filters</span>
-                  <span id="filter-hide-text" class="hidden">Hide Filters</span>
+                  <span id={dom_id(@id, "filter-show-text")}>Show Filters</span>
+                  <span id={dom_id(@id, "filter-hide-text")} class="hidden">Hide Filters</span>
                 </button>
               </div>
 
               <div :if={get_in(@table_options, [:exports, :enabled])} class="">
-                <.exports formats={get_in(@table_options, [:exports, :formats])} />
+                <.exports
+                  id={dom_id(@id, "export-dropdown")}
+                  formats={get_in(@table_options, [:exports, :formats])}
+                  nonce={@nonce}
+                />
               </div>
             </div>
 
             <!-- Filters section -->
             <div
-              id="filters-container"
+              id={dom_id(@id, "filters-container")}
               class={["", length(@filters) > (get_in(@table_options, [:max_filters]) || 3) && "hidden"]}
             >
               <.filters filters={@filters} applied_filters={@options["filters"]} />
@@ -201,6 +214,8 @@ defmodule LiveTable.TableComponent do
                           label={field.label}
                           sort_params={@options["sort"]["sort_params"]}
                           sortable={Map.get(field, :sortable, false)}
+                          nonce={@nonce}
+                          table_id={@id}
                         />
                       </th>
                       <th
@@ -213,11 +228,14 @@ defmodule LiveTable.TableComponent do
                     </tr>
                   </thead>
                   <tbody
-                    id="resources-stream"
+                    id={dom_id(@id, "resources-stream")}
                     phx-update={@table_options[:use_streams] && "stream"}
                     class="bg-background"
                   >
-                    <tr id="empty-placeholder" class="only:table-row hidden hover:bg-transparent">
+                    <tr
+                      id={dom_id(@id, "empty-placeholder")}
+                      class="only:table-row hidden hover:bg-transparent"
+                    >
                       <td colspan={
                         length(visible_fields(@fields)) + if(has_actions(@actions), do: 1, else: 0)
                       }>
@@ -245,13 +263,13 @@ defmodule LiveTable.TableComponent do
            ) do
         ~H"""
         <div
-          id="infinite-scroll-container"
+          id={dom_id(@id, "infinite-scroll-container")}
           phx-update="stream"
           phx-viewport-bottom={@options["pagination"][:has_next_page] && "load_more"}
           phx-throttle="1000"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <div id="empty-placeholder" class="hidden only:block col-span-full">
+          <div id={dom_id(@id, "empty-placeholder")} class="hidden only:block col-span-full">
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
@@ -308,11 +326,11 @@ defmodule LiveTable.TableComponent do
       defp content_section(%{table_options: %{mode: :card, use_streams: true}} = var!(assigns)) do
         ~H"""
         <div
-          id="resources-stream"
+          id={dom_id(@id, "resources-stream")}
           phx-update="stream"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <div id="card-empty-placeholder" class="hidden only:block col-span-full">
+          <div id={dom_id(@id, "card-empty-placeholder")} class="hidden only:block col-span-full">
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>

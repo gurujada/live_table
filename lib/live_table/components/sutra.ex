@@ -44,7 +44,7 @@ defmodule LiveTable.Components.Sutra do
   @impl true
   def search(assigns) do
     ~H"""
-    <label for="table-search" class="sr-only">Search</label>
+    <label for={@id} class="sr-only">Search</label>
     <SutraUI.InputGroup.input_group>
       <:prefix type="icon">
         <svg
@@ -67,7 +67,7 @@ defmodule LiveTable.Components.Sutra do
         type="text"
         name="search"
         autocomplete="off"
-        id="table-search"
+        id={@id}
         class="input w-full pl-9"
         placeholder={@placeholder}
         value={@value}
@@ -81,7 +81,7 @@ defmodule LiveTable.Components.Sutra do
   def per_page(assigns) do
     ~H"""
     <SutraUI.Select.select
-      id="per-page-select"
+      id={@id}
       name="per_page"
       value={@value}
       class="w-24"
@@ -102,7 +102,7 @@ defmodule LiveTable.Components.Sutra do
   @impl true
   def exports(assigns) do
     ~H"""
-    <SutraUI.DropdownMenu.dropdown_menu id="export-dropdown">
+    <SutraUI.DropdownMenu.dropdown_menu id={@id}>
       <:trigger>
         <span class="flex items-center gap-2">
           <.download_icon /> Export
@@ -256,8 +256,8 @@ defmodule LiveTable.Components.Sutra do
 
     ~H"""
     <div class="flex flex-col">
-      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
-      <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+      <span class="text-sm font-medium text-foreground">{@label}</span>
+      <span class="text-xs text-muted-foreground mt-0.5">
         ID: {@id} • {@description}
       </span>
     </div>
@@ -268,7 +268,7 @@ defmodule LiveTable.Components.Sutra do
     assigns = %{label: label}
 
     ~H"""
-    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
+    <span class="text-sm font-medium text-foreground">{@label}</span>
     """
   end
 

@@ -50,13 +50,16 @@ field names below. LiveTable reads them, updates the URL and runs the query.
 
 | Function | Assigns | Must post |
 |---|---|---|
-| `search/1` | `value`, `placeholder`, `debounce` | `search` |
-| `per_page/1` | `value` (string), `sizes` | `per_page` |
-| `exports/1` | `formats` (e.g. `[:csv, :pdf]`) | a `phx-click="export"` button per format, with `phx-value-format` |
+| `search/1` | `id`, `value`, `placeholder`, `debounce` | `search` |
+| `per_page/1` | `id`, `nonce`, `value` (string), `sizes` | `per_page` |
+| `exports/1` | `id`, `nonce`, `formats` (e.g. `[:csv, :pdf]`) | a `phx-click="export"` button per format, with `phx-value-format` |
 | `empty_state/1` | `table_options` | nothing |
 | `boolean_filter/1` | `key`, `filter`, `applied_filters` | `filters[key]` as `"true"`, plus a hidden `"false"` |
 | `range_filter/1` | `key`, `filter`, `applied_filters`, `current_min`, `current_max`, `pips_config` | `filters[key][min]` and `filters[key][max]` |
 | `select_filter/1` | `key`, `filter`, `applied_filters` | `filters[key][id][]`, one value per selected id |
+
+`id` is derived from the table's `id` assign, so several tables can share a page.
+`nonce` is the table's CSP nonce (or `nil`); set it on any inline `<script>` you render.
 
 `boolean_filter/1`, `range_filter/1` and `select_filter/1` are optional. Implement
 the ones for the filter types you use. If a table uses a filter type your module
@@ -87,7 +90,7 @@ defmodule MyAppWeb.TableComponents do
   @impl true
   def search(assigns) do
     ~H"""
-    <input type="search" name="search" value={@value}
+    <input type="search" id={@id} name="search" value={@value}
       placeholder={@placeholder} phx-debounce={@debounce} />
     """
   end
@@ -95,7 +98,7 @@ defmodule MyAppWeb.TableComponents do
   @impl true
   def per_page(assigns) do
     ~H"""
-    <select name="per_page">
+    <select id={@id} name="per_page">
       <option :for={size <- @sizes} value={size} selected={to_string(size) == @value}>
         {size}
       </option>
