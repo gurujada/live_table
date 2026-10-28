@@ -138,6 +138,6 @@ Debug output prints to the server console, and only in the `:dev` environment; d
 exports: %{enabled: true, formats: [:csv, :pdf]}
 ```
 
-CSV/PDF exports need `forward "/live_table/exports", LiveTable.ExportPlug` in the router, outside the `:browser` pipeline, and the Typst CLI on the server for PDF. The export button sends the browser a 60-second link with the query encrypted in it; the plug streams the file back.
+CSV/PDF exports need `forward "/live_table/exports", LiveTable.ExportPlug` in the router, outside the `:browser` pipeline, and the optional `{:typst, "~> 0.4.4"}` dependency for PDF (without it the PDF option is hidden). The export button sends the browser a 60-second link with the query encrypted in it; the plug streams the file back.
 
 Exports are enabled with both formats by default; set `exports: %{enabled: false}` to hide the menu. `formats` must be atoms from `:csv`/`:pdf`; anything else raises at render. The `"export"` event is ignored when exports are disabled or the format is not in `formats`. PDF exports are refused (flash error) above 10,000 rows.

@@ -6,6 +6,8 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     Adds `:sutra_ui`, the recommended UI components. To use your own components
     instead, remove it and see the Custom Components guide.
 
+    Adds `:typst` for PDF exports. Remove it if you don't need PDF.
+
     ## Usage
 
         $ mix live_table.install
@@ -40,7 +42,8 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       igniter
       |> configure_live_table(app_name)
-      |> add_sutra_dep()
+      |> add_dep({:sutra_ui, "~> 0.4.0"}, "Sutra UI")
+      |> add_dep({:typst, "~> 0.4.4"}, "Typst (PDF exports)")
       |> add_export_route()
       |> add_notices()
     end
@@ -69,13 +72,13 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
       end
     end
 
-    defp add_sutra_dep(igniter) do
-      Igniter.Project.Deps.add_dep(igniter, {:sutra_ui, "~> 0.4.0"}, on_exists: :skip, yes?: true)
+    defp add_dep(igniter, dep, name) do
+      Igniter.Project.Deps.add_dep(igniter, dep, on_exists: :skip, yes?: true)
     rescue
       _ ->
         Igniter.add_warning(
           igniter,
-          "Could not add Sutra UI. Please add {:sutra_ui, \"~> 0.4.0\"} manually."
+          "Could not add #{name}. Please add #{inspect(dep)} manually."
         )
     end
 

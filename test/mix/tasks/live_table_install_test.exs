@@ -23,6 +23,7 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       mix_exs = igniter.rewrite |> Rewrite.source!("mix.exs") |> Rewrite.Source.get(:content)
       assert mix_exs =~ ~s({:sutra_ui, "~> 0.4.0"})
+      assert mix_exs =~ ~s({:typst, "~> 0.4.4"})
 
       Igniter.Test.assert_has_notice(igniter, &(&1 =~ "mix sutra_ui.install"))
     end

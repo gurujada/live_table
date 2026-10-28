@@ -11,6 +11,11 @@ defmodule LiveTable.Export do
   # The browser follows the link as soon as it receives it.
   @max_age 60
 
+  # PDF needs the optional :typst package; without it the format isn't offered.
+  def fetch_format("pdf") do
+    if LiveTable.PdfGenerator.available?(), do: Map.fetch(@formats, "pdf"), else: :error
+  end
+
   def fetch_format(format) when is_binary(format), do: Map.fetch(@formats, format)
 
   def validate_formats!(formats) do
@@ -21,7 +26,7 @@ defmodule LiveTable.Export do
             "unsupported export format(s) #{inspect(unknown)}. Supported formats: csv, pdf."
     end
 
-    formats
+    Enum.filter(formats, &match?({:ok, _}, fetch_format(Atom.to_string(&1))))
   end
 
   # The query is encrypted into the download link, so whoever holds the link gets exactly

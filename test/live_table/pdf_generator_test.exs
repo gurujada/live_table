@@ -29,7 +29,8 @@ defmodule LiveTable.PdfGeneratorTest do
       for name <- [
             ~S|#read("export.typ")|,
             ~S|say "hi" \ bye|,
-            "[*bold*] @ref $x$ <label>"
+            "[*bold*] @ref $x$ <label>",
+            ~S|<%= raise "evaluated" %>|
           ] do
         Repo.insert!(%Product{name: name, price: Decimal.new(1)})
       end

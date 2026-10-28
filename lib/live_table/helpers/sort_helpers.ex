@@ -23,7 +23,7 @@ defmodule LiveTable.SortHelpers do
       id={dom_id(@table_id, @key)}
       phx-hook=".SortableColumn"
       phx-value-sort={
-        Jason.encode!(%{
+        JSON.encode!(%{
           @key => (@sort_params[@key] || :asc) |> to_string() |> next_sort_order()
         })
       }
@@ -91,7 +91,7 @@ defmodule LiveTable.SortHelpers do
   def update_sort_params(map, params, true) do
     p =
       params
-      |> Jason.decode!()
+      |> JSON.decode!()
       |> Keyword.new(fn {k, v} -> {String.to_existing_atom(k), String.to_existing_atom(v)} end)
 
     map
@@ -104,7 +104,7 @@ defmodule LiveTable.SortHelpers do
   def update_sort_params(map, params, false) do
     p =
       params
-      |> Jason.decode!()
+      |> JSON.decode!()
       |> Keyword.new(fn {k, v} -> {String.to_existing_atom(k), String.to_existing_atom(v)} end)
 
     map

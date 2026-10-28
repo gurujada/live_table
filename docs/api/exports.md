@@ -85,25 +85,23 @@ ID,Product Name,Price,Stock,Category
 ## PDF Exports
 
 PDF exports are limited to 10,000 rows. Above that, the user is asked to filter the table first.
-They need the [Typst](https://typst.app) CLI on the server:
 
-**macOS:**
-```bash
-brew install typst
+PDF export uses the [`typst`](https://hex.pm/packages/typst) package, an optional dependency
+that `mix live_table.install` adds. It ships precompiled, so there is nothing to install on the
+server. Without it, the PDF option isn't shown, even if `formats` lists `:pdf`:
+
+```elixir
+{:typst, "~> 0.4.4"}
 ```
 
-**Ubuntu/Debian:**
-```bash
-wget https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
-tar -xf typst-x86_64-unknown-linux-musl.tar.xz
-sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
+The bundled fonts cover Latin, Devanagari, Arabic and Hebrew. For other scripts, such as Telugu,
+point LiveTable at a folder of fonts (for example Noto Sans Telugu) and ship it with your release:
+
+```elixir
+config :live_table, pdf_font_dirs: [Path.expand("../priv/fonts", __DIR__)]
 ```
 
-**Windows:**
-Download from [Typst Releases](https://github.com/typst/typst/releases) and add it to PATH.
-
-Each PDF is built in its own temporary directory, which is removed afterwards. Cell values are
-passed to Typst as text, never as markup.
+Cell values are passed to Typst as text, never as markup or code.
 
 ## Upgrade Notes
 
@@ -112,6 +110,7 @@ When upgrading from 0.4.2 or earlier: exports no longer use Oban or files in `pr
 - Add `forward "/live_table/exports", LiveTable.ExportPlug` to your router.
 - Remove `"exports"` from `static_paths` and delete `priv/static/exports`.
 - Remove the `app:` and `pubsub:` keys from `config :live_table`. They are no longer used.
+- PDF uses the `typst` package instead of the `typst` CLI: add `{:typst, "~> 0.4.4"}` to your deps.
 - LiveTable no longer depends on `:oban` or `:oban_web`. If your app doesn't use Oban elsewhere,
   you can remove it and its `exports` queue.
 
@@ -129,6 +128,9 @@ handled.
 - The link expires 60 seconds after the click. Click export again.
 - If the route is inside a `scope` with a path prefix, move it to the top level of the router.
 
+**There is no PDF option:**
+- Add `{:typst, "~> 0.4.4"}` to your deps.
+
 **PDF export fails:**
-- Check that `typst --version` works for the user your app runs as.
-- The error is logged as `LiveTable PDF export failed: ...`.
+- The error is logged as `LiveTable PDF export failed: ...`, with Typst's message.
+- Text shows as boxes: add a font for that script with `pdf_font_dirs` (see above).

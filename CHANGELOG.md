@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove `"exports"` from `static_paths` and delete `priv/static/exports`.
   - Remove `app:` and `pubsub:` from `config :live_table`.
 - A PDF export shows "Preparing your PDF. The download will start shortly." while it is built.
+- **PDF exports use the [`typst`](https://hex.pm/packages/typst) package instead of the `typst` CLI.** It's an optional dependency that ships precompiled, so servers need nothing installed; `mix live_table.install` adds it. Without it the PDF option is hidden. `config :live_table, pdf_font_dirs: [...]` adds fonts for scripts the bundled fonts don't cover.
+- `:jason` is no longer a dependency (LiveTable uses Elixir's built-in `JSON`), and `:postgrex` and `:ecto_sql` are only used for LiveTable's own tests.
+- LiveTable no longer starts an application of its own or ships its test repo.
 - LiveTable no longer depends on `:oban` or `:oban_web`, and `mix live_table.install` no longer has an `--oban` option.
 - Select filter markup uses Sutra UI tokens (`text-foreground`, `text-muted-foreground`) instead of fixed `gray` classes, so dark mode follows the theme.
 - Custom export controls now use the `"export"` event with a `format` value instead of `"export-csv"` or `"export-pdf"`.

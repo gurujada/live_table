@@ -372,33 +372,20 @@ end
 
 ### PDF Generation Failing
 
-**Error:** The PDF download fails, and the logs show an `:enoent` error from `System.cmd("typst", ...)` (Typst is not installed or not on `PATH`)
+**Problem:** There is no PDF option, or the PDF download fails.
 
 **Solutions:**
 
-1. **Install Typst**
-```bash
-# macOS
-brew install typst
-
-# Ubuntu/Debian
-wget https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
-tar -xf typst-x86_64-unknown-linux-musl.tar.xz
-sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
-
-# Verify installation
-typst --version
+1. **Add the `typst` package.** The PDF option only appears when it is installed:
+```elixir
+{:typst, "~> 0.4.4"}
 ```
 
-2. **Check System PATH**
-```bash
-# Ensure Typst is in PATH
-which typst
-echo $PATH
-```
-
-3. **Check the logs.** Failures are logged as `LiveTable PDF export failed: ...`, with Typst's
+2. **Check the logs.** Failures are logged as `LiveTable PDF export failed: ...`, with Typst's
    error message.
+
+3. **Missing characters.** If text shows as boxes, add a font for that script with
+   `config :live_table, pdf_font_dirs: [...]`. See [Exports](api/exports.md#pdf-exports).
 
 ### CSV Export Character Encoding Issues
 

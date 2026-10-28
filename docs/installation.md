@@ -45,6 +45,7 @@ mix live_table.install
 The installer automatically:
 - Adds LiveTable configuration to `config/config.exs`
 - Adds [Sutra UI](https://github.com/gurujada/sutra_ui), the recommended UI components
+- Adds [`typst`](https://hex.pm/packages/typst) for PDF exports (remove it if you don't need PDF)
 - Adds the exports route to your router (`forward "/live_table/exports", LiveTable.ExportPlug`)
 
 Then set up Sutra UI's CSS with `mix sutra_ui.install` (see the [Sutra UI installation guide](https://hexdocs.pm/sutra_ui/readme.html#installation)).
@@ -83,25 +84,12 @@ forward "/live_table/exports", LiveTable.ExportPlug
 
 ## PDF Exports (Typst)
 
-CSV exports need nothing else. PDF exports require [Typst](https://typst.app) installed on your system:
+CSV exports need nothing else. PDF export uses the [`typst`](https://hex.pm/packages/typst) package, an optional dependency
+that `mix live_table.install` adds. It ships precompiled, so there is nothing to install on the
+server. Without it, the PDF option isn't shown, even if `formats` lists `:pdf`:
 
-**macOS:**
-```bash
-brew install typst
-```
-
-**Ubuntu/Debian:**
-```bash
-wget https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
-tar -xf typst-x86_64-unknown-linux-musl.tar.xz
-sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
-```
-
-**Windows:** Download from [Typst Releases](https://github.com/typst/typst/releases).
-
-Verify:
-```bash
-typst --version
+```elixir
+{:typst, "~> 0.4.4"}
 ```
 
 ---
@@ -141,7 +129,7 @@ Visit `/test` - you should see a working table!
 ### Exports failing
 
 - Check that your router has `forward "/live_table/exports", LiveTable.ExportPlug`
-- For PDF, check that `typst --version` works on the server
+- For PDF, check that `{:typst, "~> 0.4.4"}` is in your deps
 - See [Exports](api/exports.md#troubleshooting)
 
 ### "Unknown column" errors

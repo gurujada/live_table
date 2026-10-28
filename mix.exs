@@ -21,24 +21,25 @@ defmodule LiveTable.MixProject do
   end
 
   def application do
-    [
-      mod: {LiveTable.TestApplication, []},
-      extra_applications: [:logger]
-    ]
+    [extra_applications: [:logger]] ++ application(Mix.env())
   end
+
+  # The test repo and endpoint live in test/support; the library itself starts nothing.
+  defp application(:test), do: [mod: {LiveTable.TestApplication, []}]
+  defp application(_), do: []
 
   defp deps do
     [
       {:phoenix_live_view, "~> 1.2"},
       {:phoenix_html, "~> 4.3"},
       {:ecto, "~> 3.13"},
-      {:jason, "~> 1.4"},
       {:nimble_csv, "~> 1.3"},
-      {:postgrex, ">= 0.0.0"},
+      {:postgrex, ">= 0.0.0", only: [:dev, :test]},
       {:igniter, "~> 0.7.0", optional: true},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},
-      {:ecto_sql, "~> 3.13"},
+      {:ecto_sql, "~> 3.13", only: [:dev, :test]},
       {:sutra_ui, "~> 0.4.0", optional: true},
+      {:typst, "~> 0.4.4", optional: true},
       {:lazy_html, ">= 0.1.0", only: :test}
     ]
   end

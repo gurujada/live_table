@@ -177,7 +177,7 @@ LiveTable renders its controls and filters with [Sutra UI](https://github.com/gu
 - **Tailwind CSS** - Styling framework
 
 ### Optional Dependencies
-- **Typst** - PDF generation engine for reports (the `typst` CLI must be installed; see [Exports](api/exports.md))
+- **typst** - PDF exports (the `typst` Hex package; see [Exports](api/exports.md))
 
 ## Learning Path
 

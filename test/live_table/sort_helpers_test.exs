@@ -300,7 +300,7 @@ defmodule LiveTable.SortHelpersTest do
       sort_params = [name: :asc, price: :desc]
 
       encoded =
-        Jason.encode!(Enum.into(sort_params, %{}, fn {k, v} -> {to_string(k), to_string(v)} end))
+        JSON.encode!(Enum.into(sort_params, %{}, fn {k, v} -> {to_string(k), to_string(v)} end))
 
       # Simulate decoding and updating
       result = update_sort_params(%{}, encoded, false)

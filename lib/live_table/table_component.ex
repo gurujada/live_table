@@ -493,8 +493,8 @@ defmodule LiveTable.TableComponent do
       end
 
       defp exports(assigns) do
-        LiveTable.Export.validate_formats!(assigns.formats)
-        LiveTable.Components.impl().exports(assigns)
+        formats = LiveTable.Export.validate_formats!(assigns.formats)
+        LiveTable.Components.impl().exports(%{assigns | formats: formats})
       end
 
       defp render_cell(value, field, _record)
