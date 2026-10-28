@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSV text cells starting with `=`, `+`, `-`, `@`, a tab or a carriage return get a leading `'`, so spreadsheet apps don't run them as formulas.
 - PDF cell values are passed to Typst as text. Before, a value could be read as Typst markup or code. Each PDF is built in its own temporary directory, which is removed afterwards.
 - A failed PDF compile returns an error response and is logged, instead of crashing the export job.
+- Transformer data with `min`/`max` or `id` keys no longer crashes: URL filters are parsed by the filter's type, not by the value's shape.
+- A Transformer without a `render:` function renders nothing in the filter bar instead of crashing.
 - Filter keys in the URL or in events no longer create atoms. Keys that aren't in `filters/0`, and values whose shape doesn't match the filter type, are ignored instead of crashing the LiveView.
 - Unknown sort fields or directions in the URL are ignored instead of crashing the LiveView. A non-numeric `per_page` falls back to the default size instead of the maximum.
 - Restoring a `Select` filter from the URL and clearing filters now target the LiveSelect component by the filter's name, so they also work when the filter's key differs from its name.

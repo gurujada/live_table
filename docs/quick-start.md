@@ -109,7 +109,7 @@ defmodule YourAppWeb.ProductLive.Index do
     assigns = %{price: price}
     ~H"""
     <span class="font-mono text-green-600">
-      $<%= :erlang.float_to_binary(@price, decimals: 2) %>
+      $<%= Decimal.round(@price, 2) %>
     </span>
     """
   end
@@ -147,7 +147,7 @@ Create the template file:
     filters={filters()}
     options={@options}
     streams={@streams}
-    actions={actions()} # optional
+    actions={actions()}
   />
 </div>
 ```
@@ -263,17 +263,23 @@ defmodule YourAppWeb.OrderReportLive.Index do
 
   def fields do
     [
-      order_id: %{label: "Order #", sortable: true},
-      customer_email: %{label: "Customer", sortable: true, searchable: true},
-      total_amount: %{label: "Total", sortable: true},
+      # Keys without `assoc` are sorted on the base table (orders), so they match its columns
+      id: %{label: "Order #", sortable: true},
       # Reference the alias used in your custom query
+      customer_email: %{
+        label: "Customer",
+        sortable: true,
+        searchable: true,
+        assoc: {:customers, :email}
+      },
+      total_amount: %{label: "Total", sortable: true},
       product_name: %{
         label: "Product", 
         sortable: true, 
         searchable: true,
-        assoc: {:order_items, :product_name}
+        assoc: {:products, :name}
       },
-      order_date: %{label: "Date", sortable: true}
+      inserted_at: %{label: "Date", sortable: true}
     ]
   end
 
@@ -308,15 +314,16 @@ defmodule YourApp.Orders do
 
   def list_with_products do
     from o in YourApp.Order,
-      join: c in YourApp.Customer, on: o.customer_id == c.id,
+      as: :orders,
+      join: c in YourApp.Customer, on: o.customer_id == c.id, as: :customers,
       join: oi in YourApp.OrderItem, on: oi.order_id == o.id, as: :order_items,
-      join: p in YourApp.Product, on: oi.product_id == p.id,
+      join: p in YourApp.Product, on: oi.product_id == p.id, as: :products,
       select: %{
-        order_id: o.id,
+        id: o.id,
         customer_email: c.email,
         total_amount: o.total_amount,
         product_name: p.name,  # This field key must match your fields definition
-        order_date: o.inserted_at
+        inserted_at: o.inserted_at
       }
   end
 end
@@ -334,13 +341,13 @@ def table_options do
       sizes: [5, 10, 25, 50]
     },
     sorting: %{
-      default_sort: [name: :asc]  # Only works for single table queries - field must exist in schema
+      default_sort: [name: :asc]  # The field must be in fields/0 with sortable: true
     }
   }
 end
 ```
 
-**Note:** Default sort only works with simple schema fields for single table queries. For custom queries with joins, LiveTable doesn't currently support default sorting on joined fields.
+**Note:** Default sort only applies to fields defined in `fields/0` with `sortable: true`; other keys are ignored.
 
 ### Override Header Controls
 
@@ -353,7 +360,7 @@ def table_options do
   }
 end
 
-defp my_controls(assigns) do
+def my_controls(assigns) do
   ~H"""
   <.form for={%{}} id="my-live-table-controls" phx-change="sort">
     <!-- your controls here -->
@@ -434,7 +441,7 @@ defp product_card(assigns) do
   ~H"""
   <div class="bg-white rounded-lg shadow p-6">
     <h3 class="font-semibold text-lg"><%= @record.name %></h3>
-    <p class="text-gray-600 text-sm"><%= @record.description %></p>
+    <p class="text-gray-600 text-sm"><%= @record.sku %></p>
     <div class="mt-4 flex justify-between items-center">
       <span class="text-lg font-bold text-green-600">
         $<%= @record.price %>

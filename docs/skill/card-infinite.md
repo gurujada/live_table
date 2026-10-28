@@ -77,10 +77,13 @@ def fields do
     id: %{label: "ID", hidden: true},
     name: %{label: "Project", sortable: true, searchable: true},
     client_name: %{label: "Client", sortable: true, searchable: true, assoc: {:client, :name}},
-    status: %{label: "Status"}
+    status: %{label: "Status"},
+    inserted_at: %{label: "Created", hidden: true, sortable: true}
   ]
 end
 ```
+
+`default_sort` only applies to keys in `fields/0` with `sortable: true`; others are ignored.
 
 Use hidden fields when records need data for cards but the table/card controls should not display a column.
 
@@ -130,6 +133,8 @@ defmodule MyAppWeb.AuditLogLive.Index do
         }),
       window:
         Transformer.new("window", %{
+          label: "Window",
+          render: &window_filter/1,
           query_transformer: &MyApp.Audit.filter_window/2
         })
     ]

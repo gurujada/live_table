@@ -64,8 +64,14 @@ defmodule MyAppWeb.InvoiceLive.Index do
       id: %{label: "ID", hidden: true},
       invoice_number: %{label: "Invoice #", sortable: true, searchable: true},
       customer_name: %{label: "Customer", sortable: true, searchable: true, assoc: {:customer, :name}},
-      total: %{label: "Total", sortable: true, renderer: &money_cell/1},
-      status: %{label: "Status"}
+      total: %{
+        label: "Total",
+        sortable: true,
+        renderer: &money_cell/1,
+        computed: dynamic([i], i.amount + coalesce(i.tax_amount, 0))
+      },
+      status: %{label: "Status"},
+      inserted_at: %{label: "Created", hidden: true, sortable: true}
     ]
   end
 
@@ -138,7 +144,7 @@ end
 />
 ```
 
-Add `actions={actions()}` only when `actions/0` returns row actions.
+Add `actions={actions()}` only when `actions/0` returns row actions. Optional: `id` (default `"live-table"`; every DOM id the table renders derives from it) and `nonce` (CSP nonce for LiveTable's inline hook scripts).
 
 ## Fields
 
@@ -167,6 +173,8 @@ name: %{
 Use `assoc` only when the provider query has the matching named binding. Use `renderer/1` for value-only formatting, `renderer/2` when the full record is needed, `component/1` for `%{value: value, record: record}` assigns, and `component/2` for `(value, record)`.
 
 For schema-backed tables, `computed` values are included in LiveTable's generated select. For provider tables, select the computed value in the provider query; use `computed` only when LiveTable needs the expression for sorting.
+
+Search and sort on a field without `assoc` use `field(first_binding, key)` (sort uses `computed` when set), so a provider key that is not a column on the query's first binding needs `assoc` to be searchable and `assoc` or `computed` to be sortable. `default_sort` keys that are not in `fields/0` with `sortable: true` are ignored.
 
 ## Actions
 

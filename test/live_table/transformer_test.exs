@@ -109,6 +109,12 @@ defmodule LiveTable.TransformerTest do
 
       assert rendered == %{"configured" => "value"}
     end
+
+    test "renders nothing without a render function" do
+      transformer = Transformer.new("custom", %{query_transformer: fn q, _data -> q end})
+
+      assert Transformer.render(%{key: :custom, filter: transformer, applied_filters: %{}}) == ""
+    end
   end
 
   describe "Transformer.apply/2 with function transformer" do

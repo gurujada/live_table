@@ -39,7 +39,7 @@ Render with:
 />
 ```
 
-Add `actions={actions()}` when the LiveView defines row actions.
+Add `actions={actions()}` when the LiveView defines row actions. Optional assigns: `id` (default `"live-table"`; all DOM ids derive from it) and `nonce` (CSP nonce for the inline hook scripts).
 
 ## Provider Contract
 

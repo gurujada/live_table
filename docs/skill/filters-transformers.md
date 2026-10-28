@@ -18,14 +18,14 @@ Boolean.new(:active, "active", %{
 })
 ```
 
-The first argument is the field or joined field. The second argument is the URL/filter key.
+The first argument is the field or `{binding, field}`. The keyword key in `filters/0` is the URL param name (`filters[active]`); keep the second argument the same string.
 
-For joined data, align the dynamic bindings with the query:
+For joined data, use the named binding in the dynamic (LiveTable left-joins `assoc(root, :supplier)` as `:supplier` when the query has no such binding):
 
 ```elixir
 Boolean.new({:supplier, :active}, "active_supplier", %{
   label: "Active Supplier",
-  condition: dynamic([product: p, supplier: s], s.active == true)
+  condition: dynamic([supplier: s], s.active == true)
 })
 ```
 
@@ -62,7 +62,7 @@ Use for single or multi-select filters.
 ```elixir
 alias LiveTable.Select
 
-Select.new({:category, :name}, "category", %{
+Select.new({:category, :id}, "category", %{
   label: "Category",
   mode: :tags,
   options_source: {MyApp.Catalog, :search_categories, []},
@@ -95,7 +95,9 @@ Select.new(:status, "status", %{
 })
 ```
 
-Dynamic `options_source` callbacks receive the typed search text as the first argument and return options:
+The selected option values are matched with `field IN ^values`, so the filter field must be the column the option values hold (here the category id).
+
+Dynamic `options_source` callbacks receive the typed search text as the first argument (then the tuple's args) and return options. Search-as-you-type relies on Sutra UI's LiveSelect; a custom `select_filter/1` must handle it itself.
 
 ```elixir
 def search_categories(text) do
@@ -128,6 +130,8 @@ Transformer.new("eligibility", %{
   query_transformer: &apply_eligibility/2
 })
 ```
+
+`query_transformer` may also be `{Module, :function}`. In the default filter bar a transformer also needs `render:` (a function receiving `%{key: key, label: label, value: applied_data}` that renders inputs named `filters[key][field]`) and optionally `label:`. Without `render:` it shows nothing in the filter bar; omit it when your own controls or links set its data.
 
 The callback receives `(query, applied_data)` and must return a query:
 

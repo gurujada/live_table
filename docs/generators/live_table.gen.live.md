@@ -9,7 +9,7 @@ This generator wraps `mix phx.gen.live` and enhances the generated index LiveVie
 1. **LiveTable.LiveResource** - Adds the `use LiveTable.LiveResource` declaration
 2. **fields/0 function** - Auto-generates field definitions based on schema fields
 3. **filters/0 function** - Auto-generates filters based on field types
-4. **Template replacement** - Replaces `<.table>` with `<.live_table>` component
+4. **Template replacement** - Replaces the `render/1` function with one that renders the `<.live_table>` component
 
 ## Usage
 
@@ -66,8 +66,9 @@ active: %{label: "Active"}
 - Basic field without sorting/searching
 
 ### ID Fields
+An `id` field is always added as the first field:
 ```elixir
-id: %{label: "ID", sortable: true}
+id: %{label: "Id", sortable: true}
 ```
 - **sortable**: Enables column sorting
 
@@ -135,6 +136,7 @@ defmodule MyAppWeb.UserLive.Index do
 
   def fields do
     [
+      id: %{label: "Id", sortable: true},
       name: %{label: "Name", sortable: true, searchable: true},
       email: %{label: "Email", sortable: true, searchable: true},
       age: %{label: "Age", sortable: true},
@@ -181,13 +183,28 @@ end
 ```
 
 ### After (live_table.gen.live)
-```heex
-<.live_table
-  fields={fields()}
-  filters={filters()}
-  options={@options}
-  streams={@streams}
-/>
+```elixir
+def render(assigns) do
+  ~H"""
+  <Layouts.app flash={@flash}>
+    <.header>
+      Listing Users
+      <:actions>
+        <.button variant="primary" navigate={~p"/users/new"}>
+          <svg ...></svg> New User
+        </.button>
+      </:actions>
+    </.header>
+
+    <.live_table
+      fields={fields()}
+      filters={filters()}
+      options={@options}
+      streams={@streams}
+    />
+  </Layouts.app>
+  """
+end
 ```
 
 ## Features
@@ -204,13 +221,13 @@ end
 - Handles cases with no filterable fields
 
 ### Template Enhancement
-- Replaces standard table with LiveTable component
+- Replaces the `render/1` function with one that uses the LiveTable component
 - Removes column definitions (handled by fields/0)
-- Removes action slots (handled by LiveTable)
+- Removes action slots (pass an `actions` assign to `<.live_table>` to add them back)
 - Maintains streams-based rendering
 
 ### Non-Destructive
-- Only modifies the index LiveView and template
+- Only modifies the index LiveView
 - Leaves show, form, and other files untouched
 - Preserves all phx.gen.live functionality
 
@@ -226,9 +243,7 @@ def fields do
       label: "Full Name",
       sortable: true,
       searchable: true,
-      render: fn user -> 
-        "#{user.first_name} #{user.last_name}"
-      end
+      renderer: fn name -> String.upcase(name) end
     }
   ]
 end
@@ -261,9 +276,9 @@ end
 ```elixir
 def table_options do
   %{
-    page_size: 20,
-    export_enabled: true,
-    view_mode: :table
+    pagination: %{default_size: 25, sizes: [10, 25, 50]},
+    exports: %{enabled: true, formats: [:csv, :pdf]},
+    mode: :table
   }
 end
 ```
@@ -297,7 +312,7 @@ After running the generator:
 
 2. **Customize fields and filters** as needed
 
-3. **Add table options** if you want exports, custom page sizes, etc.
+3. **Add table options** if you want custom page sizes, different export formats, etc.
 
 4. **Test your LiveTable** by starting the server and navigating to the generated routes
 
@@ -306,4 +321,4 @@ After running the generator:
 - [LiveTable Quick Start](../quick-start.md)
 - [Field Configuration](../api/fields.md)
 - [Filter Configuration](../api/filters.md)
-- [Table Options](../configuration.md)
+- [Table Options](../api/table-options.md)

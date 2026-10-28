@@ -14,7 +14,7 @@ def table_options do
 end
 ```
 
-The function receives LiveTable assigns, including `@fields`, `@filters`, `@options`, and `@table_options`.
+The function receives LiveTable assigns, including `@fields`, `@filters`, `@options`, and `@table_options`. It replaces the whole default header: search, per-page, filter bar and export menu. An export control sends `phx-click="export"` with `phx-value-format="csv"` or `"pdf"`.
 
 Controls should submit through LiveTable's `"sort"` event:
 
@@ -68,11 +68,29 @@ end
 Use these parameter names:
 
 - `search` for global search.
-- `filters[filter_key]` for simple boolean/select values.
+- `per_page` for page size.
+- `filters[boolean_key]` as `"true"`/`"false"` for boolean filters.
+- `filters[select_key][id][]` for select values.
 - `filters[transformer_key][field]` for transformer payloads.
 - `phx-click="sort"` with `phx-value-clear_filters="true"` to clear filters.
 
 Do not use custom header controls to manually query and assign rows.
+
+## Components Module
+
+To restyle the built-in controls instead of replacing sections, configure a `LiveTable.Components` module (required when `:sutra_ui` is not installed):
+
+```elixir
+config :live_table, components: MyAppWeb.TableComponents
+
+defmodule MyAppWeb.TableComponents do
+  use LiveTable.Components.Sutra
+
+  def per_page(assigns), do: ~H"..."
+end
+```
+
+`use LiveTable.Components.Sutra` keeps Sutra UI for every callback not overridden. Without Sutra UI, implement the behaviour directly: `search/1`, `per_page/1`, `exports/1`, `empty_state/1`, plus `boolean_filter/1`, `range_filter/1`, `select_filter/1` for the filter types used.
 
 ## Custom Controls
 

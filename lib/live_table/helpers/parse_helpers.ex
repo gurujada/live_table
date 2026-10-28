@@ -34,18 +34,21 @@ defmodule LiveTable.ParseHelpers do
         {"search", search_term}, acc ->
           Map.put(acc, "search", search_term)
 
-        {key, %{"min" => min, "max" => max}}, acc ->
-          parse_range_filter(key, min, max, acc, filters)
+        # By the filter's type, not the value's shape: a Transformer's data can have any keys
+        {key, value}, acc ->
+          case get_filter(key, filters) do
+            %LiveTable.Range{} ->
+              parse_range_filter(key, value["min"], value["max"], acc, filters)
 
-        {key, %{"id" => id}}, acc ->
-          parse_select_filter(key, id, acc, filters)
+            %LiveTable.Select{} ->
+              parse_select_filter(key, value["id"], acc, filters)
 
-        {key, custom_data}, acc when is_map(custom_data) ->
-          parse_custom_filter(key, custom_data, acc, filters)
+            %LiveTable.Transformer{} ->
+              parse_custom_filter(key, value, acc, filters)
 
-        {k, _}, acc ->
-          key = k |> String.to_existing_atom()
-          Map.put(acc, key, get_filter(k, filters))
+            filter ->
+              Map.put(acc, String.to_existing_atom(key), filter)
+          end
       end)
 
     if raw_filters == %{} and initial_load?,
@@ -113,19 +116,8 @@ defmodule LiveTable.ParseHelpers do
 
   defp parse_custom_filter(key, custom_data, acc, filters) do
     filter = get_filter(key, filters)
-
-    case filter do
-      %LiveTable.Transformer{} ->
-        updated_filter = %{
-          filter
-          | options: Map.put(filter.options, :applied_data, custom_data)
-        }
-
-        Map.put(acc, String.to_existing_atom(key), updated_filter)
-
-      _ ->
-        Map.put(acc, String.to_existing_atom(key), filter)
-    end
+    updated_filter = %{filter | options: Map.put(filter.options, :applied_data, custom_data)}
+    Map.put(acc, String.to_existing_atom(key), updated_filter)
   end
 
   def get_filter(key, filters) when is_binary(key) do

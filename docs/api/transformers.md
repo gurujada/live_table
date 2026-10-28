@@ -60,6 +60,26 @@ custom_filter: Transformer.new("custom", %{
 })
 ```
 
+`query_transformer` is called only when the URL has data for the transformer (`filters[name][...]`, where `name` is its name in `filters/0`), and receives that data as `filter_data`.
+
+The default controls render each transformer with its `:render` function component. Without one, the transformer shows nothing in the filter bar, which suits a transformer driven by your own controls or links. It receives `@key` (the `key` string passed to `Transformer.new/2`), `@label` (the `:label` option) and `@value` (the applied data map). Name its inputs `filters[#{@key}][field]`, and use the filter's name in `filters/0` as its `key`:
+
+```elixir
+min_stock: Transformer.new("min_stock", %{
+  label: "Minimum Stock",
+  render: &render_min_stock/1,
+  query_transformer: &apply_min_stock/2
+})
+
+def render_min_stock(assigns) do
+  ~H"""
+  <label for={"filters_#{@key}_quantity"}>{@label}</label>
+  <input id={"filters_#{@key}_quantity"} name={"filters[#{@key}][quantity]"}
+    value={Map.get(@value, "quantity", "")} />
+  """
+end
+```
+
 ### Transformer Function Signature
 
 Transformer functions receive two arguments:
@@ -127,8 +147,7 @@ defmodule MyApp.Geography do
       join: l in Location, on: l.id == p.location_id,
       join: r in Region, on: r.id == l.region_id,
       left_join: nr in Region, on: nr.parent_id == r.id,
-      where: r.name == ^region or nr.name == ^region,
-      preload: [location: [region: :parent]]
+      where: r.name == ^region or nr.name == ^region
   end
   
   def filter_by_region(query, %{"region" => region}) do
@@ -446,6 +465,7 @@ This example shows how to integrate transformers with a completely custom header
 # Custom Header Component (custom_header.ex)
 defmodule CounsellingWeb.CollegeLive.CustomHeader do
   use Phoenix.Component
+  import CounsellingWeb.CoreComponents
 
   def custom_header(assigns) do
     ~H"""
@@ -593,7 +613,7 @@ defmodule CounsellingWeb.CollegeLive.CustomHeader do
               </span>
               <div class="flex flex-wrap gap-x-6">
                 <.input
-                  :for={{id, %Boolean{field: :class, options: %{label: label}}} <- @filters}
+                  :for={{id, %LiveTable.Boolean{field: :class, options: %{label: label}}} <- @filters}
                   type="checkbox"
                   name={"filters[#{id}]"}
                   label={label}
@@ -644,7 +664,7 @@ def handle_event("apply_transformer", %{"sales_performance" => params}, socket) 
   # Apply transformer by updating URL parameters
   {:noreply, 
    push_patch(socket, 
-     to: ~p"/products?#{%{"sales_performance" => params}}"
+     to: ~p"/products?#{%{"filters" => %{"sales_performance" => params}}}"
    )}
 end
 ```
@@ -673,7 +693,8 @@ def filters do
   ]
 end
 
-# Transformers are applied in order defined
+# Each transformer receives the query returned by the previous one.
+# Don't rely on them running in the order they are defined.
 ```
 
 ### Conditional Transformer Application
@@ -772,7 +793,7 @@ end
 
 ```elixir
 def handle_event("debug_transformers", _params, socket) do
-  transformers = socket.assigns.filters
+  transformers = socket.assigns.options["filters"]
   |> Enum.filter(fn {_, filter} -> 
     match?(%LiveTable.Transformer{}, filter)
   end)
@@ -844,7 +865,7 @@ end
 ### Common Issues
 
 **Transformer not applying:**
-- Check that transformer key in URL matches filter definition
+- Check that the URL key (`filters[name]`) matches the transformer's name in `filters/0`
 - Verify transformer function exists and is accessible
 - Ensure filter_data is in expected format
 

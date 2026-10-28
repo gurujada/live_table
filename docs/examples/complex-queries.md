@@ -19,19 +19,43 @@ defmodule YourAppWeb.OrderReportLive.Index do
 
   def fields do
     [
-      order_id: %{label: "Order #", sortable: true},
-      customer_name: %{label: "Customer", sortable: true, searchable: true},
-      customer_email: %{label: "Email", sortable: true, searchable: true},
-      product_count: %{label: "Items", sortable: true},
+      # Keys that aren't columns of the base table (orders) need `computed` to be sortable
+      order_id: %{label: "Order #", sortable: true, computed: dynamic([o], o.id)},
+      customer_name: %{
+        label: "Customer",
+        sortable: true,
+        computed: dynamic([customers: c], fragment("? || ' ' || ?", c.first_name, c.last_name))
+      },
+      customer_email: %{
+        label: "Email",
+        sortable: true,
+        searchable: true,
+        assoc: {:customers, :email}
+      },
+      product_count: %{
+        label: "Items",
+        sortable: true,
+        computed: dynamic([order_items: oi], count(oi.id))
+      },
       total_amount: %{label: "Total", sortable: true, renderer: &render_currency/1},
-      order_date: %{label: "Order Date", sortable: true, renderer: &render_date/1},
+      order_date: %{
+        label: "Order Date",
+        sortable: true,
+        computed: dynamic([o], o.inserted_at),
+        renderer: &render_date/1
+      },
       shipping_method: %{
         label: "Shipping", 
         sortable: true,
-        assoc: {:shipping, :method}
+        assoc: {:shipping, :name}
       },
       status: %{label: "Status", sortable: true, renderer: &render_status/1},
-      days_since_order: %{label: "Age (Days)", sortable: true, renderer: &render_days/1}
+      days_since_order: %{
+        label: "Age (Days)",
+        sortable: true,
+        computed: dynamic([o], fragment("DATE_PART('day', NOW() - ?)", o.inserted_at)),
+        renderer: &render_days/1
+      }
     ]
   end
 
@@ -124,9 +148,10 @@ defmodule YourApp.Reports do
 
   def order_details do
     from o in YourApp.Order,
+      as: :orders,
       join: c in YourApp.Customer, on: o.customer_id == c.id, as: :customers,
       join: s in YourApp.ShippingMethod, on: o.shipping_method_id == s.id, as: :shipping,
-      left_join: oi in YourApp.OrderItem, on: oi.order_id == o.id,
+      left_join: oi in YourApp.OrderItem, on: oi.order_id == o.id, as: :order_items,
       group_by: [o.id, c.id, s.id],
       select: %{
         order_id: o.id,
@@ -154,7 +179,7 @@ defmodule YourAppWeb.ProductAnalyticsLive.Index do
   use LiveTable.LiveResource
 
   def mount(%{"period" => period}, _session, socket) do
-    data_provider = {YourApp.Analytics, :product_performance, [period]}
+    data_provider = {YourApp.Analytics, :product_performance, [String.to_integer(period)]}
     socket = assign(socket, :data_provider, data_provider)
     {:ok, socket}
   end
@@ -165,20 +190,32 @@ defmodule YourAppWeb.ProductAnalyticsLive.Index do
 
   def fields do
     [
-      product_name: %{label: "Product", sortable: true, searchable: true},
+      # Sorting and search on the base table use the column name, so the key is `name`
+      name: %{label: "Product", sortable: true, searchable: true},
       sku: %{label: "SKU", sortable: true, searchable: true},
       category_name: %{
         label: "Category", 
         sortable: true,
         assoc: {:categories, :name}
       },
-      units_sold: %{label: "Units Sold", sortable: true},
-      revenue: %{label: "Revenue", sortable: true, renderer: &render_currency/1},
-      avg_order_value: %{label: "AOV", sortable: true, renderer: &render_currency/1},
-      profit_margin: %{label: "Margin %", sortable: true, renderer: &render_percentage/1},
-      conversion_rate: %{label: "Conv. Rate", sortable: true, renderer: &render_percentage/1},
-      stock_turns: %{label: "Stock Turns", sortable: true, renderer: &render_decimal/1},
-      performance_score: %{label: "Score", sortable: true, renderer: &render_score/1}
+      units_sold: %{
+        label: "Units Sold",
+        sortable: true,
+        computed: dynamic([order_items: oi], coalesce(sum(oi.quantity), 0))
+      },
+      revenue: %{
+        label: "Revenue",
+        sortable: true,
+        computed:
+          dynamic([order_items: oi], coalesce(sum(fragment("? * ?", oi.quantity, oi.unit_price)), 0.0)),
+        renderer: &render_currency/1
+      },
+      # Without `computed`, a key that isn't a column can't be sorted, so these are display-only
+      avg_order_value: %{label: "AOV", renderer: &render_currency/1},
+      profit_margin: %{label: "Margin %", renderer: &render_percentage/1},
+      conversion_rate: %{label: "Conv. Rate", renderer: &render_percentage/1},
+      stock_turns: %{label: "Stock Turns", renderer: &render_decimal/1},
+      performance_score: %{label: "Score", renderer: &render_score/1}
     ]
   end
 
@@ -189,21 +226,10 @@ defmodule YourAppWeb.ProductAnalyticsLive.Index do
         options_source: {YourApp.Catalog, :list_categories, []}
       }),
       
-      revenue_range: Range.new(:revenue, "revenue_range", %{
-        label: "Revenue Range",
-        min: 0,
-        max: 100000,
-        step: 1000
-      }),
-      
-      high_performers: Boolean.new(:performance_score, "high_performers", %{
-        label: "High Performers (Score > 80)",
-        condition: dynamic([p, categories: c], p.performance_score > 80)
-      }),
-      
+      # Filter conditions go into WHERE, so they use columns, not select keys
       low_margin: Boolean.new(:profit_margin, "low_margin", %{
         label: "Low Margin (< 20%)",
-        condition: dynamic([p, categories: c], p.profit_margin < 20)
+        condition: dynamic([p], fragment("((? - ?) / ?) * 100", p.price, p.cost_price, p.price) < 20)
       })
     ]
   end
@@ -213,10 +239,11 @@ defmodule YourAppWeb.ProductAnalyticsLive.Index do
       pagination: %{
         enabled: true,
         sizes: [25, 50, 100],
-        default_size: 50
+        default_size: 50,
+        max_per_page: 100
       },
       sorting: %{
-        default_sort: [performance_score: :desc, revenue: :desc]
+        default_sort: [revenue: :desc]
       },
       exports: %{
         enabled: true,
@@ -288,12 +315,12 @@ defmodule YourApp.Analytics do
     
     from p in YourApp.Product,
       join: c in YourApp.Category, on: p.category_id == c.id, as: :categories,
-      left_join: oi in YourApp.OrderItem, on: oi.product_id == p.id,
+      left_join: oi in YourApp.OrderItem, on: oi.product_id == p.id, as: :order_items,
       left_join: o in YourApp.Order, on: oi.order_id == o.id and o.inserted_at >= ^cutoff_date,
       left_join: v in YourApp.ProductView, on: v.product_id == p.id and v.inserted_at >= ^cutoff_date,
       group_by: [p.id, c.id],
       select: %{
-        product_name: p.name,
+        name: p.name,
         sku: p.sku,
         category_name: c.name,
         units_sold: coalesce(sum(oi.quantity), 0),
@@ -352,7 +379,7 @@ defmodule YourAppWeb.InventoryReportLive.Index do
 
   def fields do
     [
-      product_name: %{label: "Product", sortable: true, searchable: true},
+      name: %{label: "Product", sortable: true, searchable: true},
       sku: %{label: "SKU", sortable: true, searchable: true},
       supplier_name: %{
         label: "Supplier", 
@@ -364,14 +391,33 @@ defmodule YourAppWeb.InventoryReportLive.Index do
         sortable: true,
         assoc: {:warehouses, :location}
       },
-      current_stock: %{label: "Current Stock", sortable: true, renderer: &render_stock/2},
-      reserved_stock: %{label: "Reserved", sortable: true},
-      available_stock: %{label: "Available", sortable: true, renderer: &render_available/1},
+      current_stock: %{
+        label: "Current Stock",
+        sortable: true,
+        computed: dynamic([p], p.stock_quantity),
+        renderer: &render_stock/2
+      },
+      reserved_stock: %{
+        label: "Reserved",
+        sortable: true,
+        computed: dynamic([p], coalesce(p.reserved_quantity, 0))
+      },
+      available_stock: %{
+        label: "Available",
+        sortable: true,
+        computed: dynamic([p], p.stock_quantity - coalesce(p.reserved_quantity, 0)),
+        renderer: &render_available/1
+      },
       reorder_point: %{label: "Reorder Point", sortable: true},
-      max_stock: %{label: "Max Stock", sortable: true},
-      avg_daily_usage: %{label: "Daily Usage", sortable: true, renderer: &render_usage/1},
-      days_of_supply: %{label: "Days Supply", sortable: true, renderer: &render_days_supply/2},
-      last_movement: %{label: "Last Movement", sortable: true, renderer: &render_date/1},
+      max_stock: %{label: "Max Stock", sortable: true, computed: dynamic([p], p.max_stock_level)},
+      avg_daily_usage: %{label: "Daily Usage", renderer: &render_usage/1},
+      days_of_supply: %{label: "Days Supply", renderer: &render_days_supply/2},
+      last_movement: %{
+        label: "Last Movement",
+        sortable: true,
+        computed: dynamic([movements: im], max(im.inserted_at)),
+        renderer: &render_date/1
+      },
       status: %{label: "Status", renderer: &render_inventory_status/2}
     ]
   end
@@ -388,25 +434,10 @@ defmodule YourAppWeb.InventoryReportLive.Index do
         options_source: {YourApp.Warehouses, :list_locations, []}
       }),
       
-      stock_status: Select.new(:current_stock, "stock_status", %{
-        label: "Stock Status",
-        options: [
-          %{label: "Out of Stock", value: ["out_of_stock"]},
-          %{label: "Low Stock", value: ["low_stock"]},
-          %{label: "Normal", value: ["normal"]},
-          %{label: "Overstock", value: ["overstock"]}
-        ]
-      }),
-      
       needs_reorder: Boolean.new(:current_stock, "needs_reorder", %{
         label: "Needs Reorder",
         condition: dynamic([p, suppliers: s, warehouses: w], 
-          p.current_stock <= p.reorder_point and p.current_stock > 0)
-      }),
-      
-      slow_moving: Boolean.new(:avg_daily_usage, "slow_moving", %{
-        label: "Slow Moving (< 1/day)",
-        condition: dynamic([p, suppliers: s, warehouses: w], p.avg_daily_usage < 1.0)
+          p.stock_quantity <= p.reorder_point and p.stock_quantity > 0)
       })
     ]
   end
@@ -416,10 +447,11 @@ defmodule YourAppWeb.InventoryReportLive.Index do
       pagination: %{
         enabled: true,
         sizes: [50, 100, 200],
-        default_size: 100
+        default_size: 100,
+        max_per_page: 200
       },
       sorting: %{
-        default_sort: [days_of_supply: :asc, current_stock: :asc]
+        default_sort: [current_stock: :asc]
       },
       exports: %{
         enabled: true,
@@ -540,10 +572,10 @@ defmodule YourApp.Inventory do
       join: s in YourApp.Supplier, on: p.supplier_id == s.id, as: :suppliers,
       join: w in YourApp.Warehouse, on: p.warehouse_id == w.id, as: :warehouses,
       left_join: im in YourApp.InventoryMovement, 
-        on: im.product_id == p.id and im.inserted_at >= ago(30, "day"),
+        on: im.product_id == p.id and im.inserted_at >= ago(30, "day"), as: :movements,
       group_by: [p.id, s.id, w.id],
       select: %{
-        product_name: p.name,
+        name: p.name,
         sku: p.sku,
         supplier_name: s.name,
         warehouse_location: w.location,
@@ -593,22 +625,41 @@ defmodule YourAppWeb.CustomerLtvLive.Index do
 
   def fields do
     [
-      customer_name: %{label: "Customer", sortable: true, searchable: true},
+      customer_name: %{
+        label: "Customer",
+        sortable: true,
+        computed: dynamic([c], fragment("? || ' ' || ?", c.first_name, c.last_name))
+      },
       email: %{label: "Email", sortable: true, searchable: true},
-      first_order_date: %{label: "First Order", sortable: true, renderer: &render_date/1},
+      first_order_date: %{
+        label: "First Order",
+        sortable: true,
+        computed: dynamic([orders: o], min(o.inserted_at)),
+        renderer: &render_date/1
+      },
       customer_segment: %{
         label: "Segment", 
         sortable: true,
         assoc: {:segments, :name}
       },
-      total_orders: %{label: "Orders", sortable: true},
-      total_spent: %{label: "Total Spent", sortable: true, renderer: &render_currency/1},
-      avg_order_value: %{label: "AOV", sortable: true, renderer: &render_currency/1},
-      order_frequency: %{label: "Frequency (days)", sortable: true, renderer: &render_frequency/1},
-      ltv_score: %{label: "LTV Score", sortable: true, renderer: &render_ltv_score/1},
-      predicted_ltv: %{label: "Predicted LTV", sortable: true, renderer: &render_currency/1},
-      churn_risk: %{label: "Churn Risk", sortable: true, renderer: &render_churn_risk/1},
-      last_order_date: %{label: "Last Order", sortable: true, renderer: &render_last_order/1}
+      total_orders: %{label: "Orders", sortable: true, computed: dynamic([orders: o], count(o.id))},
+      total_spent: %{
+        label: "Total Spent",
+        sortable: true,
+        computed: dynamic([orders: o], coalesce(sum(o.total_amount), 0.0)),
+        renderer: &render_currency/1
+      },
+      avg_order_value: %{label: "AOV", renderer: &render_currency/1},
+      order_frequency: %{label: "Frequency (days)", renderer: &render_frequency/1},
+      ltv_score: %{label: "LTV Score", renderer: &render_ltv_score/1},
+      predicted_ltv: %{label: "Predicted LTV", renderer: &render_currency/1},
+      churn_risk: %{label: "Churn Risk", renderer: &render_churn_risk/1},
+      last_order_date: %{
+        label: "Last Order",
+        sortable: true,
+        computed: dynamic([orders: o], max(o.inserted_at)),
+        renderer: &render_last_order/1
+      }
     ]
   end
 
@@ -622,29 +673,9 @@ defmodule YourAppWeb.CustomerLtvLive.Index do
           %{label: "New", value: ["new"]},
           %{label: "At Risk", value: ["at_risk"]}
         ]
-      }),
-      
-      ltv_range: Range.new(:predicted_ltv, "ltv_range", %{
-        label: "Predicted LTV",
-        min: 0,
-        max: 50000,
-        step: 1000
-      }),
-      
-      high_value: Boolean.new(:total_spent, "high_value", %{
-        label: "High Value (> $1000)",
-        condition: dynamic([c, segments: s], c.total_spent > 1000)
-      }),
-      
-      churn_risk: Boolean.new(:churn_risk, "churn_risk", %{
-        label: "High Churn Risk (> 70%)",
-        condition: dynamic([c, segments: s], c.churn_risk > 70)
-      }),
-      
-      active_customers: Boolean.new(:last_order_date, "active", %{
-        label: "Active (Last 90 Days)",
-        condition: dynamic([c, segments: s], c.last_order_date >= ago(90, "day"))
       })
+      # Values like total_spent are aggregates, which WHERE conditions can't use.
+      # Filter on them with a Transformer that adds a `having` clause (see the Transformers API).
     ]
   end
 
@@ -653,10 +684,11 @@ defmodule YourAppWeb.CustomerLtvLive.Index do
       pagination: %{
         enabled: true,
         sizes: [25, 50, 100],
-        default_size: 50
+        default_size: 50,
+        max_per_page: 100
       },
       sorting: %{
-        default_sort: [predicted_ltv: :desc, total_spent: :desc]
+        default_sort: [total_spent: :desc]
       },
       exports: %{
         enabled: true,
@@ -757,7 +789,7 @@ def customer_ltv_analysis(cohort_year) do
   
   from c in YourApp.Customer,
     join: s in YourApp.CustomerSegment, on: c.segment_id == s.id, as: :segments,
-    left_join: o in YourApp.Order, on: o.customer_id == c.id,
+    left_join: o in YourApp.Order, on: o.customer_id == c.id, as: :orders,
     where: c.inserted_at >= ^cohort_start and c.inserted_at <= ^cohort_end,
     group_by: [c.id, s.id],
     select: %{
@@ -856,6 +888,7 @@ end
 ### 3. Field References
 - Use `assoc: {:alias_name, :field}` for joined fields
 - Ensure field keys match query select keys exactly
+- A sortable key that isn't a column of the base table needs `assoc:` or `computed:`; search only works on base-table columns and `assoc:` fields
 - Use computed fields sparingly for performance
 
 ### 4. Complex Renderers
@@ -867,5 +900,6 @@ end
 - Reference table aliases in dynamic queries
 - Use complex conditions with multiple criteria
 - Combine filters with AND logic automatically
+- Filters become WHERE conditions, so filter on aggregates with a [Transformer](../api/transformers.md) instead
 
 These examples demonstrate how LiveTable handles sophisticated reporting requirements while maintaining clean, maintainable code.

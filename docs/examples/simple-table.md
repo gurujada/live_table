@@ -320,6 +320,8 @@ defmodule YourAppWeb.InventoryLive.Index do
 
   def fields do
     [
+      # Only fields listed here are selected, so the actions need `id` (hidden from the table)
+      id: %{label: "ID", hidden: true},
       sku: %{label: "SKU", sortable: true, searchable: true},
       name: %{label: "Product", sortable: true, searchable: true},
       stock_quantity: %{label: "Current Stock", sortable: true, renderer: &render_stock/2},
@@ -359,7 +361,8 @@ defmodule YourAppWeb.InventoryLive.Index do
       pagination: %{
         enabled: true,
         sizes: [20, 50, 100],
-        default_size: 50
+        default_size: 50,
+        max_per_page: 100
       },
       sorting: %{
         default_sort: [stock_quantity: :asc]  # Show low stock first

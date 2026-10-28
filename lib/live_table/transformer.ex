@@ -89,7 +89,11 @@ defmodule LiveTable.Transformer do
       value: applied_data
     }
 
-    assigns.filter.options.render.(render_assigns)
+    case Map.get(assigns.filter.options, :render) do
+      render when is_function(render, 1) -> render.(render_assigns)
+      # A transformer can be driven by your own controls or links instead.
+      nil -> ""
+    end
   end
 
   @doc false

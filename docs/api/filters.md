@@ -50,7 +50,7 @@ FilterType.new(field, key, options)
 ```
 
 - **`field`** - The database field to filter on (atom for simple fields, `{:table_alias, :field}` for joined fields)
-- **`key`** - URL parameter key (string, used for persistence and routing)
+- **`key`** - String identifier. A checked Boolean filter writes it to the URL as its value; the URL parameter name comes from the filter's name in `filters/0`
 - **`options`** - Map of filter-specific configuration options
 
 ### Field References
@@ -66,8 +66,8 @@ active_filter: Boolean.new(:active, "active", %{...})
 price_filter: Range.new(:price, "price_range", %{...})
 ```
 
-#### Joined Fields (Custom Queries Only)
-For custom queries with joins, reference the table alias:
+#### Joined Fields
+Reference a named binding with `{:alias, :field}`. For custom queries, use your query's `as:` alias. If the query has no binding with that name, LiveTable left-joins the schema association of that name:
 
 ```elixir
 # Filter on joined suppliers table
@@ -165,10 +165,10 @@ For date, datetime, or other non-numeric range behavior, use `LiveTable.Transfor
 
 ```elixir
 Range.new(field, key, %{
-  label: "Range Label",             # Required: Display text
-  min: 0,                          # Required: Minimum value
-  max: 100,                        # Required: Maximum value
-  step: 1,                         # Optional: Step increment
+  label: "Range Label",             # Display text (default: "Range")
+  min: 0,                          # Minimum value (default: 0)
+  max: 100,                        # Maximum value (default: 100)
+  step: 1,                         # Optional: Step increment (default: 1)
   default_min: 0,                  # Optional: Default minimum (defaults to min)
   default_max: 100,                # Optional: Default maximum (defaults to max)
   unit: "$",                       # Optional: Unit display
@@ -262,12 +262,12 @@ For options loaded from the database:
 ```elixir
 def filters do
   [
-    category: Select.new({:categories, :name}, "category", %{
+    category: Select.new({:categories, :id}, "category", %{
       label: "Product Category",
       options_source: {YourApp.Catalog, :search_categories, []}
     }),
     
-    supplier: Select.new({:suppliers, :name}, "supplier", %{
+    supplier: Select.new({:suppliers, :id}, "supplier", %{
       label: "Supplier",
       placeholder: "Search suppliers...",
       options_source: {YourApp.Suppliers, :search_suppliers, []}
@@ -305,7 +305,7 @@ end
 ```elixir
 def filters do
   [
-    supplier: Select.new({:suppliers, :name}, "supplier", %{
+    supplier: Select.new({:suppliers, :id}, "supplier", %{
       label: "Supplier",
       options_source: {YourApp.Suppliers, :search_suppliers, []},
       option_template: &custom_supplier_template/1
@@ -329,11 +329,11 @@ end
 
 ```elixir
 Select.new(field, key, %{
-  label: "Select Label",                    # Required: Display text
+  label: "Select Label",                    # Display text (default: "Select")
   options: [],                             # Static options list
   options_source: {Module, :function, []}, # Dynamic options source
   option_template: &template_function/1,   # Custom option template
-  placeholder: "Choose an option...",      # Placeholder text
+  placeholder: "Choose an option...",      # Placeholder text (default: "Search...")
   mode: :tags,                             # :single, :tags, or :quick_tags
   allow_clear: false,                      # Single mode clear button
   max_selectable: 0,                       # 0 = unlimited
@@ -369,7 +369,7 @@ def filters do
     }),
     
     # Category dropdown with search
-    category: Select.new({:categories, :name}, "category", %{
+    category: Select.new({:categories, :id}, "category", %{
       label: "Category",
       placeholder: "Search categories...",
       options_source: {Shop.Catalog, :search_categories, []}
@@ -475,18 +475,20 @@ Filters automatically persist their state in URL parameters, allowing users to:
 - **Navigate back/forward** with filter state intact
 - **Refresh the page** without losing filters
 
-The `key` parameter in each filter constructor determines the URL parameter name:
+The filter's name in `filters/0` determines the URL parameter name:
 
 ```elixir
-# Creates URL parameter: ?active=true
+# Creates URL parameter: ?filters[active]=active
 active: Boolean.new(:active, "active", %{...})
 
-# Creates URL parameter: ?price_range[min]=100&price_range[max]=500  
+# Creates URL parameter: ?filters[price_range][min]=100&filters[price_range][max]=500
 price_range: Range.new(:price, "price_range", %{...})
 
-# Creates URL parameter: ?category[]=electronics&category[]=books
+# Creates URL parameter: ?filters[category][id][]=electronics&filters[category][id][]=books
 category: Select.new(:category, "category", %{...})
 ```
+
+Parameters that don't match a filter in `filters/0`, or whose shape doesn't match the filter type, are ignored.
 
 ## Performance Tips
 
@@ -536,6 +538,5 @@ CREATE INDEX idx_orders_inserted_at ON orders(inserted_at);
 - Check for any errors in your context function
 
 ### URL Parameters Not Persisting
-- Verify each filter has a unique `key` parameter
-- Check that keys don't conflict with other URL parameters
+- Verify each filter has a unique name in `filters/0`
 - Ensure the LiveView uses the LiveResource macro and does not override LiveTable's generated `handle_params/3`

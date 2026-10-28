@@ -527,7 +527,7 @@ def fields do
   [
     avatar: %{
       label: "Avatar",
-      renderer: &render_avatar/1
+      renderer: &render_avatar/2
     },
     name: %{
       label: "Name",
@@ -557,7 +557,7 @@ def fields do
   ]
 end
 
-defp render_avatar(user) do
+defp render_avatar(_avatar, user) do
   assigns = %{user: user}
   ~H"""
   <div class="flex items-center">

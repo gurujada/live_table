@@ -199,6 +199,17 @@ defmodule LiveTable.ParseHelpersTest do
       assert result[:rating].options.current_max == 50.5
     end
 
+    test "keeps transformer data whose keys look like a range or select" do
+      for data <- [%{"min" => "1", "max" => "5"}, %{"id" => ["1"]}] do
+        params = %{"filters" => %{"high_value" => data}}
+        socket = %{assigns: %{options: %{}}}
+
+        result = ParseHelpers.parse_filters(params, socket, filters())
+
+        assert %Transformer{options: %{applied_data: ^data}} = result[:high_value]
+      end
+    end
+
     test "ignores filter values whose shape doesn't match the filter type" do
       params = %{
         "filters" => %{

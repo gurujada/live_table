@@ -10,7 +10,7 @@ A Phoenix LiveView component library for building dynamic, interactive data tabl
 - **Advanced Filtering** - Text search, range filters, select dropdowns, boolean toggles, and transformers
 - **Smart Sorting** - Multi-column sorting with shift-click support
 - **Flexible Pagination** - Standard pagination or infinite scroll
-- **Export Capabilities** - CSV and PDF exports with background processing
+- **Export Capabilities** - CSV and PDF exports, served as a direct download
 - **Real-time Updates** - Built for Phoenix LiveView with instant feedback
 - **Multiple View Modes** - Table and card layouts with custom components
 - **Complex Queries** - Full support for joins, aggregations, and computed fields

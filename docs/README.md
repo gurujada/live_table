@@ -25,7 +25,7 @@ Complete reference documentation for all LiveTable features.
 - **[Fields API](api/fields.md)** - Configure data display, sorting, searching, and custom renderers
 - **[Filters API](api/filters.md)** - Boolean, Range, and Select filters with advanced examples
 - **[Transformers API](api/transformers.md)** - Ultimate filtering power with custom, stateful filters
-- **[Exports API](api/exports.md)** - CSV and PDF generation with background processing
+- **[Exports API](api/exports.md)** - CSV and PDF exports served as a direct download
 
 ### 💡 Examples & Patterns
 Real-world examples showing LiveTable in action.
@@ -103,7 +103,7 @@ LiveTable uses a three-tier architecture that separates concerns and maximizes f
 - **Performance Optimization** - Efficient pagination and query strategies
 
 ### Professional Features
-- **Export System** - CSV and PDF generation with background processing
+- **Export System** - CSV and PDF exports served as a direct download
 - **Multiple View Modes** - Table and card layouts with complete customization
 - **URL Persistence** - Shareable and bookmarkable filtered views
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
@@ -217,7 +217,7 @@ This documentation suite is comprehensive and production-ready, covering:
 - Installation and setup with all dependencies
 - Simple and complex table configurations
 - All filter types with extensive examples
-- Export system (CSV/PDF) with background processing
+- Export system (CSV/PDF)
 - Real-time updates and LiveView integration
 
 **Advanced Features:**
