@@ -50,6 +50,54 @@ defmodule LiveTable.TableComponentTest do
     end
   end
 
+  describe "live_table/1 - id and CSP nonce" do
+    defp base_assigns do
+      %{
+        fields: [{:name, %{label: "Name", sortable: true, searchable: true}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => true, "per_page" => 10, "page" => "1"}
+        },
+        streams: [%{name: "John Doe"}]
+      }
+    end
+
+    test "defaults keep the id and render no nonce" do
+      html = render_component(&TestTableComponent.live_table/1, base_assigns())
+
+      assert html =~ ~s(id="live-table")
+      assert html =~ ~s(id="live-table-controls-form")
+      refute html =~ "nonce="
+    end
+
+    test "id assign derives the root and form ids" do
+      html =
+        render_component(&TestTableComponent.live_table/1, Map.put(base_assigns(), :id, "orders"))
+
+      assert html =~ ~s(id="orders")
+      assert html =~ ~s(id="orders-controls-form")
+      refute html =~ ~s(id="live-table")
+    end
+
+    test "nonce is set on every inline hook script" do
+      html =
+        render_component(
+          &TestTableComponent.live_table/1,
+          Map.put(base_assigns(), :nonce, "abc123")
+        )
+
+      scripts = Regex.scan(~r/<script[^>]*>/, html) |> List.flatten()
+      assert length(scripts) >= 2
+      assert Enum.all?(scripts, &(&1 =~ ~s(nonce="abc123")))
+      assert Enum.any?(scripts, &(&1 =~ "Download"))
+      assert Enum.any?(scripts, &(&1 =~ "SortableColumn"))
+      assert Enum.any?(scripts, &(&1 =~ "Select"))
+      assert Enum.any?(scripts, &(&1 =~ "DropdownMenu"))
+    end
+  end
+
   describe "live_table/1 - basic rendering" do
     test "renders table mode with basic structure" do
       assigns = %{

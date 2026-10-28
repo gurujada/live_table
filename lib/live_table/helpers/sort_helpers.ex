@@ -2,6 +2,12 @@ defmodule LiveTable.SortHelpers do
   @moduledoc false
   use Phoenix.Component
 
+  attr :key, :any, required: true
+  attr :label, :string, default: nil
+  attr :sort_params, :list, default: []
+  attr :sortable, :boolean, default: false
+  attr :nonce, :string, default: nil, doc: "CSP nonce for the inline hook script"
+
   def sort_link(%{sortable: true} = assigns) do
     ~H"""
     <div
@@ -42,7 +48,7 @@ defmodule LiveTable.SortHelpers do
         </svg>
       </span>
     </div>
-    <script :type={Phoenix.LiveView.ColocatedHook} name=".SortableColumn" runtime>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".SortableColumn" runtime nonce={@nonce}>
       {
         mounted() {
           this.handleClick = (event) => {

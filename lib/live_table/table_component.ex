@@ -15,14 +15,16 @@ defmodule LiveTable.TableComponent do
           var!(assigns)
           |> assign(:table_options, unquote(opts)[:table_options])
           |> assign_new(:actions, fn -> [] end)
+          |> assign_new(:id, fn -> "live-table" end)
+          |> assign_new(:nonce, fn -> nil end)
 
         ~H"""
-        <div class="w-full" id="live-table" phx-hook=".Download">
+        <div class="w-full" id={@id} phx-hook=".Download">
           <.render_header {assigns} />
           <.render_content {assigns} />
           <.render_footer {assigns} />
         </div>
-        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download" runtime>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download" runtime nonce={@nonce}>
           {
             mounted() {
               this.handleEvent("download", ({ path }) => {
@@ -47,6 +49,8 @@ defmodule LiveTable.TableComponent do
       defp render_header(var!(assigns)) do
         ~H"""
         <.header_section
+          id={@id}
+          nonce={@nonce}
           fields={@fields}
           filters={@filters}
           options={@options}
@@ -80,6 +84,8 @@ defmodule LiveTable.TableComponent do
       defp render_controls(var!(assigns)) do
         ~H"""
         <.common_controls
+          id={@id}
+          nonce={@nonce}
           fields={@fields}
           filters={@filters}
           options={@options}
@@ -90,7 +96,7 @@ defmodule LiveTable.TableComponent do
 
       defp common_controls(var!(assigns)) do
         ~H"""
-        <.form for={%{}} id="live-table-controls-form" phx-change="sort">
+        <.form for={%{}} id={"#{@id}-controls-form"} phx-change="sort">
           <div class="space-y-4">
             <!-- Search and controls bar -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -142,6 +148,7 @@ defmodule LiveTable.TableComponent do
                       @table_options.pagination[:mode] != :infinite_scroll
                   }
                   id="per-page-select"
+                  nonce={@nonce}
                   name="per_page"
                   value={to_string(@options["pagination"]["per_page"])}
                   class="w-24"
@@ -189,7 +196,7 @@ defmodule LiveTable.TableComponent do
               </div>
 
               <div :if={get_in(@table_options, [:exports, :enabled])} class="">
-                <.exports formats={get_in(@table_options, [:exports, :formats])} />
+                <.exports formats={get_in(@table_options, [:exports, :formats])} nonce={@nonce} />
               </div>
             </div>
 
@@ -241,6 +248,7 @@ defmodule LiveTable.TableComponent do
                           label={field.label}
                           sort_params={@options["sort"]["sort_params"]}
                           sortable={Map.get(field, :sortable, false)}
+                          nonce={@nonce}
                         />
                       </th>
                       <th
@@ -540,7 +548,7 @@ defmodule LiveTable.TableComponent do
 
       defp exports(var!(assigns)) do
         ~H"""
-        <.dropdown_menu id="export-dropdown">
+        <.dropdown_menu id="export-dropdown" nonce={@nonce}>
           <:trigger>
             <span class="flex items-center gap-2">
               <svg

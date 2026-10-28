@@ -168,7 +168,7 @@ LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for its UI 
 - **SutraUI dependency**: LiveTable uses SutraUI components which provide DaisyUI-compatible semantic class names (`btn`, `select`, `input`, `dropdown`, `menu`).
 - **Tailwind-based**: Everything looks good out of the box with Tailwind CSS.
 - **DaisyUI integration**: If your app includes DaisyUI, components automatically adopt your active Daisy theme.
-- **Dark mode**: Respects Tailwind `dark:` classes and DaisyUI theme tokens.
+- **Dark mode**: Colours come from SutraUI theme tokens (`text-foreground`, `text-muted-foreground`), so dark mode follows your theme.
 - **Custom UI**: If you want to use a different UI framework, you can replace the entire UI using `custom_header`, `custom_controls`, `custom_content`, and `custom_footer` options.
 
 ## Integration Requirements
@@ -178,6 +178,7 @@ LiveTable depends on [SutraUI](https://github.com/gurujada/sutra_ui) for its UI 
 - **Ecto 3.10+** - Database query interface
 - **Oban 2.19+** - Background job processing for exports
 - **Tailwind CSS** - Styling framework
+- **SutraUI 0.4.1+** - Required UI components (installed automatically as a dependency)
 
 ### Optional Dependencies
 - **Typst** - PDF generation engine for reports

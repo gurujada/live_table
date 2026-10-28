@@ -5,6 +5,18 @@ All notable changes to LiveTable will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-10-28
+
+### Added
+
+- `<.live_table>` accepts a `nonce` assign (default `nil`). It is set on the inline `.Download` and `.SortableColumn` hook scripts so a nonce-based `script-src` Content-Security-Policy works without `'unsafe-inline'`.
+- `<.live_table>` accepts an `id` assign (default `"live-table"`), so several tables can share a page. The controls form id derives from it (`"<id>-controls-form"`).
+
+### Changed
+
+- SutraUI is now a required dependency, `~> 0.4.1` (it was optional, but LiveTable imports it unconditionally).
+- Select filter markup uses SutraUI tokens (`text-foreground`, `text-muted-foreground`) instead of fixed `gray` classes, so dark mode follows the theme.
+
 ## [0.4.2] - 2026-07-07
 
 ### Changed

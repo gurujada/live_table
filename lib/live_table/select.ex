@@ -151,7 +151,7 @@ defmodule LiveTable.Select do
       ~H\"\"\"
       <div class="flex flex-col">
         <span class="font-bold"><%= @option.label %></span>
-        <span class="text-sm text-gray-500"><%= @option.value |> Enum.at(0) %></span>
+        <span class="text-sm text-muted-foreground"><%= @option.value |> Enum.at(0) %></span>
       </div>
       \"\"\"
     end
@@ -239,7 +239,7 @@ defmodule LiveTable.Select do
     selected: [],
     placeholder: "Search...",
     css_classes: "",
-    label_classes: "block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100 mb-2",
+    label_classes: "block text-sm font-medium leading-6 text-foreground mb-2",
     # LiveSelect options
     mode: :tags,
     allow_clear: false,
@@ -297,8 +297,8 @@ defmodule LiveTable.Select do
 
     ~H"""
     <div class="flex flex-col">
-      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
-      <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+      <span class="text-sm font-medium text-foreground">{@label}</span>
+      <span class="text-xs text-muted-foreground mt-0.5">
         ID: {@id} • {@description}
       </span>
     </div>
@@ -310,7 +310,7 @@ defmodule LiveTable.Select do
     assigns = %{label: label}
 
     ~H"""
-    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
+    <span class="text-sm font-medium text-foreground">{@label}</span>
     """
   end
 

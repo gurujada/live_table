@@ -854,3 +854,21 @@ def table_options do
   config
 end
 ```
+
+## CSP nonce and multiple tables
+
+`<.live_table>` takes two optional assigns.
+
+```heex
+<.live_table
+  id="orders-table"
+  nonce={@csp_nonce}
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+/>
+```
+
+- `nonce` is set on the inline hook scripts (`.Download`, `.SortableColumn`), so a nonce-based `script-src` works. Default `nil` renders no nonce attribute.
+- `id` is the table root id (default `"live-table"`). Give each table on a page its own id.
