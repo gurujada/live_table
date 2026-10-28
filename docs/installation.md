@@ -4,9 +4,9 @@ This guide walks you through setting up LiveTable in your Phoenix application.
 
 ## Prerequisites
 
-- **Elixir** 1.17 or later
-- **Phoenix** 1.8+ with LiveView 1.0+
-- **Ecto** 3.10+
+- **Elixir** 1.20 or later
+- **Phoenix** 1.8+ with LiveView 1.2+
+- **Ecto** 3.13+
 - **Tailwind CSS** (recommended, but not required)
 
 ## Quick Installation
@@ -45,32 +45,13 @@ mix live_table.install
 The installer automatically:
 - Adds LiveTable configuration to `config/config.exs`
 - Adds [Sutra UI](https://github.com/gurujada/sutra_ui), the recommended UI components
-- Optionally configures Oban for exports (use `--oban` flag or you'll be prompted)
+- Adds the exports route to your router (`forward "/live_table/exports", LiveTable.ExportPlug`)
 
 Then set up Sutra UI's CSS with `mix sutra_ui.install` (see the [Sutra UI installation guide](https://hexdocs.pm/sutra_ui/readme.html#installation)).
 
 To use your own components instead, remove `sutra_ui` from your deps and follow [Custom Components](custom-components.md).
 
-### Step 3: Manual Steps
-
-After the installer completes:
-
-**1. Add static paths** in `lib/your_app_web.ex`:
-
-```elixir
-def static_paths, do: ~w(assets fonts images favicon.ico robots.txt exports)
-```
-
-**2. If using Oban for exports**, add to your supervision tree in `lib/your_app/application.ex`:
-
-```elixir
-children = [
-  # ... other children
-  {Oban, Application.fetch_env!(:your_app, Oban)}
-]
-```
-
-**3. Restart your server:**
+### Step 3: Restart your server
 
 ```bash
 mix phx.server
@@ -89,55 +70,20 @@ If the installer doesn't work for your project structure, add `{:sutra_ui, "~> 0
 (or configure [your own components](custom-components.md)), and add to `config/config.exs`:
 
 ```elixir
-config :live_table,
-  app: :your_app,
-  repo: YourApp.Repo,
-  pubsub: YourApp.PubSub
+config :live_table, repo: YourApp.Repo
 ```
 
-The `:app` option is required for exports to work correctly in production releases.
+and add the exports route to your router, outside any `scope` that pipes through `:browser`:
+
+```elixir
+forward "/live_table/exports", LiveTable.ExportPlug
+```
 
 ---
 
-## Export Setup (Optional)
+## PDF Exports (Typst)
 
-LiveTable supports CSV and PDF exports using Oban for background processing.
-
-### Oban Configuration
-
-Add Oban to your dependencies:
-
-```elixir
-{:oban, "~> 2.19"}
-```
-
-Configure in `config/config.exs`:
-
-```elixir
-config :your_app, Oban,
-  repo: YourApp.Repo,
-  plugins: [Oban.Plugins.Pruner],
-  queues: [exports: 10]
-```
-
-Add to supervision tree:
-
-```elixir
-children = [
-  {Oban, Application.fetch_env!(:your_app, Oban)}
-]
-```
-
-Run Oban migrations:
-
-```bash
-mix oban.install
-mix ecto.migrate
-```
-
-### PDF Export (Typst)
-
-PDF exports require [Typst](https://typst.app) installed on your system:
+CSV exports need nothing else. PDF exports require [Typst](https://typst.app) installed on your system:
 
 **macOS:**
 ```bash
@@ -194,10 +140,9 @@ Visit `/test` - you should see a working table!
 
 ### Exports failing
 
-- Verify Oban is started in your supervision tree
-- Verify your Oban config includes the `exports` queue
-- Ensure `exports` is in your static paths
-- Check server logs for detailed error messages
+- Check that your router has `forward "/live_table/exports", LiveTable.ExportPlug`
+- For PDF, check that `typst --version` works on the server
+- See [Exports](api/exports.md#troubleshooting)
 
 ### "Unknown column" errors
 

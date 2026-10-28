@@ -40,15 +40,14 @@ Flexible sorting options that scale:
 Handle datasets of any size:
 - **Configurable page sizes** (10, 25, 50, 100+)
 - **Efficient querying** with LIMIT/OFFSET optimization
-- **User preferences** maintained across sessions
-- **Performance monitoring** for large datasets
+- **URL persistence** of the current page and page size
 
 ### 📤 Professional Exports
 Generate reports without blocking your UI:
 - **CSV exports** for spreadsheet analysis
 - **PDF reports** with professional formatting using Typst
-- **Background processing** via Oban for large datasets
-- **Custom formatting** and filtering in exports
+- **Streamed downloads**: CSV goes straight from the database to the browser, with no job queue or stored files
+- **Filtered exports** that follow the table's current search, filters and sort
 
 ### 🎨 Flexible Display Modes
 Present data the way your users need it:
@@ -159,7 +158,7 @@ LiveTable is designed to handle real-world application demands:
 - **Query optimization** - Automatic LIMIT/OFFSET for pagination
 - **Index-aware** - Designed to work with database indexes
 - **Lazy loading** - Components render only when needed
-- **Background processing** - Exports don't block the UI
+- **Out-of-band downloads** - Exports are served by a plug, so they don't block the UI
 
 ## Styling and Themes
 
@@ -173,14 +172,12 @@ LiveTable renders its controls and filters with [Sutra UI](https://github.com/gu
 ## Integration Requirements
 
 ### Dependencies
-- **Phoenix LiveView 1.0+** - Core framework dependency
-- **Ecto 3.10+** - Database query interface
-- **Oban 2.19+** - Background job processing for exports
+- **Phoenix LiveView 1.2+** - Core framework dependency
+- **Ecto 3.13+** - Database query interface
 - **Tailwind CSS** - Styling framework
 
 ### Optional Dependencies
-- **Typst** - PDF generation engine for reports
-- **Phoenix PubSub** - Real-time updates across users
+- **Typst** - PDF generation engine for reports (the `typst` CLI must be installed; see [Exports](api/exports.md))
 
 ## Learning Path
 

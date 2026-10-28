@@ -270,35 +270,10 @@ from p in Product,
   select: %{id: p.id, name: p.name, category_name: c.name}
 ```
 
-### Memory Issues with Large Exports
+### Large Exports
 
-**Problem:** Export jobs fail or consume too much memory.
-
-**Solutions:**
-
-1. **Configure Oban Limits**
-```elixir
-config :your_app, Oban,
-  queues: [
-    exports: [limit: 2, paused: false],  # Limit concurrent exports
-    default: 5
-  ]
-```
-
-2. **Increase Timeout**
-```elixir
-config :live_table,
-  export_timeout: 600_000  # 10 minutes
-```
-
-3. **Monitor Export File Sizes**
-```bash
-# Check export directory size
-du -sh priv/static/exports/
-
-# Clean up old exports
-find priv/static/exports/ -name "*.csv" -mtime +7 -delete
-```
+CSV exports are streamed from the database to the browser, so their size is limited by the
+download, not by memory. PDF exports stop at 10,000 rows; ask users to filter first, or use CSV.
 
 ## Runtime Errors
 
@@ -397,7 +372,7 @@ end
 
 ### PDF Generation Failing
 
-**Error:** `Export failed: Typst not found`
+**Error:** The PDF download fails, and the logs show an `:enoent` error from `System.cmd("typst", ...)` (Typst is not installed or not on `PATH`)
 
 **Solutions:**
 
@@ -422,12 +397,8 @@ which typst
 echo $PATH
 ```
 
-3. **Verify File Permissions**
-```bash
-# Check export directory permissions
-ls -la priv/static/exports/
-chmod 755 priv/static/exports/
-```
+3. **Check the logs.** Failures are logged as `LiveTable PDF export failed: ...`, with Typst's
+   error message.
 
 ### CSV Export Character Encoding Issues
 
@@ -435,27 +406,17 @@ chmod 755 priv/static/exports/
 
 **Solutions:**
 
-1. **Configure UTF-8 Encoding**
-```elixir
-def table_options do
-  %{
-    exports: %{
-      enabled: true,
-      formats: [:csv],
-      csv: %{
-        encoding: :utf8,      # Explicit UTF-8
-        delimiter: ","
-      }
-    }
-  }
-end
-```
+1. **Open the file as UTF-8**
+
+   CSV exports are always UTF-8, comma-delimited (RFC 4180), with no byte order mark; encoding and
+   delimiter are not configurable. If a spreadsheet app shows garbled characters, import the file
+   and choose UTF-8 rather than opening it directly.
 
 2. **Test with Different Applications**
 ```bash
-# Test CSV in terminal
-file exports/products_2024-01-01.csv
-cat exports/products_2024-01-01.csv | head -5
+# Check a downloaded export in the terminal
+file ~/Downloads/export-*.csv
+head -5 ~/Downloads/export-*.csv
 ```
 
 ## LiveView Integration Issues
@@ -567,21 +528,6 @@ iex> YourApp.Products.list_products() |> Repo.all()
 </div>
 <.live_table ... />
 """
-```
-
-### Monitor Background Jobs
-
-```elixir
-# Check Oban job status
-iex> Oban.Job |> YourApp.Repo.all()
-
-# Check specific export jobs
-iex> 
-Oban.Job 
-|> where([j], j.queue == "exports") 
-|> order_by([j], desc: j.inserted_at)
-|> limit(10)
-|> YourApp.Repo.all()
 ```
 
 ## Getting Help

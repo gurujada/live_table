@@ -11,6 +11,8 @@ defmodule LiveTable.TestRouter do
     plug :put_secure_browser_headers
   end
 
+  forward "/live_table/exports", LiveTable.ExportPlug
+
   scope "/" do
     pipe_through :browser
 

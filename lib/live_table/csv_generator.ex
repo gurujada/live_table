@@ -2,42 +2,25 @@ defmodule LiveTable.CsvGenerator do
   @moduledoc false
 
   alias NimbleCSV.RFC4180, as: CSV
-  @repo Application.compile_env(:live_table, :repo)
 
-  def generate_csv(query, header_data) do
-    timestamp = LiveTable.ExportHelpers.generate_export_timestamp()
-    temp_path = Path.join(System.tmp_dir!(), "export-#{timestamp}.csv")
+  # Streams the query as CSV iodata, a header row first. Run it inside a repo transaction.
+  def stream(query, columns) do
+    repo = Application.fetch_env!(:live_table, :repo)
+    {keys, labels} = Enum.unzip(columns)
 
-    case stream_data_to_file(query, temp_path, header_data) do
-      {:ok, _} -> {:ok, temp_path}
-    end
+    rows =
+      query
+      |> repo.stream(max_rows: 1000)
+      |> Stream.map(fn row -> Enum.map(keys, &cell(Map.get(row, &1))) end)
+      |> Stream.chunk_every(1000)
+      |> Stream.map(&CSV.dump_to_iodata/1)
+
+    Stream.concat([CSV.dump_to_iodata([labels])], rows)
   end
 
-  defp stream_data_to_file(query, path, header_data) do
-    [header_keys, header_labels] = header_data
+  # Spreadsheets run cells starting with these as formulas; a leading quote keeps them text.
+  defp cell(<<first, _::binary>> = value) when first in [?=, ?+, ?-, ?@, ?\t, ?\r],
+    do: "'" <> value
 
-    atom_keys = Enum.map(header_keys, &String.to_atom/1)
-
-    apply(@repo, :transaction, [
-      fn ->
-        File.write!(path, CSV.dump_to_iodata([header_labels]))
-
-        apply(@repo, :stream, [query, [max_rows: 1000]])
-        |> Stream.map(fn row ->
-          Enum.map(atom_keys, &Map.get(row, &1))
-        end)
-        |> Stream.chunk_every(1000)
-        |> Stream.map(fn chunk ->
-          if Process.whereis(:chunk_monitor) do
-            send(:chunk_monitor, {:chunk, length(chunk)})
-          end
-
-          CSV.dump_to_iodata(chunk)
-        end)
-        |> Stream.each(&File.write!(path, &1, [:append]))
-        |> Stream.run()
-      end,
-      [timeout: :infinity]
-    ])
-  end
+  defp cell(value), do: value
 end

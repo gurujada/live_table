@@ -5,21 +5,38 @@ defmodule LiveTable.PdfGenerator do
   # with support for custom headers and efficient streaming of large datasets. It uses
   # Typst as an intermediate format for PDF generation.
 
-  @repo Application.compile_env(:live_table, :repo)
   import Ecto.Query, only: [limit: 2]
-  # Generates a PDF file from an Ecto query with specified headers.
-  def generate_pdf(query, header_data) do
-    timestamp = LiveTable.ExportHelpers.generate_export_timestamp()
-    temp_path = Path.join(System.tmp_dir!(), "export-#{timestamp}.typ")
-    query = limit(query, 10_000)
 
-    case generate_typst_file(query, temp_path, header_data) do
-      {:ok, path} -> compile_typst_to_pdf(path)
-      error -> error
+  # Renders the query as a PDF binary. Typst works in a private directory that is
+  # always removed, and only sees that directory.
+  def render(query, columns) do
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "live_table-" <> Base.url_encode64(:crypto.strong_rand_bytes(12))
+      )
+
+    File.mkdir_p!(dir)
+
+    try do
+      typ_path = Path.join(dir, "export.typ")
+      pdf_path = Path.join(dir, "export.pdf")
+      {keys, labels} = Enum.unzip(columns)
+
+      generate_typst_file(limit(query, 10_000), typ_path, keys, labels)
+
+      case System.cmd("typst", ["compile", "--root", dir, typ_path, pdf_path],
+             stderr_to_stdout: true
+           ) do
+        {_, 0} -> {:ok, File.read!(pdf_path)}
+        {error, _} -> {:error, "Failed to compile PDF: #{error}"}
+      end
+    after
+      File.rm_rf(dir)
     end
   end
 
-  defp generate_typst_file(query, path, [header_keys, header_labels]) do
+  defp generate_typst_file(query, path, header_keys, header_labels) do
     typst_template = """
     #set page(
       paper: "a4",
@@ -67,72 +84,44 @@ defmodule LiveTable.PdfGenerator do
     """
 
     File.write!(path, typst_template)
-
-    case stream_data_to_file(query, path, header_keys) do
-      {:ok, _} ->
-        File.write!(path, "\n)", [:append])
-        {:ok, path}
-
-      error ->
-        error
-    end
+    stream_data_to_file(query, path, header_keys)
+    File.write!(path, "\n)", [:append])
   end
 
   defp generate_table_header(header_labels) do
     header_labels
-    |> Enum.map(&"[*#{&1}*]")
+    |> Enum.map(&"text(weight: \"bold\", #{typst_string(&1)})")
     |> Enum.join(", ")
   end
 
   defp stream_data_to_file(query, path, header_keys) do
-    atom_keys = Enum.map(header_keys, &String.to_atom/1)
+    repo = Application.fetch_env!(:live_table, :repo)
 
-    apply(
-      @repo,
-      :transaction,
-      [
-        fn ->
-          apply(@repo, :stream, [query, [max_rows: 500]])
-          |> Stream.map(fn row ->
-            atom_keys
-            |> Enum.map(fn key -> Map.get(row, key) |> format_value() end)
-            |> Enum.join(", ")
-            |> Kernel.<>(",\n")
-          end)
-          |> Stream.chunk_every(500)
-          |> Stream.each(fn chunk ->
-            if Process.whereis(:chunk_monitor) do
-              send(:chunk_monitor, {:chunk, length(chunk)})
-            end
-
-            File.write!(path, Enum.join(chunk, ""), [:append])
-          end)
-          |> Stream.run()
-
-          {:ok, path}
-        end,
-        [timeout: :infinity]
-      ]
+    repo.transaction(
+      fn ->
+        query
+        |> repo.stream(max_rows: 500)
+        |> Stream.map(fn row ->
+          Enum.map_join(header_keys, ", ", &typst_string(Map.get(row, &1))) <> ",\n"
+        end)
+        |> Stream.chunk_every(500)
+        |> Stream.each(&File.write!(path, &1, [:append]))
+        |> Stream.run()
+      end,
+      timeout: :infinity
     )
   end
 
-  defp compile_typst_to_pdf(tp_path) do
-    pdf_path = String.replace(tp_path, ".typ", ".pdf")
+  # Cells are Typst string literals, so data is never read as markup or code.
+  defp typst_string(nil), do: ~s("")
 
-    case System.cmd("typst", ["compile", tp_path, pdf_path]) do
-      {_, 0} ->
-        {:ok, pdf_path}
+  defp typst_string(value) do
+    escaped =
+      value
+      |> to_string()
+      |> String.replace("\\", "\\\\")
+      |> String.replace("\"", "\\\"")
 
-      # File.rm(tp_path)
-      {error, _} ->
-        {:error, "Failed to compile PDF: #{error}"}
-    end
+    ~s("#{escaped}")
   end
-
-  defp format_value(value) when is_binary(value) do
-    value = value |> String.replace("@", "\\@")
-    "[#{value}]"
-  end
-
-  defp format_value(value), do: "[#{value}]"
 end

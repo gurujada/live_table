@@ -1,75 +1,60 @@
 # Exports API Reference
 
-LiveTable provides export capabilities for generating CSV and PDF files from your table data. Exports are processed in the background using Oban, ensuring your LiveView remains responsive.
+LiveTable exports the table's data as CSV or PDF. An export includes every row that matches the
+current search, filters and sort, not just the current page.
 
 ## Overview
 
 LiveTable supports two export formats:
 - **CSV** - Comma-separated values for spreadsheet applications
-- **PDF** - Formatted documents using Typst typesetting engine
+- **PDF** - Formatted documents using the Typst typesetting engine
 
 `formats` accepts only formats LiveTable can actually produce. Any other entry raises an
 `ArgumentError` listing the supported formats, rather than rendering a button that dispatches to
 the wrong exporter.
 
-Exports include all table data (not just the current page) and respect active filters. Files are generated asynchronously and served as downloadable links.
+## How it works
 
-## Upgrade Notes
+1. The user clicks an export button. The LiveView builds the export's query exactly as it builds
+   the table's, including your `data_provider` and any per-user scoping.
+2. The query is encrypted with your endpoint's `secret_key_base` into a download link that is
+   valid for 60 seconds, and the browser follows it straight away.
+3. `LiveTable.ExportPlug` decrypts the link, runs the query and streams the file back.
 
-Custom export buttons should submit `phx-click="export"` with
-`phx-value-format="csv"` or `phx-value-format="pdf"`. The previous `"export-csv"`
-and `"export-pdf"` events are no longer handled.
-
-Exports queued before this update must be re-run because the query payload format
-has changed. CSV and PDF generators now accept Ecto queries rather than query
-strings.
+Nothing is written to `priv/static`, nothing needs cleaning up, and the download works whichever
+node it lands on. The link can't be read or altered, and it carries its own authorisation, so the
+plug doesn't need your login pipeline.
 
 ## Basic Setup
 
-### 1. Enable Exports in Table Configuration
+### 1. Route exports to LiveTable
+
+`mix live_table.install` adds this to your router. To add it by hand, put it outside any `scope`
+that pipes through `:browser`:
 
 ```elixir
-defmodule YourAppWeb.ProductLive.Index do
-  use YourAppWeb, :live_view
-  use LiveTable.LiveResource, schema: YourApp.Product
-
-  def table_options do
-    %{
-      exports: %{
-        enabled: true,
-        formats: [:csv, :pdf]  # Enable both formats
-      }
-    }
-  end
-end
+# lib/your_app_web/router.ex
+forward "/live_table/exports", LiveTable.ExportPlug
 ```
 
-### 2. Configure Static File Serving
+### 2. Enable exports in table configuration
 
-Add exports to your static paths in `lib/your_app_web.ex`:
-
-```elixir
-def static_paths do
-  ~w(assets fonts images favicon.ico robots.txt exports)
-end
-```
-
-## Export Configuration Options
-
-### Table-Level Configuration
+Exports are enabled with both formats by default. To choose:
 
 ```elixir
 def table_options do
   %{
     exports: %{
-      enabled: true,                    # Enable/disable exports
-      formats: [:csv, :pdf]            # Available formats: :csv, :pdf
+      enabled: true,
+      formats: [:csv, :pdf]
     }
   }
 end
 ```
 
-### Application-Wide Configuration
+The `export` event is ignored when exports are disabled or the format isn't in `formats`.
+
+### Application-wide configuration
 
 ```elixir
 # config/config.exs
@@ -77,65 +62,30 @@ config :live_table,
   defaults: %{
     exports: %{
       enabled: true,
-      formats: [:csv, :pdf]
+      formats: [:csv]
     }
   }
 ```
 
-### Oban Configuration
-
-```elixir
-# config/config.exs
-config :your_app, Oban,
-  repo: YourApp.Repo,
-  engine: Oban.Engines.Basic,
-  notifier: Oban.Notifiers.Postgres,
-  plugins: [Oban.Plugins.Pruner],
-  queues: [
-    exports: 10,        # Export processing queue
-    default: 5          # Other background jobs
-  ]
-```
-
 ## CSV Exports
 
-CSV exports use NimbleCSV for fast, memory-efficient processing.
+CSV exports are streamed straight from the database to the browser with NimbleCSV, so large
+exports use little memory.
 
-### Features
-- **Streaming processing** - Handles large datasets without memory issues
-- **Custom headers** - Uses field labels from your configuration
-- **Filter respect** - Only exports filtered/searched data
-- **UTF-8 encoding** - Proper character encoding for international data
-
-### Example CSV Output
+- The header row uses your field labels.
+- Text cells starting with `=`, `+`, `-`, `@`, a tab or a carriage return get a leading `'`,
+  so spreadsheet apps show them as text instead of running them as formulas.
 
 ```csv
 ID,Product Name,Price,Stock,Category
 1,iPhone 15 Pro,999.99,25,Electronics
 2,MacBook Air,1199.99,8,Electronics
-3,Wireless Mouse,45.99,50,Accessories
-```
-
-### CSV Configuration
-
-```elixir
-def table_options do
-  %{
-    exports: %{
-      enabled: true,
-      formats: [:csv]
-    }
-  }
-end
 ```
 
 ## PDF Exports
 
-PDF exports use Typst for professional document formatting.
-
-### Prerequisites
-
-Install Typst on your system:
+PDF exports are limited to 10,000 rows. Above that, the user is asked to filter the table first.
+They need the [Typst](https://typst.app) CLI on the server:
 
 **macOS:**
 ```bash
@@ -144,130 +94,41 @@ brew install typst
 
 **Ubuntu/Debian:**
 ```bash
-# Download latest release
 wget https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
 tar -xf typst-x86_64-unknown-linux-musl.tar.xz
 sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
 ```
 
 **Windows:**
-Download from [Typst Releases](https://github.com/typst/typst/releases) and add to PATH.
+Download from [Typst Releases](https://github.com/typst/typst/releases) and add it to PATH.
 
-**Verify Installation:**
-```bash
-typst --version
-```
+Each PDF is built in its own temporary directory, which is removed afterwards. Cell values are
+passed to Typst as text, never as markup.
 
-### Features
-- **Professional formatting** - Clean, readable table layouts
-- **Large dataset support** - Efficient processing for thousands of records
-- **Responsive tables** - Automatic column width adjustment
+## Upgrade Notes
 
-### PDF Configuration
+When upgrading from 0.4.2 or earlier: exports no longer use Oban or files in `priv/static`:
 
-```elixir
-def table_options do
-  %{
-    exports: %{
-      enabled: true,
-      formats: [:pdf]
-    }
-  }
-end
-```
+- Add `forward "/live_table/exports", LiveTable.ExportPlug` to your router.
+- Remove `"exports"` from `static_paths` and delete `priv/static/exports`.
+- Remove the `app:` and `pubsub:` keys from `config :live_table`. They are no longer used.
+- LiveTable no longer depends on `:oban` or `:oban_web`. If your app doesn't use Oban elsewhere,
+  you can remove it and its `exports` queue.
 
-## Export Process Flow
-
-### 1. User Initiates Export
-
-When a user clicks an export button, LiveTable:
-1. Captures current table state (filters, search, sort)
-2. Queues a background job with this state
-3. Shows a "Processing..." message
-4. Returns immediately (non-blocking)
-
-### 2. Background Processing
-
-The Oban worker:
-1. Recreates the exact query from captured state
-2. Streams data in batches
-3. Generates the export file
-4. Saves it to the exports directory
-5. Updates job status
-
-### 3. Download Delivery
-
-Once complete:
-1. User receives a download link
-2. File is served via static file handling
-3. Files auto-expire after configured time
+Custom export buttons should send `phx-click="export"` with `phx-value-format="csv"` or
+`phx-value-format="pdf"`. The previous `"export-csv"` and `"export-pdf"` events are no longer
+handled.
 
 ## Troubleshooting
 
-### Common Issues
+**Clicking export does nothing:**
+- Check that exports are enabled and the format is in `formats`.
+- Check that the router forwards `/live_table/exports` to `LiveTable.ExportPlug`.
 
-**Exports not generating:**
-- Check Oban is running and exports queue is configured
-- Verify static file directory exists and is writable
-- Check for errors in Oban dashboard
+**The download is a 404 page:**
+- The link expires 60 seconds after the click. Click export again.
+- If the route is inside a `scope` with a path prefix, move it to the top level of the router.
 
-**PDF generation failing:**
-- Ensure Typst is installed and in PATH
-- Check file permissions in export directory
-- Verify system has enough disk space
-
-**Download links not working:**
-- Verify static file serving is configured
-- Check exports directory is in static_paths
-- Ensure web server can serve files from exports directory
-
-### Debug Export Jobs
-
-```elixir
-# Check export job status
-iex> Oban.Job |> where([j], j.queue == "exports") |> Repo.all()
-
-# Check export files
-iex> File.ls!(Path.join([:code.priv_dir(:your_app), "static", "exports"]))
-```
-
-## Examples
-
-### E-commerce Product Export
-
-```elixir
-def table_options do
-  %{
-    exports: %{
-      enabled: true,
-      formats: [:csv, :pdf]
-    }
-  }
-end
-```
-
-### Customer Data Export
-
-```elixir
-def table_options do
-  %{
-    exports: %{
-      enabled: true,
-      formats: [:csv]  # CSV only for customer data
-    }
-  }
-end
-```
-
-### Financial Report Export
-
-```elixir
-def table_options do
-  %{
-    exports: %{
-      enabled: true,
-      formats: [:pdf]  # PDF only for financial reports
-    }
-  }
-end
-```
+**PDF export fails:**
+- Check that `typst --version` works for the user your app runs as.
+- The error is logged as `LiveTable PDF export failed: ...`.

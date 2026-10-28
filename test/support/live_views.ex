@@ -52,7 +52,7 @@ defmodule LiveTable.TestProductLive do
     %{
       pagination: %{enabled: true, default_size: 2, max_per_page: 5, sizes: [2, 5]},
       sorting: %{enabled: true, default_sort: [name: :asc]},
-      exports: %{enabled: false},
+      exports: %{enabled: true, formats: [:csv, :pdf]},
       use_streams: true
     }
   end

@@ -16,8 +16,8 @@ defmodule LiveTable.ExportTest do
 
   describe "fetch_format/1" do
     test "resolves a format sent as an event parameter" do
-      assert {:ok, %{worker: LiveTable.Workers.CsvExportWorker}} = Export.fetch_format("csv")
-      assert {:ok, %{worker: LiveTable.Workers.PdfExportWorker}} = Export.fetch_format("pdf")
+      assert {:ok, %{content_type: "text/csv"}} = Export.fetch_format("csv")
+      assert {:ok, %{content_type: "application/pdf"}} = Export.fetch_format("pdf")
     end
 
     test "refuses unknown formats instead of defaulting to one" do
@@ -33,6 +33,35 @@ defmodule LiveTable.ExportTest do
       assert_raise ArgumentError, fn ->
         String.to_existing_atom("live_table_probe_never_an_atom")
       end
+    end
+  end
+
+  describe "download_path/4 and verify/2" do
+    import Ecto.Query
+
+    @endpoint LiveTable.TestEndpoint
+
+    test "round-trips the query and columns through the link" do
+      query = from(p in LiveTable.Catalog.Product, where: p.id in ^[1, 2], select: %{id: p.id})
+      "/live_table/exports/" <> token = Export.download_path(@endpoint, "csv", query, id: "ID")
+
+      assert {:ok, %{format: "csv", query: ^query, columns: [id: "ID"]}} =
+               Export.verify(@endpoint, token)
+    end
+
+    test "the link doesn't reveal the query" do
+      query = from(p in LiveTable.Catalog.Product, where: p.name == ^"secret-value")
+      path = Export.download_path(@endpoint, "csv", query, [])
+
+      refute path =~ "Product"
+      refute path =~ "secret"
+    end
+
+    test "refuses a tampered token" do
+      token = Export.download_path(@endpoint, "csv", from(p in "products"), []) |> Path.basename()
+
+      assert :error = Export.verify(@endpoint, token <> "x")
+      assert :error = Export.verify(@endpoint, "not-a-token")
     end
   end
 

@@ -12,15 +12,18 @@ defmodule LiveTable.ExportHelpers do
   defmacro __using__(opts) do
     quote do
       def handle_event("export", %{"format" => format}, socket) do
-        case LiveTable.Export.fetch_format(format) do
-          {:ok, exporter} -> enqueue_export(exporter, socket)
-          :error -> {:noreply, socket}
+        exports = LiveTable.TableConfig.get_table_options(table_options()).exports
+
+        with true <- exports.enabled,
+             true <- format in Enum.map(exports.formats, &to_string/1),
+             {:ok, exporter} <- LiveTable.Export.fetch_format(format) do
+          export(format, exporter, socket)
+        else
+          _ -> {:noreply, socket}
         end
       end
 
-      defp enqueue_export(exporter, socket) do
-        {export_topic, updated_socket} = maybe_subscribe(socket)
-
+      defp export(format, exporter, socket) do
         options = socket.assigns.options |> put_in(["pagination", "paginate?"], false)
 
         query =
@@ -32,19 +35,11 @@ defmodule LiveTable.ExportHelpers do
 
         case export_limit_error(exporter, query) do
           nil ->
-            {:ok, _job} =
-              %{
-                query: LiveTable.Export.encode_query(query),
-                header_data: extract_header_data(),
-                topic: export_topic
-              }
-              |> exporter.worker.new()
-              |> Oban.insert()
-
-            {:noreply, updated_socket}
+            path = LiveTable.Export.download_path(socket, format, query, export_columns())
+            {:noreply, socket |> push_event("download", %{path: path}) |> export_notice(format)}
 
           message ->
-            {:noreply, put_flash(updated_socket, :error, message)}
+            {:noreply, put_flash(socket, :error, message)}
         end
       end
 
@@ -59,57 +54,14 @@ defmodule LiveTable.ExportHelpers do
 
       defp export_limit_error(_exporter, _query), do: nil
 
-      # Extracts header keys and labels from fields for export
-      defp extract_header_data do
-        fields()
-        |> Enum.reduce([[], []], fn {k, %{label: label}}, [key_names, headers] ->
-          [[k | key_names], [label | headers]]
-        end)
-        |> Enum.map(&Enum.reverse/1)
-      end
+      # A CSV starts downloading at once; a PDF is built first, which takes a few seconds.
+      defp export_notice(socket, "pdf"),
+        do: put_flash(socket, :info, "Preparing your PDF. The download will start shortly.")
 
-      defp maybe_subscribe(socket) do
-        case socket.assigns[:export_topic] do
-          nil ->
-            client_id = Ecto.UUID.generate()
-            export_topic = "exports:#{client_id}"
+      defp export_notice(socket, _format), do: socket
 
-            updated_socket = assign(socket, export_topic: export_topic)
-
-            if connected?(socket) do
-              Phoenix.PubSub.subscribe(Application.fetch_env!(:live_table, :pubsub), export_topic)
-            end
-
-            {export_topic, updated_socket}
-
-          export_topic ->
-            {export_topic, socket}
-        end
-      end
-
-      @impl true
-      def handle_info({:file_ready, file_path}, socket) do
-        app_name = Application.fetch_env!(:live_table, :app)
-        static_path = Path.join([:code.priv_dir(app_name), "static", "exports"])
-        File.mkdir_p!(static_path)
-
-        filename = Path.basename(file_path)
-        dest_path = Path.join(static_path, filename)
-        File.cp!(file_path, dest_path)
-
-        socket =
-          socket
-          |> push_event("download", %{path: "/exports/#{filename}"})
-          |> put_flash(:info, "File downloaded successfully.")
-
-        Process.send_after(self(), {:cleanup_file, dest_path}, :timer.seconds(20))
-        File.rm(file_path)
-        {:noreply, socket}
-      end
-
-      def handle_info({:cleanup_file, file_path}, socket) do
-        File.rm(file_path)
-        {:noreply, socket}
+      defp export_columns do
+        for {key, %{label: label}} <- fields(), do: {key, label}
       end
     end
   end

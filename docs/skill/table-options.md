@@ -9,8 +9,8 @@ LiveTable merges built-in defaults, application config, and per-table overrides:
 ```elixir
 config :live_table,
   repo: MyApp.Repo,
-  pubsub: MyApp.PubSub,
-  app: :my_app,
+  # optional; required only without :sutra_ui (see docs/skill/custom-ui.md)
+  components: MyAppWeb.TableComponents,
   defaults: %{
     pagination: %{sizes: [10, 25, 50], default_size: 25},
     search: %{debounce: 300}
@@ -50,7 +50,8 @@ pagination: %{
 - `enabled: false` shows all rows from the query.
 - `mode: :buttons` is the normal Previous/Next footer.
 - `mode: :infinite_scroll` is for card mode only; see `docs/skill/card-infinite.md`.
-- `max_per_page` caps URL-manipulated page sizes.
+- `max_per_page` caps URL-manipulated page sizes; a non-numeric `per_page` falls back to `default_size`.
+- Built-in defaults: `enabled: true, mode: :buttons, sizes: [10, 25, 50], default_size: 10, max_per_page: 50`.
 
 ## Sorting
 
@@ -58,7 +59,7 @@ pagination: %{
 sorting: %{enabled: true, default_sort: [inserted_at: :desc]}
 ```
 
-Column sorting requires `sortable: true` on fields. Shift-click multi-sort is built into the component.
+Column sorting requires `sortable: true` on fields. Shift-click multi-sort is built into the component. The built-in `default_sort` is `[id: :asc]`; `default_sort` keys that are not in `fields/0` with `sortable: true` are ignored.
 
 ## Search
 
@@ -129,7 +130,7 @@ Supported values:
 - `:query`
 - `:trace`
 
-Debug output is for development; do not enable query tracing in production.
+Debug output prints to the server console, and only in the `:dev` environment; do not enable query tracing in production.
 
 ## Exports
 
@@ -137,4 +138,6 @@ Debug output is for development; do not enable query tracing in production.
 exports: %{enabled: true, formats: [:csv, :pdf]}
 ```
 
-CSV/PDF exports require LiveTable export setup: `repo`, `pubsub`, and `app` config; Oban running an `exports` queue; static serving for `exports`; and Typst installed for PDF.
+CSV/PDF exports need `forward "/live_table/exports", LiveTable.ExportPlug` in the router, outside the `:browser` pipeline, and the Typst CLI on the server for PDF. The export button sends the browser a 60-second link with the query encrypted in it; the plug streams the file back.
+
+Exports are enabled with both formats by default; set `exports: %{enabled: false}` to hide the menu. `formats` must be atoms from `:csv`/`:pdf`; anything else raises at render. The `"export"` event is ignored when exports are disabled or the format is not in `formats`. PDF exports are refused (flash error) above 10,000 rows.

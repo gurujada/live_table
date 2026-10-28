@@ -17,9 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking: exports no longer use Oban or `priv/static`.** The export button sends the browser a download link with the export's query encrypted in it, valid for 60 seconds, and `LiveTable.ExportPlug` streams the file back. Nothing is stored, so exports work on any node and in releases with a read-only `priv`. To upgrade:
+  - Add `forward "/live_table/exports", LiveTable.ExportPlug` to your router, outside the `:browser` pipeline. `mix live_table.install` adds it.
+  - Remove `"exports"` from `static_paths` and delete `priv/static/exports`.
+  - Remove `app:` and `pubsub:` from `config :live_table`.
+- A PDF export shows "Preparing your PDF. The download will start shortly." while it is built.
+- LiveTable no longer depends on `:oban` or `:oban_web`, and `mix live_table.install` no longer has an `--oban` option.
 - Select filter markup uses Sutra UI tokens (`text-foreground`, `text-muted-foreground`) instead of fixed `gray` classes, so dark mode follows the theme.
 - Custom export controls now use the `"export"` event with a `format` value instead of `"export-csv"` or `"export-pdf"`.
-- **Upgrade note:** Exports queued before upgrading must be re-run.
 
 ### Fixed
 
@@ -27,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Blank or non-numeric range filter bounds fall back to the range defaults instead of crashing the LiveView.
 - Export queries preserve pinned values and filters instead of being reconstructed from their printed representation.
 - Unsupported export formats raise an error instead of exporting a PDF.
+- Export files were publicly readable under a guessable name in `priv/static/exports`, and stayed there if the LiveView died before cleanup.
+- The `export` event is ignored when exports are disabled or the format isn't in the table's `formats`.
+- CSV text cells starting with `=`, `+`, `-`, `@`, a tab or a carriage return get a leading `'`, so spreadsheet apps don't run them as formulas.
+- PDF cell values are passed to Typst as text. Before, a value could be read as Typst markup or code. Each PDF is built in its own temporary directory, which is removed afterwards.
+- A failed PDF compile returns an error response and is logged, instead of crashing the export job.
 - Filter keys in the URL or in events no longer create atoms. Keys that aren't in `filters/0`, and values whose shape doesn't match the filter type, are ignored instead of crashing the LiveView.
 - Unknown sort fields or directions in the URL are ignored instead of crashing the LiveView. A non-numeric `per_page` falls back to the default size instead of the maximum.
 - Restoring a `Select` filter from the URL and clearing filters now target the LiveSelect component by the filter's name, so they also work when the filter's key differs from its name.

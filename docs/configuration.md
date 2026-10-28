@@ -15,7 +15,6 @@ Configure LiveTable globally in your `config/config.exs`:
 ```elixir
 config :live_table,
   repo: YourApp.Repo,
-  pubsub: YourApp.PubSub,
   defaults: %{
     pagination: %{
       enabled: true,
@@ -43,7 +42,6 @@ config :live_table,
 ### Required Configuration
 
 - **`repo`** - Your application's Ecto repository
-- **`pubsub`** - Your application's PubSub module for real-time updates
 
 ### Optional Configuration
 
@@ -362,7 +360,7 @@ end
 - `custom_header` - Replace the entire header section (search, filters, controls)
 - `custom_controls` - Replace only the header controls bar (search, per-page, filter toggle)
 - `custom_content` - Replace the table/card content area
-- `custom_footer` - Replace the footer section (pagination, exports)
+- `custom_footer` - Replace the footer section (pagination)
 
 Note: When `custom_header` is provided, it replaces the full header. In that case `custom_controls` is ignored.
 
@@ -597,60 +595,15 @@ config :live_table,
 # config/prod.exs
 config :live_table,
   defaults: %{
-    pagination: %{sizes: [25, 50, 100]},
+    pagination: %{sizes: [25, 50, 100], max_per_page: 100},
     exports: %{enabled: true}
   }
 ```
 
-## Oban Configuration
+## Exports
 
-LiveTable uses Oban to process CSV/PDF export jobs in the background.
-
-Installer behavior:
-- When you run mix live_table.install, you will be prompted: "Configure Oban for exports now?"
-- If you choose Yes:
-  - Adds {:oban, "~> 2.19"} to your mix.exs
-  - Fetches and compiles dependencies
-  - Adds a minimal Oban configuration to config/config.exs (repo, plugins, queues: [exports: 10])
-  - Prints a next step showing how to start Oban in your supervision tree
-- If you choose No:
-  - You can add Oban later manually using the configuration shown below.
-
-Configure background job processing for exports:
-
-```elixir
-# config/config.exs
-config :your_app, Oban,
-  repo: YourApp.Repo,
-  engine: Oban.Engines.Basic,
-  notifier: Oban.Notifiers.Postgres,
-  plugins: [
-    Oban.Plugins.Pruner,
-    {Oban.Plugins.Cron,
-     crontab: [
-       # Clean up old export files daily at 2 AM
-       {"0 2 * * *", YourApp.Workers.CleanupExports}
-     ]}
-  ],
-  queues: [
-    exports: 10,        # Export processing queue
-    default: 5          # Other background jobs
-  ]
-```
-
-### Oban Web (Optional)
-
-Monitor export jobs with Oban Web:
-
-```elixir
-# lib/your_app_web/router.ex
-import Oban.Web.Router
-
-scope "/admin" do
-  pipe_through [:browser, :admin_required]
-  oban_dashboard "/oban"
-end
-```
+Exports are served by `LiveTable.ExportPlug`, which your router forwards to. There is no job
+queue to configure. See [Exports](api/exports.md).
 
 ## Complete Example
 
@@ -660,7 +613,6 @@ Here's a comprehensive configuration example:
 # config/config.exs
 config :live_table,
   repo: YourApp.Repo,
-  pubsub: YourApp.PubSub,
   defaults: %{
     pagination: %{
       enabled: true,
@@ -707,6 +659,7 @@ config :live_table,
   defaults: %{
     pagination: %{
       enabled: true,
+      mode: :buttons,
       sizes: [10, 25, 50],
       default_size: 10,
       max_per_page: 50
@@ -722,10 +675,13 @@ config :live_table,
     search: %{
       enabled: true,
       debounce: 300,
-      placeholder: "Search..."
+      placeholder: "Search...",
+      mode: :auto
     },
     max_filters: 3,
     mode: :table,
-    use_streams: true
+    use_streams: true,
+    fixed_header: false,
+    debug: :off
   }
 ```

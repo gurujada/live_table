@@ -34,8 +34,6 @@ defmodule LiveTable.MixProject do
       {:ecto, "~> 3.13"},
       {:jason, "~> 1.4"},
       {:nimble_csv, "~> 1.3"},
-      {:oban, "~> 2.20"},
-      {:oban_web, "~> 2.11"},
       {:postgrex, ">= 0.0.0"},
       {:igniter, "~> 0.7.0", optional: true},
       {:ex_doc, "~> 0.39", only: :dev, runtime: false},

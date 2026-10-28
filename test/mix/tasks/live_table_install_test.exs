@@ -27,6 +27,21 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       Igniter.Test.assert_has_notice(igniter, &(&1 =~ "mix sutra_ui.install"))
     end
 
+    test "forwards exports to LiveTable.ExportPlug in the router, once" do
+      igniter =
+        Igniter.Test.phx_test_project()
+        |> Igniter.compose_task("live_table.install", ["--yes"])
+        |> Igniter.compose_task("live_table.install", ["--yes"])
+
+      router =
+        igniter.rewrite
+        |> Rewrite.source!("lib/test_web/router.ex")
+        |> Rewrite.Source.get(:content)
+
+      assert router =~ ~s(forward "/live_table/exports", LiveTable.ExportPlug)
+      assert router |> String.split("LiveTable.ExportPlug") |> length() == 2
+    end
+
     @tag :tmp_dir
     test "installs LiveTable configuration successfully", %{tmp_dir: tmp_dir} do
       # Setup a fake Phoenix project structure
@@ -44,10 +59,7 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       # Verify config file was updated
       config_content = File.read!("config/config.exs")
-      assert config_content =~ "config :live_table"
-      assert config_content =~ "app: :test_app"
-      assert config_content =~ "repo: TestApp.Repo"
-      assert config_content =~ "pubsub: TestApp.PubSub"
+      assert config_content =~ "config :live_table, repo: TestApp.Repo"
 
       # Note: Phoenix 1.8+ uses runtime colocated hooks, so app.js is NOT modified.
       # The hooks are automatically registered when components render.
@@ -93,9 +105,7 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       existing_config = """
       import Config
 
-      config :live_table,
-        repo: TestApp.Repo,
-        pubsub: TestApp.PubSub
+      config :live_table, repo: TestApp.Repo
       """
 
       File.write!("config/config.exs", existing_config)
@@ -116,124 +126,6 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
 
       assert occurrences == 1
     end
-
-    @tag :tmp_dir
-    test "configures Oban when --oban flag is provided", %{tmp_dir: tmp_dir} do
-      File.cd!(tmp_dir)
-      setup_fake_phoenix_project()
-
-      output =
-        capture_io(fn ->
-          Mix.Tasks.LiveTable.Install.run(["--yes", "--oban"])
-        end)
-
-      # Adds Oban config
-      config_content = File.read!("config/config.exs")
-      assert config_content =~ "config :test_app, Oban"
-      assert config_content =~ "repo: TestApp.Repo"
-      assert config_content =~ "queues: [exports: 10]"
-
-      # Shows Oban start instruction
-      assert output =~ "children = [..., {Oban, Application.fetch_env!(:test_app, Oban)}]"
-    end
-
-    @tag :tmp_dir
-    test "does not configure Oban when not requested (non-interactive)", %{tmp_dir: tmp_dir} do
-      File.cd!(tmp_dir)
-      setup_fake_phoenix_project()
-
-      _output =
-        capture_io(fn ->
-          Mix.Tasks.LiveTable.Install.run(["--yes"])
-        end)
-
-      config_content = File.read!("config/config.exs")
-      refute config_content =~ "config :test_app, Oban"
-    end
-  end
-
-  @tag :tmp_dir
-  test "prompts and configures Oban when user answers yes", %{tmp_dir: tmp_dir} do
-    File.cd!(tmp_dir)
-    setup_fake_phoenix_project()
-
-    messages =
-      run_with_process_shell(fn ->
-        send(self(), {:mix_shell_input, :prompt, "y"})
-        run_install_igniter_directly()
-      end)
-
-    # Adds Oban config
-    config_content = File.read!("config/config.exs")
-    assert config_content =~ "config :test_app, Oban"
-    assert config_content =~ "repo: TestApp.Repo"
-    assert config_content =~ "queues: [exports: 10]"
-
-    # Shows Oban start instruction
-    assert shell_messages_contain?(
-             messages,
-             "children = [..., {Oban, Application.fetch_env!(:test_app, Oban)}]"
-           )
-  end
-
-  @tag :tmp_dir
-  test "prompts and does not configure Oban when user answers no", %{tmp_dir: tmp_dir} do
-    File.cd!(tmp_dir)
-    setup_fake_phoenix_project()
-
-    run_with_process_shell(fn ->
-      send(self(), {:mix_shell_input, :prompt, "n"})
-      run_install_igniter_directly()
-    end)
-
-    config_content = File.read!("config/config.exs")
-    refute config_content =~ "config :test_app, Oban"
-  end
-
-  defp run_with_process_shell(fun) do
-    original_shell = Mix.shell()
-    Mix.shell(Mix.Shell.Process)
-    Mix.Shell.Process.flush()
-
-    try do
-      fun.()
-      collect_mix_shell_messages()
-    after
-      Mix.Shell.Process.flush()
-      Mix.shell(original_shell)
-    end
-  end
-
-  defp collect_mix_shell_messages(acc \\ []) do
-    receive do
-      {:mix_shell, _, _} = message -> collect_mix_shell_messages([message | acc])
-    after
-      0 -> Enum.reverse(acc)
-    end
-  end
-
-  defp shell_messages_contain?(messages, expected) do
-    Enum.any?(messages, fn
-      {:mix_shell, _, parts} ->
-        parts
-        |> List.wrap()
-        |> Enum.any?(&(is_binary(&1) and String.contains?(&1, expected)))
-
-      _ ->
-        false
-    end)
-  end
-
-  defp run_install_igniter_directly do
-    args = Mix.Tasks.LiveTable.Install.parse_argv([])
-
-    igniter =
-      Igniter.new()
-      |> Map.put(:task, Mix.Task.task_name(Mix.Tasks.LiveTable.Install))
-      |> Map.put(:args, args)
-      |> Mix.Tasks.LiveTable.Install.igniter()
-
-    Igniter.do_or_dry_run(igniter, yes: true)
   end
 
   defp setup_fake_phoenix_project do

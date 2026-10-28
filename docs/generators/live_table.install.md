@@ -14,28 +14,17 @@ This task requires the optional `:igniter` dependency in your app:
 mix live_table.install
 ```
 
-With Oban for exports (optional):
-
-```bash
-mix live_table.install --oban
-```
-
 ## What It Does
 
 The install generator automatically configures your Phoenix application:
 
 ### 1. Configuration (`config/config.exs`)
 
-Adds LiveTable configuration with your app name, Repo, and PubSub:
+Adds LiveTable configuration with your Repo:
 
 ```elixir
-config :live_table,
-  app: :your_app,
-  repo: YourApp.Repo,
-  pubsub: YourApp.PubSub
+config :live_table, repo: YourApp.Repo
 ```
-
-The `:app` option is required for exports to work correctly in production releases.
 
 ### 2. Sutra UI
 
@@ -43,41 +32,26 @@ Adds `{:sutra_ui, "~> 0.4.0"}`, the recommended UI components, to your deps. Run
 `mix sutra_ui.install` afterwards to set up its CSS. To use your own components,
 remove it and see [Custom Components](../custom-components.html).
 
-### 3. Oban Configuration (Optional)
+### 3. Exports route
 
-If you use the `--oban` flag (for CSV/PDF exports):
-
-```elixir
-config :your_app, Oban,
-  repo: YourApp.Repo,
-  plugins: [Oban.Plugins.Pruner],
-  queues: [exports: 10]
-```
-
-## Manual Steps Required
-
-After running the installer, you must:
-
-### 1. Add Static Paths
-
-In your `lib/your_app_web.ex`, add `"exports"` to your static paths:
+Adds the route that serves CSV and PDF exports to your router, outside the `:browser`
+pipeline:
 
 ```elixir
-def static_paths, do: ~w(assets fonts images favicon.ico robots.txt exports)
+scope "/" do
+  forward "/live_table/exports", LiveTable.ExportPlug
+end
 ```
 
-### 2. Start Oban (if using exports)
+## After installing
 
-Add Oban to your supervision tree in `lib/your_app/application.ex`:
+### 1. Set up Sutra UI
 
-```elixir
-children = [
-  # ... other children
-  {Oban, Application.fetch_env!(:your_app, Oban)}
-]
+```bash
+mix sutra_ui.install
 ```
 
-### 3. Restart Your Server
+### 2. Restart Your Server
 
 ```bash
 mix phx.server
@@ -87,14 +61,13 @@ mix phx.server
 
 | Option | Description |
 |--------|-------------|
-| `--oban` | Configure Oban for CSV/PDF exports |
 | `--yes` | Skip confirmation prompts |
 
 ## Troubleshooting
 
-### "Could not find config/config.exs"
+### Config or route not added
 
-The installer expects a standard Phoenix project structure. If your config is in a different location, you'll need to manually add the configuration.
+The installer creates `config/config.exs` if it is missing, and leaves it alone if it already has a `config :live_table` entry. If it cannot find your Phoenix router, it skips the exports route; add `forward "/live_table/exports", LiveTable.ExportPlug` manually.
 
 ## See Also
 

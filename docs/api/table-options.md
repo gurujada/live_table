@@ -44,7 +44,8 @@ config :live_table,
   defaults: %{
     pagination: %{
       enabled: true,
-      sizes: [20, 50, 100]
+      sizes: [20, 50, 100],
+      max_per_page: 100
     },
     sorting: %{
       default_sort: [inserted_at: :desc]
@@ -67,7 +68,7 @@ pagination: %{
   enabled: true,              # Enable/disable pagination
   mode: :buttons,             # :buttons (default) or :infinite_scroll
   sizes: [10, 25, 50],       # Available page size options
-  default_size: 25,          # Default page size
+  default_size: 10,          # Default page size
   max_per_page: 50           # Maximum allowed records per page
 }
 ```
@@ -367,7 +368,7 @@ end
 **Notes:**
 - Useful for tables with many rows where users need to see column headers while scrolling
 - Works with table mode only (not card mode)
-- Requires a scrollable container for the effect to be visible
+- The table body scrolls inside a container capped at 600px height, so the header stays visible
 
 ### Empty State
 
@@ -462,7 +463,8 @@ def table_options do
     pagination: %{
       enabled: true,
       sizes: [10, 25, 50, 100],
-      default_size: 25
+      default_size: 25,
+      max_per_page: 100
     },
     sorting: %{
       enabled: true,
@@ -490,7 +492,8 @@ def table_options do
     pagination: %{
       enabled: true,
       sizes: [50, 100, 200],
-      default_size: 100
+      default_size: 100,
+      max_per_page: 200
     },
     sorting: %{
       enabled: true,
@@ -562,7 +565,8 @@ config :live_table,
   defaults: %{
     pagination: %{
       sizes: [25, 50, 100],
-      default_size: 50
+      default_size: 50,
+      max_per_page: 100
     },
     exports: %{
       enabled: true,
@@ -825,7 +829,7 @@ end
 
 **Exports not available:**
 - Check `exports.enabled` is `true`
-- Verify Oban configuration for background processing
+- Verify the router forwards `/live_table/exports` to `LiveTable.ExportPlug`
 - Ensure export formats are properly specified
 
 **Debug not showing output:**
@@ -871,4 +875,4 @@ end
 ```
 
 - `nonce` is set on LiveTable's inline hook scripts (`.Download`, `.SortableColumn`) and passed to your components module. Default `nil` renders no nonce attribute. Sutra UI 0.4's components render their own inline scripts without a nonce, so a strict nonce-based `script-src` also needs a Sutra UI release that supports it, or your own components.
-- `id` is the table root id (default `"live-table"`). Every other id the table renders is prefixed with it (`orders-table-search`, `orders-export-dropdown`, ...), so give each table on a page its own id. With the default id, ids are unchanged. Filter field ids (derived from filter keys) and stream row ids are not prefixed.
+- `id` is the table root id (default `"live-table"`). Every other id the table renders is prefixed with it (`orders-table-search`, `orders-table-export-dropdown`, ...), so give each table on a page its own id. With the default id, ids are unchanged. Filter field ids (derived from filter keys) and stream row ids are not prefixed.

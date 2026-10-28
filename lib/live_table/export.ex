@@ -2,9 +2,14 @@ defmodule LiveTable.Export do
   @moduledoc false
 
   @formats %{
-    "csv" => %{worker: LiveTable.Workers.CsvExportWorker},
-    "pdf" => %{worker: LiveTable.Workers.PdfExportWorker, max_records: 10_000}
+    "csv" => %{content_type: "text/csv"},
+    "pdf" => %{content_type: "application/pdf", max_records: 10_000}
   }
+
+  @path "/live_table/exports"
+  @salt "live_table export"
+  # The browser follows the link as soon as it receives it.
+  @max_age 60
 
   def fetch_format(format) when is_binary(format), do: Map.fetch(@formats, format)
 
@@ -19,26 +24,20 @@ defmodule LiveTable.Export do
     formats
   end
 
-  # Oban stores JSON args; serialize the actual query rather than its printed representation.
-  def encode_query(%Ecto.Query{} = query) do
-    query |> :erlang.term_to_binary() |> Base.encode64()
+  # The query is encrypted into the download link, so whoever holds the link gets exactly
+  # this export and nothing else, on any node, without storing anything.
+  def download_path(context, format, query, columns) do
+    data =
+      :erlang.term_to_binary(%{format: format, query: query, columns: columns}, [:compressed])
+
+    "#{@path}/#{Phoenix.Token.encrypt(context, @salt, data)}"
   end
 
-  def decode_query(encoded) when is_binary(encoded) do
-    decoded =
-      try do
-        encoded |> Base.decode64!() |> :erlang.binary_to_term([:safe])
-      rescue
-        ArgumentError -> raise ArgumentError, "corrupt export query payload"
-      end
-
-    case decoded do
-      %Ecto.Query{} = query -> query
-      _ -> raise ArgumentError, "expected an Ecto query in the export payload"
+  # Only download_path/4 can produce a token that decrypts with the app's secret.
+  def verify(context, token) do
+    case Phoenix.Token.decrypt(context, @salt, token, max_age: @max_age) do
+      {:ok, data} -> {:ok, Plug.Crypto.non_executable_binary_to_term(data, [:safe])}
+      {:error, _reason} -> :error
     end
-  end
-
-  def decode_query(_) do
-    raise ArgumentError, "expected an encoded export query"
   end
 end
