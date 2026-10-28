@@ -98,6 +98,168 @@ defmodule LiveTable.TableComponentTest do
     end
   end
 
+  describe "live_table/1 - derived dom ids" do
+    @old_ids ~w(table-search per-page-select filters-container filter-show-text
+                filter-hide-text resources-stream empty-placeholder
+                infinite-scroll-container card-empty-placeholder export-dropdown)
+
+    defp ids_of(html) do
+      ~r/\sid="([^"]*)"/ |> Regex.scan(html, capture: :all_but_first) |> List.flatten()
+    end
+
+    defp id_assigns(extra) do
+      filters =
+        for i <- 1..4 do
+          key = "flag#{i}"
+
+          {String.to_atom(key),
+           %LiveTable.Boolean{
+             field: String.to_atom(key),
+             key: key,
+             options: %{label: "Flag #{i}"}
+           }}
+        end
+
+      Map.merge(
+        %{
+          fields: [{:name, %{label: "Name", sortable: true, searchable: true}}],
+          filters: filters,
+          options: %{
+            "filters" => %{"search" => ""},
+            "sort" => %{"sort_params" => []},
+            "pagination" => %{"paginate?" => true, "per_page" => 10, "page" => "1"}
+          },
+          streams: []
+        },
+        extra
+      )
+    end
+
+    defmodule IdCardComponent do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :card,
+          use_streams: false,
+          card_component: &__MODULE__.card/1,
+          search: %{enabled: true, placeholder: "Search...", debounce: 300},
+          pagination: %{sizes: [10, 25, 50]},
+          exports: %{enabled: true, formats: [:csv, :pdf]}
+        }
+
+      def card(assigns) do
+        ~H"""
+        <div>{@record.name}</div>
+        """
+      end
+    end
+
+    for {mode, component} <- [table: TestTableComponent, card: IdCardComponent] do
+      test "custom id leaves no old literal id (#{mode})" do
+        html = render_component(&unquote(component).live_table/1, id_assigns(%{id: "orders"}))
+        ids = ids_of(html)
+
+        assert ids -- (ids -- @old_ids) == []
+        assert html =~ "orders-table-search"
+        assert html =~ "orders-per-page-select"
+        assert html =~ "orders-export-dropdown"
+        assert html =~ "orders-filters-container"
+        assert html =~ "orders-filter-show-text"
+        assert html =~ "orders-filter-hide-text"
+        assert html =~ "#orders-filters-container"
+        refute html =~ "#filters-container"
+        refute html =~ "#filter-show-text"
+      end
+
+      test "default id keeps the old ids (#{mode})" do
+        html = render_component(&unquote(component).live_table/1, id_assigns(%{}))
+        ids = ids_of(html)
+
+        for id <- ~w(table-search per-page-select filters-container filter-show-text
+                     filter-hide-text export-dropdown) do
+          assert id in ids
+        end
+
+        assert html =~ "#filters-container"
+      end
+    end
+
+    defmodule StreamTable do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :table,
+          use_streams: true,
+          pagination: %{sizes: [10]},
+          search: %{enabled: true, placeholder: "Search...", debounce: 300},
+          exports: %{enabled: true, formats: [:csv]}
+        }
+    end
+
+    defmodule StreamCard do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :card,
+          use_streams: true,
+          pagination: %{sizes: [10]},
+          search: %{enabled: true, placeholder: "Search...", debounce: 300},
+          exports: %{enabled: true, formats: [:csv]},
+          card_component: &__MODULE__.card/1
+        }
+
+      def card(assigns) do
+        ~H"""
+        <div>{@record.name}</div>
+        """
+      end
+    end
+
+    defmodule StreamInfinite do
+      use LiveTable.TableComponent,
+        table_options: %{
+          mode: :card,
+          use_streams: true,
+          pagination: %{mode: :infinite_scroll},
+          search: %{enabled: true, placeholder: "Search...", debounce: 300},
+          exports: %{enabled: true, formats: [:csv]},
+          card_component: &__MODULE__.card/1
+        }
+
+      def card(assigns) do
+        ~H"""
+        <div>{@record.name}</div>
+        """
+      end
+    end
+
+    for {mode, component, ids} <- [
+          {:table, StreamTable, ~w(resources-stream empty-placeholder)},
+          {:card, StreamCard, ~w(resources-stream card-empty-placeholder)},
+          {:infinite, StreamInfinite, ~w(infinite-scroll-container empty-placeholder)}
+        ] do
+      test "stream container ids derive from the table id (#{mode})" do
+        base = id_assigns(%{streams: %{resources: [{"item-1", %{name: "Item 1"}}]}})
+        base = put_in(base.options["pagination"][:has_next_page], false)
+
+        custom = render_component(&unquote(component).live_table/1, Map.put(base, :id, "orders"))
+        default = render_component(&unquote(component).live_table/1, base)
+
+        for id <- unquote(ids) do
+          assert "orders-#{id}" in ids_of(custom)
+          refute id in ids_of(custom)
+          assert id in ids_of(default)
+        end
+      end
+    end
+
+    test "sort link ids derive from the table id" do
+      custom = render_component(&TestTableComponent.live_table/1, id_assigns(%{id: "orders"}))
+      default = render_component(&TestTableComponent.live_table/1, id_assigns(%{}))
+
+      assert "orders-name" in ids_of(custom)
+      refute "name" in ids_of(custom)
+      assert "name" in ids_of(default)
+    end
+  end
+
   describe "live_table/1 - basic rendering" do
     test "renders table mode with basic structure" do
       assigns = %{

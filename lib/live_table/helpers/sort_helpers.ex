@@ -2,10 +2,17 @@ defmodule LiveTable.SortHelpers do
   @moduledoc false
   use Phoenix.Component
 
+  @doc false
+  # Ids are document-wide, so every id a table renders derives from the table id.
+  # The default table id keeps the bare name, so existing DOM and tests do not change.
+  def dom_id("live-table", name), do: to_string(name)
+  def dom_id(table_id, name), do: "#{table_id}-#{name}"
+
   attr :key, :any, required: true
   attr :label, :string, default: nil
   attr :sort_params, :list, default: []
   attr :sortable, :boolean, default: false
+  attr :table_id, :string, default: "live-table"
   attr :nonce, :string, default: nil, doc: "CSP nonce for the inline hook script"
 
   def sort_link(%{sortable: true} = assigns) do
@@ -13,7 +20,7 @@ defmodule LiveTable.SortHelpers do
     <div
       class="group inline-flex items-center cursor-pointer whitespace-nowrap align-middle"
       phx-click="sort"
-      id={@key}
+      id={dom_id(@table_id, @key)}
       phx-hook=".SortableColumn"
       phx-value-sort={
         Jason.encode!(%{

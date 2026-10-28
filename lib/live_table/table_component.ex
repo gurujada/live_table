@@ -133,7 +133,7 @@ defmodule LiveTable.TableComponent do
                       type="text"
                       name="search"
                       autocomplete="off"
-                      id="table-search"
+                      id={dom_id(@id, "table-search")}
                       class="input w-full pl-9"
                       placeholder={@table_options[:search][:placeholder]}
                       value={@options["filters"]["search"]}
@@ -147,7 +147,7 @@ defmodule LiveTable.TableComponent do
                     @options["pagination"]["paginate?"] &&
                       @table_options.pagination[:mode] != :infinite_scroll
                   }
-                  id="per-page-select"
+                  id={dom_id(@id, "per-page-select")}
                   nonce={@nonce}
                   name="per_page"
                   value={to_string(@options["pagination"]["per_page"])}
@@ -169,9 +169,9 @@ defmodule LiveTable.TableComponent do
                   :if={length(@filters) > (get_in(@table_options, [:max_filters]) || 3)}
                   type="button"
                   phx-click={
-                    JS.toggle(to: "#filters-container")
-                    |> JS.toggle(to: "#filter-show-text")
-                    |> JS.toggle(to: "#filter-hide-text")
+                    JS.toggle(to: "#" <> dom_id(@id, "filters-container"))
+                    |> JS.toggle(to: "#" <> dom_id(@id, "filter-show-text"))
+                    |> JS.toggle(to: "#" <> dom_id(@id, "filter-hide-text"))
                   }
                   class="btn btn-outline"
                 >
@@ -190,19 +190,19 @@ defmodule LiveTable.TableComponent do
                   >
                     <path d="M3 6h18" /><path d="M7 12h10" /><path d="M10 18h4" />
                   </svg>
-                  <span id="filter-show-text">Show Filters</span>
-                  <span id="filter-hide-text" class="hidden">Hide Filters</span>
+                  <span id={dom_id(@id, "filter-show-text")}>Show Filters</span>
+                  <span id={dom_id(@id, "filter-hide-text")} class="hidden">Hide Filters</span>
                 </button>
               </div>
 
               <div :if={get_in(@table_options, [:exports, :enabled])} class="">
-                <.exports formats={get_in(@table_options, [:exports, :formats])} nonce={@nonce} />
+                <.exports id={@id} formats={get_in(@table_options, [:exports, :formats])} nonce={@nonce} />
               </div>
             </div>
 
             <!-- Filters section -->
             <div
-              id="filters-container"
+              id={dom_id(@id, "filters-container")}
               class={["", length(@filters) > (get_in(@table_options, [:max_filters]) || 3) && "hidden"]}
             >
               <.filters filters={@filters} applied_filters={@options["filters"]} />
@@ -249,6 +249,7 @@ defmodule LiveTable.TableComponent do
                           sort_params={@options["sort"]["sort_params"]}
                           sortable={Map.get(field, :sortable, false)}
                           nonce={@nonce}
+                          table_id={@id}
                         />
                       </th>
                       <th
@@ -261,11 +262,14 @@ defmodule LiveTable.TableComponent do
                     </tr>
                   </thead>
                   <tbody
-                    id="resources-stream"
+                    id={dom_id(@id, "resources-stream")}
                     phx-update={@table_options[:use_streams] && "stream"}
                     class="bg-background"
                   >
-                    <tr id="empty-placeholder" class="only:table-row hidden hover:bg-transparent">
+                    <tr
+                      id={dom_id(@id, "empty-placeholder")}
+                      class="only:table-row hidden hover:bg-transparent"
+                    >
                       <td colspan={
                         length(visible_fields(@fields)) + if(has_actions(@actions), do: 1, else: 0)
                       }>
@@ -293,13 +297,13 @@ defmodule LiveTable.TableComponent do
            ) do
         ~H"""
         <div
-          id="infinite-scroll-container"
+          id={dom_id(@id, "infinite-scroll-container")}
           phx-update="stream"
           phx-viewport-bottom={@options["pagination"][:has_next_page] && "load_more"}
           phx-throttle="1000"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <div id="empty-placeholder" class="hidden only:block col-span-full">
+          <div id={dom_id(@id, "empty-placeholder")} class="hidden only:block col-span-full">
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
@@ -356,11 +360,11 @@ defmodule LiveTable.TableComponent do
       defp content_section(%{table_options: %{mode: :card, use_streams: true}} = var!(assigns)) do
         ~H"""
         <div
-          id="resources-stream"
+          id={dom_id(@id, "resources-stream")}
           phx-update="stream"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <div id="card-empty-placeholder" class="hidden only:block col-span-full">
+          <div id={dom_id(@id, "card-empty-placeholder")} class="hidden only:block col-span-full">
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
@@ -548,7 +552,7 @@ defmodule LiveTable.TableComponent do
 
       defp exports(var!(assigns)) do
         ~H"""
-        <.dropdown_menu id="export-dropdown" nonce={@nonce}>
+        <.dropdown_menu id={dom_id(@id, "export-dropdown")} nonce={@nonce}>
           <:trigger>
             <span class="flex items-center gap-2">
               <svg

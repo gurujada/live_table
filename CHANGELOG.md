@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `<.live_table>` accepts a `nonce` assign (default `nil`). It is set on the inline `.Download` and `.SortableColumn` hook scripts so a nonce-based `script-src` Content-Security-Policy works without `'unsafe-inline'`.
-- `<.live_table>` accepts an `id` assign (default `"live-table"`), so several tables can share a page. The controls form id derives from it (`"<id>-controls-form"`).
+- `<.live_table>` accepts an `id` assign (default `"live-table"`), so several tables can share a page. Every DOM id the table renders (root, controls form, search, per-page select, export dropdown, filter toggle and container, stream containers, empty placeholders, sort links) is `"<id>-<name>"`, and the matching `JS.toggle` targets follow. With the default id every id is unchanged.
 
 ### Changed
 
