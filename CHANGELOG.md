@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PDF exports use the [`typst`](https://hex.pm/packages/typst) package instead of the `typst` CLI.** It's an optional dependency that ships precompiled, so servers need nothing installed; `mix live_table.install` adds it. Without it the PDF option is hidden. `config :live_table, pdf_font_dirs: [...]` adds fonts for scripts the bundled fonts don't cover.
 - `:jason` is no longer a dependency (LiveTable uses Elixir's built-in `JSON`), and `:postgrex` and `:ecto_sql` are only used for LiveTable's own tests.
 - LiveTable no longer starts an application of its own or ships its test repo.
+- The filter bar no longer uses Sutra UI's `filter-bar` classes, which are deprecated in Sutra UI 0.5 and removed in 0.6.
+- `mix live_table.install` adds `@source "../../deps/live_table/lib";` to `assets/css/app.css`. Without it, Tailwind skips classes used only in LiveTable's markup. Existing apps should add the line.
 - LiveTable no longer depends on `:oban` or `:oban_web`, and `mix live_table.install` no longer has an `--oban` option.
 - Select filter markup uses Sutra UI tokens (`text-foreground`, `text-muted-foreground`) instead of fixed `gray` classes, so dark mode follows the theme.
 - Custom export controls now use the `"export"` event with a `format` value instead of `"export-csv"` or `"export-pdf"`.
@@ -42,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A failed PDF compile returns an error response and is logged, instead of crashing the export job.
 - Transformer data with `min`/`max` or `id` keys no longer crashes: URL filters are parsed by the filter's type, not by the value's shape.
 - A Transformer without a `render:` function renders nothing in the filter bar instead of crashing.
+- Search matches `%`, `_` and `!` literally instead of treating `%` and `_` as wildcards.
+- On PostgreSQL a non-text column, such as a number, can be `searchable`. Before, it raised an `ILIKE` operator error. Trigram indexes on text columns are still used.
 - Filter keys in the URL or in events no longer create atoms. Keys that aren't in `filters/0`, and values whose shape doesn't match the filter type, are ignored instead of crashing the LiveView.
 - Unknown sort fields or directions in the URL are ignored instead of crashing the LiveView. A non-numeric `per_page` falls back to the default size instead of the maximum.
 - Restoring a `Select` filter from the URL and clearing filters now target the LiveSelect component by the filter's name, so they also work when the filter's key differs from its name.

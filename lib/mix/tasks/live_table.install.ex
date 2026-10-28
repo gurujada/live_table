@@ -45,6 +45,7 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
       |> add_dep({:sutra_ui, "~> 0.4.0"}, "Sutra UI")
       |> add_dep({:typst, "~> 0.4.4"}, "Typst (PDF exports)")
       |> add_export_route()
+      |> add_tailwind_source()
       |> add_notices()
     end
 
@@ -80,6 +81,46 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
           igniter,
           "Could not add #{name}. Please add #{inspect(dep)} manually."
         )
+    end
+
+    @tailwind_source ~s(@source "../../deps/live_table/lib";)
+
+    # Tailwind only generates classes from the paths it scans, and LiveTable's markup
+    # lives in deps/.
+    defp add_tailwind_source(igniter) do
+      path = "assets/css/app.css"
+
+      if Igniter.exists?(igniter, path) do
+        igniter
+        |> Igniter.include_existing_file(path)
+        |> Igniter.update_file(path, fn source ->
+          content = Rewrite.Source.get(source, :content)
+
+          cond do
+            String.contains?(content, "deps/live_table") ->
+              source
+
+            content =~ ~r/@import "tailwindcss"[^;]*;/ ->
+              updated =
+                String.replace(
+                  content,
+                  ~r/@import "tailwindcss"[^;]*;/,
+                  "\\0\n#{@tailwind_source}",
+                  global: false
+                )
+
+              Rewrite.Source.update(source, :content, updated)
+
+            true ->
+              Rewrite.Source.update(source, :content, @tailwind_source <> "\n" <> content)
+          end
+        end)
+      else
+        Igniter.add_notice(
+          igniter,
+          "Add #{@tailwind_source} to your Tailwind CSS file so it generates LiveTable's classes."
+        )
+      end
     end
 
     # Outside any pipeline: the link is authorised by the encrypted token it carries.

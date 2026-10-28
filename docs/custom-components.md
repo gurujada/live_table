@@ -173,7 +173,7 @@ end
 ## Styling the rest of the table
 
 The table, sort headers, pagination buttons and filter layout are LiveTable's own
-markup. They use Sutra UI class names (`table`, `btn-outline`, `filter-bar`) and
+markup. They use Sutra UI class names (`table`, `btn-outline`) and
 theme colors (`bg-muted`, `text-foreground`, `border-border`). Without Sutra UI,
 style those classes in your CSS, or replace the sections with `custom_header`,
 `custom_controls`, `custom_content` and `custom_footer`

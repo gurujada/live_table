@@ -403,12 +403,12 @@ defmodule LiveTable.TableComponent do
         var!(assigns) = assign(var!(assigns), :cols, cols)
 
         ~H"""
-        <div :if={@filters != []} class="filter-bar">
+        <div :if={@filters != []} class="mb-6 space-y-4">
           <div class={[
-            "filter-bar-grid",
-            filter_bar_cols_class(@cols)
+            "grid gap-4",
+            filter_cols_class(@cols)
           ]}>
-            <div :for={{key, filter} <- @filters} class="filter-bar-item">
+            <div :for={{key, filter} <- @filters} class="w-full p-3">
               {filter.__struct__.render(%{
                 key: key,
                 filter: filter,
@@ -418,13 +418,13 @@ defmodule LiveTable.TableComponent do
           </div>
           <div
             :if={@applied_filters != %{"search" => ""} and @applied_filters != %{}}
-            class="filter-bar-actions"
+            class="flex justify-end"
           >
             <button
               type="button"
               phx-click="sort"
               phx-value-clear_filters="true"
-              class="filter-bar-clear"
+              class="text-muted-foreground inline-flex items-center gap-2 text-sm transition-colors hover:text-foreground cursor-pointer"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -448,14 +448,10 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      defp filter_bar_cols_class(cols) do
-        case cols do
-          1 -> "filter-bar-cols-1"
-          2 -> "filter-bar-cols-2"
-          3 -> "filter-bar-cols-3"
-          _ -> "filter-bar-cols-3"
-        end
-      end
+      # Sutra UI's filter-bar classes are deprecated, so the layout is spelled out here.
+      defp filter_cols_class(1), do: "grid-cols-1"
+      defp filter_cols_class(2), do: "grid-cols-1 sm:grid-cols-2"
+      defp filter_cols_class(_), do: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
 
       defp paginate(var!(assigns)) do
         ~H"""

@@ -48,6 +48,15 @@ scope "/" do
 end
 ```
 
+### 5. Tailwind source
+
+Adds this after `@import "tailwindcss"` in `assets/css/app.css`, so Tailwind generates the
+classes LiveTable's markup uses:
+
+```css
+@source "../../deps/live_table/lib";
+```
+
 ## After installing
 
 ### 1. Set up Sutra UI

@@ -21,8 +21,11 @@ defmodule LiveTable.FilterTest do
       query = from(p in "products")
       result = Filter.apply_filters(query, %{"search" => "search term"}, fields)
 
-      assert inspect(result) =~ "ilike(p0.name, ^\"%search term%\")"
-      assert inspect(result) =~ "ilike(p0.description, ^\"%search term%\")"
+      assert inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", p0.name, ^\"%search term%\")"
+
+      assert inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", p0.description, ^\"%search term%\")"
     end
 
     test "supports lower-like mode for case-insensitive search" do
@@ -34,7 +37,7 @@ defmodule LiveTable.FilterTest do
       result = Filter.apply_filters(query, %{"search" => "Search Term"}, fields, :like_lower)
       inspected = inspect(result)
 
-      assert inspected =~ "lower(?) LIKE ?"
+      assert inspected =~ "lower(?) LIKE ? ESCAPE '!'"
       assert inspected =~ "%search term%"
     end
 
@@ -61,9 +64,14 @@ defmodule LiveTable.FilterTest do
       filters = %{"search" => "search term"}
       result = Filter.apply_filters(query, filters, fields)
 
-      assert inspect(result) =~ "ilike(p0.name, ^\"%search term%\")"
-      assert inspect(result) =~ "ilike(s1.name, ^\"%search term%\")"
-      assert inspect(result) =~ "ilike(c2.name, ^\"%search term%\")"
+      assert inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", p0.name, ^\"%search term%\")"
+
+      assert inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", s1.name, ^\"%search term%\")"
+
+      assert inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", c2.name, ^\"%search term%\")"
     end
 
     test "doesn't apply search to non-searchable column" do
@@ -75,8 +83,11 @@ defmodule LiveTable.FilterTest do
       query = from(p in "products")
       result = Filter.apply_filters(query, %{"search" => "search term"}, fields)
 
-      assert inspect(result) =~ "ilike(p0.name, ^\"%search term%\")"
-      refute inspect(result) =~ "ilike(p0.description, ^\"%search term%\")"
+      assert inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", p0.name, ^\"%search term%\")"
+
+      refute inspect(result) =~
+               "fragment(\"?::text ILIKE ? ESCAPE '!'\", p0.description, ^\"%search term%\")"
     end
   end
 end

@@ -47,6 +47,7 @@ The installer automatically:
 - Adds [Sutra UI](https://github.com/gurujada/sutra_ui), the recommended UI components
 - Adds [`typst`](https://hex.pm/packages/typst) for PDF exports (remove it if you don't need PDF)
 - Adds the exports route to your router (`forward "/live_table/exports", LiveTable.ExportPlug`)
+- Adds `@source "../../deps/live_table/lib";` to `assets/css/app.css`, so Tailwind generates the classes LiveTable's markup uses
 
 Then set up Sutra UI's CSS with `mix sutra_ui.install` (see the [Sutra UI installation guide](https://hexdocs.pm/sutra_ui/readme.html#installation)).
 
@@ -78,6 +79,12 @@ and add the exports route to your router, outside any `scope` that pipes through
 
 ```elixir
 forward "/live_table/exports", LiveTable.ExportPlug
+```
+
+and let Tailwind scan LiveTable's markup, in `assets/css/app.css` after `@import "tailwindcss"`:
+
+```css
+@source "../../deps/live_table/lib";
 ```
 
 ---

@@ -28,6 +28,23 @@ defmodule Mix.Tasks.LiveTable.InstallTest do
       Igniter.Test.assert_has_notice(igniter, &(&1 =~ "mix sutra_ui.install"))
     end
 
+    test "adds LiveTable to the paths Tailwind scans, once" do
+      igniter =
+        Igniter.Test.phx_test_project()
+        |> Igniter.compose_task("live_table.install", ["--yes"])
+        |> Igniter.compose_task("live_table.install", ["--yes"])
+
+      css =
+        igniter.rewrite
+        |> Rewrite.source!("assets/css/app.css")
+        |> Rewrite.Source.get(:content)
+
+      assert css =~
+               ~s|@import "tailwindcss" source(none);\n@source "../../deps/live_table/lib";\n|
+
+      assert css |> String.split("deps/live_table") |> length() == 2
+    end
+
     test "forwards exports to LiveTable.ExportPlug in the router, once" do
       igniter =
         Igniter.Test.phx_test_project()

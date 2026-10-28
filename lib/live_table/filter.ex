@@ -25,26 +25,41 @@ defmodule LiveTable.Filter do
     end)
   end
 
-  # Build search condition for direct table fields
+  # Search terms are matched literally: %, _ and the escape character ! are escaped.
+  # `!` behaves the same in PostgreSQL, MySQL and SQLite, unlike a backslash.
+  # PostgreSQL casts the column to text so numeric and other columns can be searched too.
   defp build_field_condition(field, search_term, :ilike) do
-    pattern = "%#{search_term}%"
-    dynamic([p], ilike(field(p, ^field), ^pattern))
+    pattern = pattern(search_term)
+    dynamic([p], fragment("?::text ILIKE ? ESCAPE '!'", field(p, ^field), ^pattern))
   end
 
   defp build_field_condition(field, search_term, :like_lower) do
-    pattern = "%#{String.downcase(search_term)}%"
-    dynamic([p], fragment("lower(?) LIKE ?", field(p, ^field), ^pattern))
+    pattern = pattern(String.downcase(search_term))
+    dynamic([p], fragment("lower(?) LIKE ? ESCAPE '!'", field(p, ^field), ^pattern))
   end
 
   # Build search condition for associated table fields
   defp build_assoc_condition(table_name, field, search_term, :ilike) do
-    pattern = "%#{search_term}%"
-    dynamic([{^table_name, p}], ilike(field(p, ^field), ^pattern))
+    pattern = pattern(search_term)
+
+    dynamic(
+      [{^table_name, p}],
+      fragment("?::text ILIKE ? ESCAPE '!'", field(p, ^field), ^pattern)
+    )
   end
 
   defp build_assoc_condition(table_name, field, search_term, :like_lower) do
-    pattern = "%#{String.downcase(search_term)}%"
-    dynamic([{^table_name, p}], fragment("lower(?) LIKE ?", field(p, ^field), ^pattern))
+    pattern = pattern(String.downcase(search_term))
+
+    dynamic(
+      [{^table_name, p}],
+      fragment("lower(?) LIKE ? ESCAPE '!'", field(p, ^field), ^pattern)
+    )
+  end
+
+  defp pattern(search_term) do
+    escaped = String.replace(search_term, ["!", "%", "_"], &("!" <> &1))
+    "%#{escaped}%"
   end
 
   # Extracts fields marked as searchable from the fields configuration
