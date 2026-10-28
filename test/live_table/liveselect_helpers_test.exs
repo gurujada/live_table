@@ -131,6 +131,23 @@ defmodule LiveTable.LiveSelectHelpersTest do
       assert "category" in keys
       assert "status" in keys
     end
+
+    test "uses the filter's name, which is the LiveSelect id, not its key" do
+      filters = [supplier: Select.new(:supplier_id, "supplier_select", %{options: []})]
+      params = %{"filters" => %{"supplier" => %{"id" => ["3"]}}}
+      socket = %{assigns: %{}}
+
+      assert {[{"supplier", [3]}], _} =
+               LiveSelectHelpers.prepare_live_select_updates(params, socket, filters)
+    end
+
+    test "ignores keys that are not select filters" do
+      params = %{"filters" => %{"unknown" => %{"id" => ["1"]}, "category" => %{"id" => ["1"]}}}
+      socket = %{assigns: %{}}
+
+      assert {[{"category", [1]}], _} =
+               LiveSelectHelpers.prepare_live_select_updates(params, socket, filters())
+    end
   end
 
   describe "track_restored_keys/2" do

@@ -173,4 +173,27 @@ defmodule LiveTable.LiveResourceLiveViewTest do
       refute html =~ "Unmatched"
     end
   end
+
+  describe "hand-edited URLs" do
+    test "render the table instead of crashing", %{conn: conn} do
+      product_fixture(%{name: "Alpha"})
+
+      for query <- [
+            "sort_params[name]=sideways",
+            "sort_params[nonexistent]=asc",
+            "sort_params=abc",
+            "per_page=abc",
+            "page[]=2",
+            "filters[not_a_filter]=true",
+            "filters=abc",
+            "filters[price_range]=true",
+            "filters[price_range][min][x]=1&filters[price_range][max]=500",
+            "filters[category][id]=5",
+            "filters[in_stock][x]=true"
+          ] do
+        {:ok, _view, html} = live(conn, "/products?" <> query)
+        assert html =~ "Alpha"
+      end
+    end
+  end
 end

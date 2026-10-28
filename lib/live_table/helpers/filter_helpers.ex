@@ -3,9 +3,7 @@ defmodule LiveTable.FilterHelpers do
   defmacro __using__(_opts) do
     quote do
       defp get_filter(key) when is_binary(key) do
-        key
-        |> String.to_atom()
-        |> get_filter()
+        LiveTable.ParseHelpers.get_filter(key, filters())
       end
 
       defp get_filter(key) when is_atom(key) do

@@ -11,7 +11,7 @@ defmodule LiveTable.LiveViewHelpers do
         table_options = unquote(opts[:table_options])
         data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
 
-        sort_params = LiveTable.ParseHelpers.parse_sort_params(params, default_sort)
+        sort_params = LiveTable.ParseHelpers.parse_sort_params(params, default_sort, fields())
         current_filters = filters()
 
         {live_select_updates, already_restored} =
@@ -60,8 +60,8 @@ defmodule LiveTable.LiveViewHelpers do
           |> Map.reject(fn {_, v} -> v == "" || is_nil(v) end)
 
         if LiveTable.Components.sutra?() do
-          for {_filter_key, %LiveTable.Select{} = filter} <- filters() do
-            send_update(SutraUI.LiveSelect, id: filter.key, reset_value: [])
+          for {name, %LiveTable.Select{}} <- filters() do
+            send_update(SutraUI.LiveSelect, id: to_string(name), reset_value: [])
           end
         end
 

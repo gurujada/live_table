@@ -5,12 +5,14 @@ defmodule LiveTable.LiveSelectHelpers do
     already_restored = Map.get(socket.assigns, :live_select_restored, MapSet.new())
 
     live_select_updates =
-      Map.get(params, "filters", %{})
-      |> Enum.filter(fn {_key, val} -> match?(%{"id" => _}, val) end)
+      if(is_map(params["filters"]), do: params["filters"], else: %{})
+      |> Enum.filter(fn {key, val} ->
+        match?(%{"id" => ids} when is_list(ids), val) and
+          match?(%LiveTable.Select{}, LiveTable.ParseHelpers.get_filter(key, filters))
+      end)
+      # The LiveSelect component's id is the filter's name in filters/0
       |> Enum.map(fn {key, %{"id" => ids}} ->
-        filter = LiveTable.ParseHelpers.get_filter(key, filters)
-        ids = Enum.map(ids, &LiveTable.ParseHelpers.coerce_select_value/1)
-        {filter.key, ids}
+        {key, Enum.map(ids, &LiveTable.ParseHelpers.coerce_select_value/1)}
       end)
       |> Enum.reject(fn {key, _ids} -> MapSet.member?(already_restored, key) end)
 

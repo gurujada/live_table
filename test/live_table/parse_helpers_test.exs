@@ -41,12 +41,19 @@ defmodule LiveTable.ParseHelpersTest do
     ]
   end
 
-  describe "parse_sort_params/2" do
+  def fields do
+    [
+      name: %{label: "Name", sortable: true},
+      price: %{label: "Price", sortable: true}
+    ]
+  end
+
+  describe "parse_sort_params/3" do
     test "parses sort params with string keys" do
       params = %{"sort_params" => %{"name" => "asc", "price" => "desc"}}
       default = [id: :asc]
 
-      result = ParseHelpers.parse_sort_params(params, default)
+      result = ParseHelpers.parse_sort_params(params, default, fields())
 
       assert result == [name: :asc, price: :desc]
     end
@@ -55,7 +62,7 @@ defmodule LiveTable.ParseHelpersTest do
       params = %{"sort_params" => [name: :asc, price: :desc]}
       default = [id: :asc]
 
-      result = ParseHelpers.parse_sort_params(params, default)
+      result = ParseHelpers.parse_sort_params(params, default, fields())
 
       assert result == [name: :asc, price: :desc]
     end
@@ -64,9 +71,23 @@ defmodule LiveTable.ParseHelpersTest do
       params = %{}
       default = [name: :asc]
 
-      result = ParseHelpers.parse_sort_params(params, default)
+      result = ParseHelpers.parse_sort_params(params, default, fields())
 
       assert result == [name: :asc]
+    end
+
+    test "drops unknown fields and directions from the URL" do
+      params = %{
+        "sort_params" => %{"name" => "sideways", "price" => "desc", "nonexistent" => "asc"}
+      }
+
+      assert ParseHelpers.parse_sort_params(params, [], fields()) == [price: :desc]
+    end
+
+    test "uses default when sort params are not a map" do
+      params = %{"sort_params" => "abc"}
+
+      assert ParseHelpers.parse_sort_params(params, [name: :asc], fields()) == [name: :asc]
     end
   end
 
@@ -177,6 +198,31 @@ defmodule LiveTable.ParseHelpersTest do
       assert result[:rating].options.current_min == 10.5
       assert result[:rating].options.current_max == 50.5
     end
+
+    test "ignores filter values whose shape doesn't match the filter type" do
+      params = %{
+        "filters" => %{
+          "under_100" => %{"x" => "true"},
+          "price_range" => "true",
+          "category" => %{"id" => "1"}
+        }
+      }
+
+      socket = %{assigns: %{options: %{}}}
+
+      assert ParseHelpers.parse_filters(params, socket, filters()) == %{"search" => ""}
+    end
+
+    test "ignores filter keys that are not in filters/0 without creating atoms" do
+      key = "not_a_filter_#{System.unique_integer([:positive])}"
+      params = %{"filters" => %{key => "true", "under_100" => "true"}}
+      socket = %{assigns: %{options: %{}}}
+
+      result = ParseHelpers.parse_filters(params, socket, filters())
+
+      assert Map.keys(result) |> Enum.sort() == [:under_100, "search"] |> Enum.sort()
+      assert_raise ArgumentError, fn -> String.to_existing_atom(key) end
+    end
   end
 
   describe "get_filter/2" do
@@ -198,6 +244,13 @@ defmodule LiveTable.ParseHelpersTest do
       result = ParseHelpers.get_filter(:nonexistent, filters())
 
       assert result == nil
+    end
+
+    test "returns nil for an unknown string key without creating an atom" do
+      key = "unknown_filter_#{System.unique_integer([:positive])}"
+
+      assert ParseHelpers.get_filter(key, filters()) == nil
+      assert_raise ArgumentError, fn -> String.to_existing_atom(key) end
     end
 
     test "retrieves Range filter" do
@@ -303,6 +356,26 @@ defmodule LiveTable.ParseHelpersTest do
 
       assert result["pagination"]["page"] == "5"
       assert result["pagination"]["per_page"] == "50"
+    end
+
+    test "uses the default size for a non-numeric or non-string per_page" do
+      table_options = %{
+        sorting: %{enabled: true},
+        pagination: %{enabled: true, default_size: 25, max_per_page: 50}
+      }
+
+      for per_page <- ["abc", "0", ["5"]] do
+        result =
+          ParseHelpers.build_options(
+            [],
+            %{},
+            %{"page" => ["2"], "per_page" => per_page},
+            table_options
+          )
+
+        assert result["pagination"]["page"] == "1"
+        assert result["pagination"]["per_page"] == "25"
+      end
     end
   end
 end

@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Blank or non-numeric range filter bounds fall back to the range defaults instead of crashing the LiveView.
 - Export queries preserve pinned values and filters instead of being reconstructed from their printed representation.
 - Unsupported export formats raise an error instead of exporting a PDF.
+- Filter keys in the URL or in events no longer create atoms. Keys that aren't in `filters/0`, and values whose shape doesn't match the filter type, are ignored instead of crashing the LiveView.
+- Unknown sort fields or directions in the URL are ignored instead of crashing the LiveView. A non-numeric `per_page` falls back to the default size instead of the maximum.
+- Restoring a `Select` filter from the URL and clearing filters now target the LiveSelect component by the filter's name, so they also work when the filter's key differs from its name.
 
 ## [0.4.2] - 2026-07-07
 
