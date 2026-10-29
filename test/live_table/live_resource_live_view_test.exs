@@ -45,6 +45,12 @@ defmodule LiveTable.LiveResourceLiveViewTest do
       assert render(view) =~ "Page <span class=\"font-medium text-foreground\">1</span>"
     end
 
+    test "rows are identified by their primary key", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      assert view |> element("tr#resource-#{products.alpha.id}", "Alpha") |> has_element?()
+    end
+
     test "schema data source renders selected fields without schema metadata columns", %{
       conn: conn
     } do

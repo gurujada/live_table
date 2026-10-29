@@ -241,6 +241,7 @@ defmodule YourApp.Orders do
       join: oi in OrderItem, on: oi.order_id == o.id, as: :order_items,
       join: p in Product, on: oi.product_id == p.id,
       select: %{
+        id: o.id,
         order_id: o.id,
         customer_email: c.email,
         total_amount: o.total_amount,
@@ -596,8 +597,10 @@ end
 1. Use the LiveResource (no schema)
 2. Assign `:data_provider` before LiveTable handles URL params, usually in `mount/3`
 3. Field keys must match your query's select keys
-4. Use `assoc: {:alias_name, :field}` for sortable or searchable joined fields
-5. The alias_name must match your query's `as:` alias
+4. Select a unique `id` for each row (usually `id: o.id`). LiveTable identifies rows by the
+   primary key of the query's root schema, and raises when a row lacks it
+5. Use `assoc: {:alias_name, :field}` for sortable or searchable joined fields
+6. The alias_name must match your query's `as:` alias
 
 ### Troubleshooting
 

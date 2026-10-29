@@ -8,6 +8,22 @@ defmodule LiveTable.SortHelpers do
   def dom_id("live-table", name), do: to_string(name)
   def dom_id(table_id, name), do: "#{table_id}-#{name}"
 
+  @doc false
+  # Rows are identified by their primary key, so a single row can be updated or removed.
+  def row_dom_id(_row, []),
+    do:
+      raise(ArgumentError, "LiveTable identifies rows by their primary key; the schema has none.")
+
+  def row_dom_id(row, key) do
+    "resource-" <>
+      Enum.map_join(key, "-", fn field ->
+        Map.get(row, field) ||
+          raise ArgumentError,
+                "LiveTable identifies rows by their primary key, but a row has no #{inspect(field)}. " <>
+                  "Select it in your data provider's query, e.g. `select: %{#{field}: p.#{field}, ...}`."
+      end)
+  end
+
   attr :key, :any, required: true
   attr :label, :string, default: nil
   attr :sort_params, :list, default: []

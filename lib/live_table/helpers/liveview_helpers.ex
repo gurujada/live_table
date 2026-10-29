@@ -22,14 +22,14 @@ defmodule LiveTable.LiveViewHelpers do
         options =
           LiveTable.ParseHelpers.build_options(sort_params, parsed_filters, params, table_options)
 
-        {resources, updated_options} = fetch_resources(options, data_provider)
+        {resources, updated_options, key} = fetch_resources(options, data_provider)
 
         updated_restored =
           LiveTable.LiveSelectHelpers.track_restored_keys(already_restored, live_select_updates)
 
         socket =
           socket
-          |> assign_to_socket(resources, table_options)
+          |> assign_to_socket(resources, key, table_options)
           |> assign(:options, updated_options)
           |> assign(:current_path, current_path)
           |> assign(:live_select_restored, updated_restored)
@@ -163,39 +163,29 @@ defmodule LiveTable.LiveViewHelpers do
 
         data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
 
-        {resources, has_next_page} =
-          case stream_resources(fields(), fetch_options, data_provider) do
-            {resources, overflow} ->
-              {resources, length(overflow) > 0}
-
-            resources when is_list(resources) ->
-              {resources, false}
-          end
+        {resources, has_next_page, key} =
+          stream_resources(fields(), fetch_options, data_provider)
 
         updated_options =
           put_in(options["pagination"][:has_next_page], has_next_page)
 
         socket =
           socket
-          |> stream(:resources, resources,
-            dom_id: fn _resource -> "resource-#{Ecto.UUID.generate()}" end
-          )
+          |> stream(:resources, resources, dom_id: &LiveTable.SortHelpers.row_dom_id(&1, key))
           |> assign(:infinite_scroll_page, next_page)
           |> assign(:options, updated_options)
 
         {:noreply, socket}
       end
 
-      defp assign_to_socket(socket, resources, %{use_streams: true}) do
+      defp assign_to_socket(socket, resources, key, %{use_streams: true}) do
         stream(socket, :resources, resources,
-          dom_id: fn _resource ->
-            "resource-#{Ecto.UUID.generate()}"
-          end,
+          dom_id: &LiveTable.SortHelpers.row_dom_id(&1, key),
           reset: true
         )
       end
 
-      defp assign_to_socket(socket, resources, %{use_streams: false}) do
+      defp assign_to_socket(socket, resources, _key, %{use_streams: false}) do
         assign(socket, :resources, resources)
       end
 
@@ -209,13 +199,11 @@ defmodule LiveTable.LiveViewHelpers do
 
       defp fetch_resources(options, data_provider) do
         case stream_resources(fields(), options, data_provider) do
-          {resources, overflow} ->
-            has_next_page = length(overflow) > 0
-            updated_options = put_in(options["pagination"][:has_next_page], has_next_page)
-            {resources, updated_options}
+          {resources, nil, key} ->
+            {resources, options, key}
 
-          resources when is_list(resources) ->
-            {resources, options}
+          {resources, has_next_page, key} ->
+            {resources, put_in(options["pagination"][:has_next_page], has_next_page), key}
         end
       end
     end

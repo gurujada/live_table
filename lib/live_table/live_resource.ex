@@ -76,28 +76,20 @@ defmodule LiveTable.LiveResource do
         TableConfig.get_search_mode(table_options(), @repo)
       end
 
-      defp stream_resources(
-             fields,
-             %{"pagination" => %{"paginate?" => true}} = options,
-             data_source
-           ) do
-        per_page = options["pagination"]["per_page"] |> String.to_integer()
+      # Returns the page's rows, whether another page follows, and the rows' primary key.
+      defp stream_resources(fields, options, data_source) do
+        query = list_resources(fields, options, data_source || @resource_opts[:schema])
+        rows = @repo.all(query)
+        key = primary_key(query)
 
-        data_source = data_source || @resource_opts[:schema]
+        case options["pagination"] do
+          %{"paginate?" => true, "per_page" => per_page} ->
+            {rows, overflow} = Enum.split(rows, String.to_integer(per_page))
+            {rows, overflow != [], key}
 
-        list_resources(fields, options, data_source)
-        |> @repo.all()
-        |> Enum.split(per_page)
-      end
-
-      defp stream_resources(
-             fields,
-             %{"pagination" => %{"paginate?" => false}} = options,
-             data_source
-           ) do
-        data_source = data_source || @resource_opts[:schema]
-
-        list_resources(fields, options, data_source) |> @repo.all()
+          _ ->
+            {rows, nil, key}
+        end
       end
 
       defp prepare_query_context(options) do

@@ -4,6 +4,13 @@ defmodule LiveTable.JoinTest do
   alias LiveTable.Catalog.Product
   import Ecto.Query
 
+  describe "primary_key/1" do
+    test "comes from the query's root schema" do
+      assert Join.primary_key(from(p in Product)) == [:id]
+      assert Join.primary_key(from(p in "products")) == [:id]
+    end
+  end
+
   describe "join_associations/2" do
     test "adds no joins when filters have no associations" do
       filters = %{
@@ -165,7 +172,7 @@ defmodule LiveTable.JoinTest do
       query = from(p in Product, as: :resource)
       result = Join.select_columns(query, fields)
 
-      assert inspect(result) =~ "select: %{}"
+      assert inspect(result) =~ "select: %{id: p0.id}"
     end
 
     test "preserves field order in select" do
@@ -365,9 +372,9 @@ defmodule LiveTable.JoinTest do
       result1 = Join.join_associations(query, %{})
       refute inspect(result1) =~ "join:"
 
-      # Should add empty select with empty fields
+      # Selects only the primary key with empty fields
       result2 = Join.select_columns(query, %{})
-      assert inspect(result2) =~ "select: %{}"
+      assert inspect(result2) =~ "select: %{id: p0.id}"
     end
   end
 end

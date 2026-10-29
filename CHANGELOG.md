@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking: rows are identified by their primary key.** Each row's DOM id is `resource-<primary key>` instead of a random id, so a single row can be updated or removed in place. Schema tables select the primary key automatically. A data provider's select must include the root schema's primary key (usually `id: p.id`), unique per row; LiveTable raises when a row lacks it.
 - **Breaking: exports no longer use Oban or `priv/static`.** The export button sends the browser a download link with the export's query encrypted in it, valid for 60 seconds, and `LiveTable.ExportPlug` streams the file back. Nothing is stored, so exports work on any node and in releases with a read-only `priv`. To upgrade:
   - Add `forward "/live_table/exports", LiveTable.ExportPlug` to your router, outside the `:browser` pipeline. `mix live_table.install` adds it.
   - Remove `"exports"` from `static_paths` and delete `priv/static/exports`.

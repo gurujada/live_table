@@ -26,7 +26,10 @@ defmodule LiveTable.Join do
   # - Regular fields from the main table
   # - Fields from associated tables
   # - Computed fields using dynamic expressions
+  # - The primary key, which identifies each row
   def select_columns(query, fields) do
+    key = Enum.map(primary_key(query), &{&1, dynamic([resource: r], field(r, ^&1))})
+
     select_struct =
       Enum.flat_map(fields, fn
         {name, %{computed: dynamic_expr}} ->
@@ -35,10 +38,16 @@ defmodule LiveTable.Join do
         {name, _opts} ->
           [{name, dynamic([resource: r], field(r, ^name))}]
       end)
-      |> Enum.into(%{})
+      |> Enum.into(Map.new(key))
 
     select(query, ^select_struct)
   end
+
+  # The primary key of the query's root schema, or :id when it has none.
+  def primary_key(%Ecto.Query{from: %{source: {_, schema}}}) when schema != nil,
+    do: schema.__schema__(:primary_key)
+
+  def primary_key(_query), do: [:id]
 
   defp get_filter_assocs(filters) do
     filters

@@ -27,6 +27,7 @@ def list_colleges(program_id, seat_type \\ :open) do
     on: rc.college_program_id == cp.id and rc.seat_type == ^seat_type,
     where: p.id == ^program_id,
     select: %{
+      id: cp.id,
       program: p,
       college: c,
       opening_rank: rc.opening_rank,
@@ -35,6 +36,10 @@ def list_colleges(program_id, seat_type \\ :open) do
     }
 end
 ```
+
+Every row needs a unique `id`. LiveTable identifies rows by the primary key of the query's root
+schema (`:id` here) and raises when a row lacks it. Pick the id of what a row represents: here each
+row is a college program, so `id: cp.id`, not `p.id`, which every row shares.
 
 ## Prefer Stable Provider State
 

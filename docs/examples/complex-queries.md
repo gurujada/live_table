@@ -154,6 +154,7 @@ defmodule YourApp.Reports do
       left_join: oi in YourApp.OrderItem, on: oi.order_id == o.id, as: :order_items,
       group_by: [o.id, c.id, s.id],
       select: %{
+        id: o.id,
         order_id: o.id,
         customer_name: fragment("? || ' ' || ?", c.first_name, c.last_name),
         customer_email: c.email,
@@ -320,6 +321,7 @@ defmodule YourApp.Analytics do
       left_join: v in YourApp.ProductView, on: v.product_id == p.id and v.inserted_at >= ^cutoff_date,
       group_by: [p.id, c.id],
       select: %{
+        id: p.id,
         name: p.name,
         sku: p.sku,
         category_name: c.name,
@@ -575,6 +577,7 @@ defmodule YourApp.Inventory do
         on: im.product_id == p.id and im.inserted_at >= ago(30, "day"), as: :movements,
       group_by: [p.id, s.id, w.id],
       select: %{
+        id: p.id,
         name: p.name,
         sku: p.sku,
         supplier_name: s.name,
@@ -793,6 +796,7 @@ def customer_ltv_analysis(cohort_year) do
     where: c.inserted_at >= ^cohort_start and c.inserted_at <= ^cohort_end,
     group_by: [c.id, s.id],
     select: %{
+      id: c.id,
       customer_name: fragment("? || ' ' || ?", c.first_name, c.last_name),
       email: c.email,
       first_order_date: min(o.inserted_at),
