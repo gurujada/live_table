@@ -39,7 +39,7 @@ Render with:
 />
 ```
 
-Add `actions={actions()}` when the LiveView defines row actions. Optional assigns: `id` (default `"live-table"`; all DOM ids derive from it) and `nonce` (CSP nonce for the inline hook scripts).
+Add `actions={actions()}` when the LiveView defines row actions. Optional assigns: `id` (default `"live-table"`; all DOM ids derive from it), `nonce` (CSP nonce for the inline hook scripts) and `context` (a map passed to cards, actions and field components as `@context`, e.g. `%{current_user: @current_user}`).
 
 ## Provider Contract
 

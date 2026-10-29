@@ -32,6 +32,21 @@ defmodule LiveTable.TableComponentTest do
       }
   end
 
+  defmodule ContextCardComponent do
+    use LiveTable.TableComponent,
+      table_options: %{
+        mode: :card,
+        use_streams: false,
+        card_component: fn assigns ->
+          ~H"""
+          <div class="card" data-nonce={@nonce} data-table={@table_id}>
+            {@record.name} for {@context.user}
+          </div>
+          """
+        end
+      }
+  end
+
   defmodule StreamTableComponent do
     use LiveTable.TableComponent,
       table_options: %{
@@ -1118,6 +1133,69 @@ defmodule LiveTable.TableComponentTest do
       assert html =~ "live-table"
       assert html =~ "Page"
       assert html =~ "1"
+    end
+  end
+
+  describe "row assigns" do
+    defp row_assigns_base do
+      %{
+        fields: [{:name, %{label: "Name", sortable: false}}],
+        filters: [],
+        options: %{
+          "filters" => %{"search" => ""},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: [%{name: "Alpha"}],
+        context: %{user: "Ravi"}
+      }
+    end
+
+    test "cards get the context, nonce and table id" do
+      assigns = Map.merge(row_assigns_base(), %{id: "people", nonce: "abc"})
+      html = render_component(&ContextCardComponent.live_table/1, assigns)
+
+      assert html =~ ~s(data-nonce="abc")
+      assert html =~ ~s(data-table="people")
+      assert html =~ "Alpha for Ravi"
+    end
+
+    test "actions and cell components get the context" do
+      show = fn assigns ->
+        ~H"""
+        <span>Show {@record.name} to {@context.user}</span>
+        """
+      end
+
+      cell = fn assigns ->
+        ~H"""
+        <b>{@value} seen by {@context.user}</b>
+        """
+      end
+
+      assigns =
+        Map.merge(row_assigns_base(), %{
+          fields: [{:name, %{label: "Name", sortable: false, component: cell}}],
+          actions: [show: show]
+        })
+
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "Show Alpha to Ravi"
+      assert html =~ "Alpha seen by Ravi"
+    end
+
+    test "context defaults to an empty map" do
+      show = fn assigns ->
+        ~H"""
+        <span>context {inspect(@context)}</span>
+        """
+      end
+
+      assigns = row_assigns_base() |> Map.delete(:context) |> Map.put(:actions, show: show)
+      html = render_component(&TestTableComponent.live_table/1, assigns)
+
+      assert html =~ "context %{}"
     end
   end
 

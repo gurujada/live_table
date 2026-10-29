@@ -13,6 +13,15 @@ defmodule LiveTable.TableComponent do
           |> assign_new(:actions, fn -> [] end)
           |> assign_new(:id, fn -> "live-table" end)
           |> assign_new(:nonce, fn -> nil end)
+          |> assign_new(:context, fn -> %{} end)
+
+        # What cards, actions and cell components get besides the row itself.
+        var!(assigns) =
+          assign(var!(assigns), :row_assigns, %{
+            context: var!(assigns).context,
+            nonce: var!(assigns).nonce,
+            table_id: var!(assigns).id
+          })
 
         ~H"""
         <div class="w-full" id={@id} phx-hook=".Download">
@@ -247,6 +256,7 @@ defmodule LiveTable.TableComponent do
                       fields={visible_fields(@fields)}
                       table_options={@table_options}
                       actions={@actions}
+                      row_assigns={@row_assigns}
                     />
                   </tbody>
                 </table>
@@ -273,7 +283,7 @@ defmodule LiveTable.TableComponent do
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
-            {@table_options.card_component.(%{record: record})}
+            {@table_options.card_component.(Map.put(@row_assigns, :record, record))}
           </div>
         </div>
 
@@ -317,7 +327,7 @@ defmodule LiveTable.TableComponent do
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={record <- @streams}>
-            {@table_options.card_component.(%{record: record})}
+            {@table_options.card_component.(Map.put(@row_assigns, :record, record))}
           </div>
         </div>
         """
@@ -334,7 +344,7 @@ defmodule LiveTable.TableComponent do
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
-            {@table_options.card_component.(%{record: record})}
+            {@table_options.card_component.(Map.put(@row_assigns, :record, record))}
           </div>
         </div>
         """
@@ -353,10 +363,10 @@ defmodule LiveTable.TableComponent do
         ~H"""
         <tr :for={resource <- @streams}>
           <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm text-foreground">
-            {render_cell(Map.get(resource, key), field, resource)}
+            {render_cell(Map.get(resource, key), field, resource, @row_assigns)}
           </td>
           <td :if={has_actions(@actions)}>
-            <.render_actions actions={@actions} record={resource} />
+            <.render_actions actions={@actions} record={resource} row_assigns={@row_assigns} />
           </td>
         </tr>
         """
@@ -366,10 +376,10 @@ defmodule LiveTable.TableComponent do
         ~H"""
         <tr :for={{id, resource} <- @streams.resources} id={id}>
           <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm text-foreground">
-            {render_cell(Map.get(resource, key), field, resource)}
+            {render_cell(Map.get(resource, key), field, resource, @row_assigns)}
           </td>
           <td :if={has_actions(@actions)}>
-            <.render_actions actions={@actions} record={resource} />
+            <.render_actions actions={@actions} record={resource} row_assigns={@row_assigns} />
           </td>
         </tr>
         """
@@ -493,30 +503,34 @@ defmodule LiveTable.TableComponent do
         LiveTable.Components.impl().exports(%{assigns | formats: formats})
       end
 
-      defp render_cell(value, field, _record)
+      defp render_cell(value, field, _record, _row_assigns)
            when is_nil(value) and not is_nil(field.empty_text) do
         field.empty_text
       end
 
-      defp render_cell(value, %{renderer: renderer}, record) when is_function(renderer, 1) do
+      defp render_cell(value, %{renderer: renderer}, _record, _row_assigns)
+           when is_function(renderer, 1) do
         renderer.(value)
       end
 
-      defp render_cell(value, %{renderer: renderer}, record) when is_function(renderer, 2) do
+      defp render_cell(value, %{renderer: renderer}, record, _row_assigns)
+           when is_function(renderer, 2) do
         renderer.(value, record)
       end
 
-      defp render_cell(value, %{component: component}, record) when is_function(component, 1) do
-        component.(%{value: value, record: record})
+      defp render_cell(value, %{component: component}, record, row_assigns)
+           when is_function(component, 1) do
+        component.(Map.merge(row_assigns, %{value: value, record: record}))
       end
 
-      defp render_cell(value, %{component: component}, record) when is_function(component, 2) do
+      defp render_cell(value, %{component: component}, record, _row_assigns)
+           when is_function(component, 2) do
         component.(value, record)
       end
 
-      defp render_cell(true, _field, _record), do: "Yes"
-      defp render_cell(false, _field, _record), do: "No"
-      defp render_cell(value, _field, _record), do: safe_cell_value(value)
+      defp render_cell(true, _field, _record, _row_assigns), do: "Yes"
+      defp render_cell(false, _field, _record, _row_assigns), do: "No"
+      defp render_cell(value, _field, _record, _row_assigns), do: safe_cell_value(value)
 
       defp safe_cell_value(value) do
         Phoenix.HTML.Safe.to_iodata(value)
@@ -536,7 +550,7 @@ defmodule LiveTable.TableComponent do
         ~H"""
         <div class="flex">
           <%= for {_key, component} <- actions_items(@actions) do %>
-            {component.(%{record: @record})}
+            {component.(Map.put(@row_assigns, :record, @record))}
           <% end %>
         </div>
         """

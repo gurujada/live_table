@@ -95,7 +95,8 @@ end
 ```
 
 #### `component` (function)
-Alternative to `renderer` - a function component that receives assigns with `:value` and `:record`.
+Alternative to `renderer` - a function component that receives assigns with `:value` and `:record`,
+plus the [row assigns](#action-component-assigns) `:context`, `:nonce` and `:table_id`.
 
 ```elixir
 status: %{
@@ -686,6 +687,11 @@ end
 
 Each action component receives assigns with:
 - `@record` - The full record for that row
+- `@context` - The `context` map passed to `<.live_table>` (default `%{}`)
+- `@nonce` - The table's CSP nonce, or `nil`
+- `@table_id` - The table's `id`
+
+Card components and field `component`s get the same assigns.
 
 ```elixir
 defp view_action(assigns) do
@@ -696,6 +702,36 @@ defp view_action(assigns) do
   """
 end
 ```
+
+Actions are plain functions and can't see the page's assigns. Pass what they need through
+`context`:
+
+```heex
+<.live_table
+  fields={fields()}
+  filters={filters()}
+  options={@options}
+  streams={@streams}
+  actions={actions()}
+  context={%{current_user: @current_user, org: @org}}
+/>
+```
+
+```elixir
+defp delete_action(assigns) do
+  ~H"""
+  <button
+    :if={@context.current_user.admin?}
+    phx-click="delete"
+    phx-value-id={@record.id}
+  >
+    Delete
+  </button>
+  """
+end
+```
+
+Keep `context` to what rows need: when it changes, every row re-renders.
 
 ### Conditional Actions
 

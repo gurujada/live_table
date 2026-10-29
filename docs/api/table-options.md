@@ -309,6 +309,9 @@ mode: :card,
 card_component: &product_card/1
 ```
 
+The card component gets `@record`, plus `@context`, `@nonce` and `@table_id` (see
+[CSP nonce, id and context](#csp-nonce-id-and-context)).
+
 ### Streams Configuration
 
 Control whether LiveTable uses Phoenix Streams or regular assigns.
@@ -859,9 +862,9 @@ def table_options do
 end
 ```
 
-## CSP nonce and multiple tables
+## CSP nonce, id and context
 
-`<.live_table>` takes two optional assigns.
+`<.live_table>` takes three optional assigns.
 
 ```heex
 <.live_table
@@ -875,4 +878,7 @@ end
 ```
 
 - `nonce` is set on LiveTable's inline hook scripts (`.Download`, `.SortableColumn`) and passed to your components module. Default `nil` renders no nonce attribute. Sutra UI 0.4's components render their own inline scripts without a nonce, so a strict nonce-based `script-src` also needs a Sutra UI release that supports it, or your own components.
+- `context` is a map passed to card components, actions and field `component`s as `@context`
+  (default `%{}`), for page state they need, such as the current user. They also get `@nonce` and
+  `@table_id`. See [Action Component Assigns](fields.md#action-component-assigns).
 - `id` is the table root id (default `"live-table"`). Every other id the table renders is prefixed with it (`orders-table-search`, `orders-table-export-dropdown`, ...), so give each table on a page its own id. With the default id, ids are unchanged. Filter field ids (derived from filter keys) and stream row ids are not prefixed.

@@ -144,7 +144,7 @@ end
 />
 ```
 
-Add `actions={actions()}` only when `actions/0` returns row actions. Optional: `id` (default `"live-table"`; every DOM id the table renders derives from it) and `nonce` (CSP nonce for LiveTable's inline hook scripts).
+Add `actions={actions()}` only when `actions/0` returns row actions. Optional: `id` (default `"live-table"`; every DOM id the table renders derives from it), `nonce` (CSP nonce for LiveTable's inline hook scripts) and `context` (a map passed to cards, actions and field components as `@context`, e.g. `%{current_user: @current_user}`).
 
 ## Fields
 
