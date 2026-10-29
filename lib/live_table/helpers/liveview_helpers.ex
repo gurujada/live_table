@@ -178,6 +178,37 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
+      @doc false
+      # Re-runs the query for the rows on screen.
+      def __live_table_refresh__(socket) do
+        options = socket.assigns.options
+        data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
+
+        {resources, fetched, key} =
+          options
+          |> loaded_options(socket.assigns[:infinite_scroll_page])
+          |> fetch_resources(data_provider)
+
+        socket
+        |> assign_to_socket(resources, key, unquote(opts[:table_options]))
+        |> assign(
+          :options,
+          put_in(options["pagination"][:has_next_page], fetched["pagination"][:has_next_page])
+        )
+      end
+
+      # With infinite scroll, every page loaded so far is on screen.
+      defp loaded_options(options, nil), do: options
+
+      defp loaded_options(options, pages) do
+        per_page = String.to_integer(options["pagination"]["per_page"]) * pages
+
+        update_in(
+          options["pagination"],
+          &%{&1 | "page" => "1", "per_page" => to_string(per_page)}
+        )
+      end
+
       defp assign_to_socket(socket, resources, key, %{use_streams: true}) do
         stream(socket, :resources, resources,
           dom_id: &LiveTable.SortHelpers.row_dom_id(&1, key),

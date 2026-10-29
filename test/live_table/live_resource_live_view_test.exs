@@ -202,4 +202,92 @@ defmodule LiveTable.LiveResourceLiveViewTest do
       end
     end
   end
+
+  describe "live rows" do
+    setup do
+      alpha = product_fixture(%{name: "Alpha", price: Decimal.new("100.00")})
+      beta = product_fixture(%{name: "Beta", price: Decimal.new("200.00")})
+      gamma = product_fixture(%{name: "Gamma", price: Decimal.new("300.00")})
+
+      %{alpha: alpha, beta: beta, gamma: gamma}
+    end
+
+    defp broadcast(ids), do: LiveTable.broadcast(LiveTable.TestPubSub, "products", ids)
+
+    test "a new row lands in its sorted place", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      new = product_fixture(%{name: "Aardvark"})
+      broadcast([new.id])
+
+      html = render(view)
+      assert html =~ "Aardvark"
+      assert html =~ "Alpha"
+      refute html =~ "Beta"
+    end
+
+    test "a row that now sorts onto another page leaves this one", %{conn: conn, alpha: alpha} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      LiveTable.Repo.update!(Ecto.Changeset.change(alpha, name: "Zulu"))
+      broadcast([alpha.id])
+
+      html = render(view)
+      refute html =~ "Zulu"
+      refute html =~ "Alpha"
+      assert html =~ "Beta"
+      assert html =~ "Gamma"
+    end
+
+    test "a deleted row disappears", %{conn: conn, beta: beta} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      LiveTable.Repo.delete!(beta)
+      broadcast([beta.id])
+
+      html = render(view)
+      refute html =~ "Beta"
+      assert html =~ "Gamma"
+    end
+
+    test "a row outside the filters doesn't appear", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/products?search=Gamma")
+
+      new = product_fixture(%{name: "Aardvark"})
+      broadcast([new.id])
+
+      refute render(view) =~ "Aardvark"
+    end
+
+    test "an updated row on screen changes in place", %{conn: conn, alpha: alpha} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      LiveTable.Repo.update!(Ecto.Changeset.change(alpha, price: Decimal.new("150.00")))
+      broadcast([alpha.id])
+
+      assert view |> element("#resource-#{alpha.id}", "150.00") |> has_element?()
+    end
+
+    test "infinite scroll keeps every loaded page", %{conn: conn, gamma: gamma} do
+      {:ok, view, _html} = live(conn, "/products_infinite")
+      view |> element("#infinite-scroll-container") |> render_hook("load_more", %{})
+
+      LiveTable.Repo.update!(Ecto.Changeset.change(gamma, price: Decimal.new("350.00")))
+      broadcast([gamma.id])
+
+      html = render(view)
+      assert html =~ "Alpha"
+      assert html =~ "Beta"
+      assert html =~ "350.00"
+    end
+
+    test "other messages still reach the LiveView", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      send(view.pid, :ping)
+      render(view)
+
+      assert :sys.get_state(view.pid).socket.assigns.pinged
+    end
+  end
 end

@@ -6,7 +6,11 @@ defmodule LiveTable.TestProductLive do
 
   alias LiveTable.{Boolean, Range, Select, Transformer}
 
-  def mount(_params, _session, socket), do: {:ok, socket}
+  def mount(_params, _session, socket) do
+    {:ok, LiveTable.subscribe(socket, LiveTable.TestPubSub, "products")}
+  end
+
+  def handle_info(:ping, socket), do: {:noreply, assign(socket, :pinged, true)}
 
   def fields do
     [
@@ -128,7 +132,9 @@ defmodule LiveTable.TestProductInfiniteLive do
   use Phoenix.LiveView
   use LiveTable.LiveResource, schema: LiveTable.Catalog.Product
 
-  def mount(_params, _session, socket), do: {:ok, socket}
+  def mount(_params, _session, socket) do
+    {:ok, LiveTable.subscribe(socket, LiveTable.TestPubSub, "products")}
+  end
 
   def fields do
     [

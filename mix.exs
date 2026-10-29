@@ -82,6 +82,7 @@ defmodule LiveTable.MixProject do
         "docs/api/filters.md",
         "docs/api/transformers.md",
         "docs/api/exports.md",
+        "docs/api/live-rows.md",
         "docs/api/table-options.md",
         # Generators
         "docs/generators/live_table.install.md",
@@ -110,6 +111,7 @@ defmodule LiveTable.MixProject do
           "docs/api/filters.md",
           "docs/api/transformers.md",
           "docs/api/exports.md",
+          "docs/api/live-rows.md",
           "docs/api/table-options.md"
         ],
         Generators: [
