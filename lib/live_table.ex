@@ -31,6 +31,7 @@ defmodule LiveTable do
   - [Table Options](table-options.html) - Pagination, exports, debug mode
   - [Examples](simple-table.html) - Real-world usage patterns
   - [Live Rows](live-rows.html) - Update open tables when data changes
+  - [Bulk Actions](bulk-actions.html) - Act on selected rows
   """
 
   @doc """

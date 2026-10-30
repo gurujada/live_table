@@ -14,6 +14,7 @@ defmodule LiveTable.TableComponent do
           |> assign_new(:id, fn -> "live-table" end)
           |> assign_new(:nonce, fn -> nil end)
           |> assign_new(:context, fn -> %{} end)
+          |> assign_new(:bulk_actions, fn -> [] end)
 
         # What cards, actions and cell components get besides the row itself.
         var!(assigns) =
@@ -24,12 +25,22 @@ defmodule LiveTable.TableComponent do
           })
 
         ~H"""
-        <div class="w-full" id={@id} phx-hook=".Download">
+        <div
+          class="w-full"
+          id={@id}
+          phx-hook=".LiveTable"
+          data-view={
+            :erlang.phash2(
+              {@options["sort"], @options["filters"], @options["pagination"]["page"],
+               @options["pagination"]["per_page"]}
+            )
+          }
+        >
           <.render_header {assigns} />
           <.render_content {assigns} />
           <.render_footer {assigns} />
         </div>
-        <script :type={Phoenix.LiveView.ColocatedHook} name=".Download" runtime nonce={@nonce}>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".LiveTable" runtime nonce={@nonce}>
           {
             mounted() {
               this.handleEvent("download", ({ path }) => {
@@ -40,6 +51,75 @@ defmodule LiveTable.TableComponent do
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+              });
+
+              // Bulk selection lives here, in the browser; the server only sees it when an
+              // action runs, through the phx-value-ids and phx-value-all of its button.
+              this.selected = new Set();
+              this.all = false;
+              this.view = this.el.dataset.view;
+
+              this.el.addEventListener("change", (e) => {
+                if (e.target.matches("[data-live-table-select]")) {
+                  this.mark([e.target], e.target.checked);
+                } else if (e.target.matches("[data-live-table-select-page]")) {
+                  this.mark(this.boxes(), e.target.checked);
+                }
+              });
+
+              this.el.addEventListener("click", (e) => {
+                const button = e.target.closest("button");
+                if (!button) return;
+                if (button.matches("[data-live-table-select-page]")) this.mark(this.boxes(), true);
+                if (button.matches("[data-live-table-select-all]")) this.all = true;
+                if (button.matches("[data-live-table-clear]")) this.clear();
+                this.sync();
+              });
+
+              this.handleEvent("live_table:bulk_done", () => this.clear());
+              this.sync();
+            },
+            updated() {
+              if (this.el.dataset.view !== this.view) {
+                this.view = this.el.dataset.view;
+                this.clear();
+              }
+              this.sync();
+            },
+            boxes() {
+              return [...this.el.querySelectorAll("[data-live-table-select]")];
+            },
+            mark(boxes, checked) {
+              boxes.forEach((box) => checked ? this.selected.add(box.value) : this.selected.delete(box.value));
+              this.all = false;
+              this.sync();
+            },
+            clear() {
+              this.selected.clear();
+              this.all = false;
+              this.sync();
+            },
+            sync() {
+              const boxes = this.boxes();
+              boxes.forEach((box) => (box.checked = this.selected.has(box.value)));
+              // Rows that left the page leave the selection.
+              this.selected = new Set(boxes.filter((box) => box.checked).map((box) => box.value));
+
+              const bar = this.el.querySelector("[data-live-table-bar]");
+              if (!bar) return;
+              const page = boxes.length > 0 && this.selected.size === boxes.length;
+              const count = this.all ? "All matching rows selected" : `${this.selected.size} selected`;
+              const show = (selector, visible) =>
+                this.el.querySelectorAll(selector).forEach((el) => (el.hidden = !visible));
+
+              bar.hidden = this.selected.size === 0;
+              bar.querySelector("[data-live-table-count]").textContent = count;
+              show("[data-live-table-select-all]", page && !this.all && bar.dataset.morePages === "true");
+              show("button[data-live-table-select-page]", !page);
+              this.el.querySelectorAll("input[data-live-table-select-page]").forEach((box) => (box.checked = page));
+              bar.querySelectorAll("[data-live-table-action]").forEach((button) => {
+                button.setAttribute("phx-value-ids", [...this.selected].join(","));
+                button.setAttribute("phx-value-all", this.all);
               });
             }
           }
@@ -193,6 +273,13 @@ defmodule LiveTable.TableComponent do
 
       defp render_content(var!(assigns)) do
         ~H"""
+        <.bulk_bar
+          :if={@bulk_actions != []}
+          id={@id}
+          bulk_actions={@bulk_actions}
+          card={@table_options.mode == :card}
+          more_pages={@options["pagination"][:has_next_page] || @options["pagination"]["page"] != "1"}
+        />
         <.content_section {assigns} />
         """
       end
@@ -213,6 +300,14 @@ defmodule LiveTable.TableComponent do
                     @table_options[:fixed_header] && "sticky top-0 z-10"
                   ]}>
                     <tr>
+                      <th :if={@bulk_actions != []} scope="col" class="w-10 px-3 py-3">
+                        <input
+                          type="checkbox"
+                          class="size-4 accent-primary"
+                          aria-label="Select all rows on this page"
+                          data-live-table-select-page
+                        />
+                      </th>
                       <th
                         :for={{key, field} <- visible_fields(@fields)}
                         scope="col"
@@ -246,7 +341,8 @@ defmodule LiveTable.TableComponent do
                       class="only:table-row hidden hover:bg-transparent"
                     >
                       <td colspan={
-                        length(visible_fields(@fields)) + if(has_actions(@actions), do: 1, else: 0)
+                        length(visible_fields(@fields)) + if(has_actions(@actions), do: 1, else: 0) +
+                          if(@bulk_actions != [], do: 1, else: 0)
                       }>
                         <.render_empty_state table_options={@table_options} />
                       </td>
@@ -257,6 +353,8 @@ defmodule LiveTable.TableComponent do
                       table_options={@table_options}
                       actions={@actions}
                       row_assigns={@row_assigns}
+                      bulk={@bulk_actions != []}
+                      primary_key={@options["primary_key"]}
                     />
                   </tbody>
                 </table>
@@ -283,7 +381,7 @@ defmodule LiveTable.TableComponent do
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
-            {@table_options.card_component.(Map.put(@row_assigns, :record, record))}
+            {@table_options.card_component.(Map.merge(@row_assigns, %{record: record, row_id: id}))}
           </div>
         </div>
 
@@ -327,7 +425,12 @@ defmodule LiveTable.TableComponent do
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={record <- @streams}>
-            {@table_options.card_component.(Map.put(@row_assigns, :record, record))}
+            {@table_options.card_component.(
+              Map.merge(@row_assigns, %{
+                record: record,
+                row_id: @bulk_actions != [] && row_dom_id(record, @options["primary_key"])
+              })
+            )}
           </div>
         </div>
         """
@@ -344,7 +447,7 @@ defmodule LiveTable.TableComponent do
             <.render_empty_state table_options={@table_options} />
           </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
-            {@table_options.card_component.(Map.put(@row_assigns, :record, record))}
+            {@table_options.card_component.(Map.merge(@row_assigns, %{record: record, row_id: id}))}
           </div>
         </div>
         """
@@ -362,6 +465,15 @@ defmodule LiveTable.TableComponent do
       defp render_row(%{table_options: %{use_streams: false}} = var!(assigns)) do
         ~H"""
         <tr :for={resource <- @streams}>
+          <td :if={@bulk} class="w-10 px-3">
+            <input
+              type="checkbox"
+              class="size-4 accent-primary"
+              aria-label="Select row"
+              data-live-table-select
+              value={row_dom_id(resource, @primary_key)}
+            />
+          </td>
           <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm text-foreground">
             {render_cell(Map.get(resource, key), field, resource, @row_assigns)}
           </td>
@@ -375,6 +487,15 @@ defmodule LiveTable.TableComponent do
       defp render_row(%{table_options: %{use_streams: true}} = var!(assigns)) do
         ~H"""
         <tr :for={{id, resource} <- @streams.resources} id={id}>
+          <td :if={@bulk} class="w-10 px-3">
+            <input
+              type="checkbox"
+              class="size-4 accent-primary"
+              aria-label="Select row"
+              data-live-table-select
+              value={id}
+            />
+          </td>
           <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm text-foreground">
             {render_cell(Map.get(resource, key), field, resource, @row_assigns)}
           </td>
@@ -382,6 +503,50 @@ defmodule LiveTable.TableComponent do
             <.render_actions actions={@actions} record={resource} row_assigns={@row_assigns} />
           </td>
         </tr>
+        """
+      end
+
+      # Shown and filled in by the .LiveTable hook, which holds the selection.
+      defp bulk_bar(var!(assigns)) do
+        ~H"""
+        <div
+          id={dom_id(@id, "bulk-bar")}
+          data-live-table-bar
+          data-more-pages={to_string(@more_pages)}
+          hidden
+        >
+          <div class="mt-6 flex flex-wrap items-center gap-3 text-sm">
+            <span class="font-medium text-foreground" data-live-table-count></span>
+            <button
+              :if={@card}
+              type="button"
+              class="underline text-foreground"
+              data-live-table-select-page
+            >
+              Select page
+            </button>
+            <button
+              type="button"
+              class="underline text-foreground"
+              data-live-table-select-all
+              hidden
+            >
+              Select all matching
+            </button>
+            <button
+              :for={{name, action} <- @bulk_actions}
+              type="button"
+              class="btn btn-outline"
+              phx-click="bulk_action"
+              phx-value-action={name}
+              data-live-table-action
+              data-confirm={action[:confirm]}
+            >
+              {action.label}
+            </button>
+            <button type="button" class="text-muted-foreground" data-live-table-clear>Clear</button>
+          </div>
+        </div>
         """
       end
 

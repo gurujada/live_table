@@ -310,7 +310,8 @@ card_component: &product_card/1
 ```
 
 The card component gets `@record`, plus `@context`, `@nonce` and `@table_id` (see
-[CSP nonce, id and context](#csp-nonce-id-and-context)).
+[CSP nonce, id and context](#csp-nonce-id-and-context)). With
+[bulk actions](bulk-actions.md), it also gets `@row_id`.
 
 ### Streams Configuration
 
@@ -877,7 +878,7 @@ end
 />
 ```
 
-- `nonce` is set on LiveTable's inline hook scripts (`.Download`, `.SortableColumn`) and passed to your components module. Default `nil` renders no nonce attribute. Sutra UI 0.4's components render their own inline scripts without a nonce, so a strict nonce-based `script-src` also needs a Sutra UI release that supports it, or your own components.
+- `nonce` is set on LiveTable's inline hook scripts (`.LiveTable`, `.SortableColumn`) and passed to your components module. Default `nil` renders no nonce attribute. Sutra UI 0.4's components render their own inline scripts without a nonce, so a strict nonce-based `script-src` also needs a Sutra UI release that supports it, or your own components.
 - `context` is a map passed to card components, actions and field `component`s as `@context`
   (default `%{}`), for page state they need, such as the current user. They also get `@nonce` and
   `@table_id`. See [Action Component Assigns](fields.md#action-component-assigns).

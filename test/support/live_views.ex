@@ -12,6 +12,21 @@ defmodule LiveTable.TestProductLive do
 
   def handle_info(:ping, socket), do: {:noreply, assign(socket, :pinged, true)}
 
+  def bulk_actions do
+    [
+      mark_down: %{
+        label: "Mark down",
+        confirm: "Mark down the selected products?",
+        handler: &__MODULE__.mark_down/2
+      }
+    ]
+  end
+
+  def mark_down(query, socket) do
+    LiveTable.Repo.update_all(query, set: [price: Decimal.new("1.00")])
+    socket
+  end
+
   def fields do
     [
       id: %{label: "ID", sortable: true},
@@ -87,6 +102,7 @@ defmodule LiveTable.TestProductLive do
       options={@options}
       streams={@streams}
       actions={actions()}
+      bulk_actions={bulk_actions()}
     />
     """
   end
@@ -115,6 +131,10 @@ defmodule LiveTable.TestProductNoStreamsLive do
     }
   end
 
+  def bulk_actions do
+    [mark_down: %{label: "Mark down", handler: &LiveTable.TestProductLive.mark_down/2}]
+  end
+
   def render(assigns) do
     ~H"""
     <.live_table
@@ -123,6 +143,7 @@ defmodule LiveTable.TestProductNoStreamsLive do
       options={@options}
       streams={@resources}
       actions={actions()}
+      bulk_actions={bulk_actions()}
     />
     """
   end
@@ -161,9 +182,19 @@ defmodule LiveTable.TestProductInfiniteLive do
     }
   end
 
+  def bulk_actions do
+    [mark_down: %{label: "Mark down", handler: &LiveTable.TestProductLive.mark_down/2}]
+  end
+
   def product_card(assigns) do
     ~H"""
     <article>
+      <input
+        type="checkbox"
+        aria-label={"Select #{@record.name}"}
+        data-live-table-select
+        value={@row_id}
+      />
       <h2>{@record.name}</h2>
       <span>{to_string(@record.price)}</span>
     </article>
@@ -178,6 +209,7 @@ defmodule LiveTable.TestProductInfiniteLive do
       options={@options}
       streams={@streams}
       actions={actions()}
+      bulk_actions={bulk_actions()}
     />
     """
   end

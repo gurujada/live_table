@@ -38,10 +38,11 @@ defmodule LiveTable.LiveResource do
       def fields, do: []
       def filters, do: []
       def actions, do: []
+      def bulk_actions, do: []
 
       def table_options(), do: %{}
 
-      defoverridable fields: 0, filters: 0, table_options: 0, actions: 0
+      defoverridable fields: 0, filters: 0, table_options: 0, actions: 0, bulk_actions: 0
 
       defp list_resources(fields, options, {module, function, args} = _data_provider)
            when is_atom(function) do

@@ -25,6 +25,7 @@ The LiveView may define:
 - `fields/0`
 - `filters/0`
 - `actions/0`
+- `bulk_actions/0` (pass `bulk_actions={bulk_actions()}`; each handler gets `(query, socket)` and returns the socket; selection is client-side; cards draw their own `<input type="checkbox" data-live-table-select value={@row_id} />`)
 - `table_options/0`
 - ordinary action-specific `handle_event/3` callbacks for row buttons or app-specific controls
 

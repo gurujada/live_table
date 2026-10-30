@@ -55,6 +55,9 @@ defmodule LiveTable.LiveViewHelpers do
 
             {_, v}, acc when is_map(v) ->
               Map.merge(acc, v)
+
+            _, acc ->
+              acc
           end)
           |> Map.take(~w(page per_page sort_params))
           |> Map.reject(fn {_, v} -> v == "" || is_nil(v) end)
@@ -88,6 +91,9 @@ defmodule LiveTable.LiveViewHelpers do
 
             {_, v}, acc when is_map(v) ->
               Map.merge(acc, v)
+
+            _, acc ->
+              acc
           end)
           |> Map.merge(params, fn
             "filters", v1, v2 when is_map(v1) and is_map(v2) -> v1
@@ -178,6 +184,42 @@ defmodule LiveTable.LiveViewHelpers do
         {:noreply, socket}
       end
 
+      def handle_event("bulk_action", %{"action" => name} = params, socket) do
+        action =
+          Enum.find_value(bulk_actions(), fn {key, a} -> Atom.to_string(key) == name && a end)
+
+        # The selection lives in the browser, which sends the row ids, or "all" for every row
+        # matching the current filters.
+        ids =
+          if params["all"] == "true",
+            do: :all,
+            else:
+              (params["ids"] || "")
+              |> String.split(",", trim: true)
+              |> Enum.map(&String.replace_prefix(&1, "resource-", ""))
+
+        if action && ids != [] do
+          socket = action.handler.(bulk_query(socket, ids), socket)
+
+          {:noreply,
+           socket |> push_event("live_table:bulk_done", %{}) |> __live_table_refresh__()}
+        else
+          {:noreply, socket}
+        end
+      end
+
+      defp bulk_query(socket, ids) do
+        options = put_in(socket.assigns.options, ["pagination", "paginate?"], false)
+
+        data_source =
+          socket.assigns[:data_provider] || unquote(opts[:data_provider]) ||
+            unquote(opts[:schema])
+
+        fields()
+        |> list_resources(options, data_source)
+        |> LiveTable.Bulk.query(ids)
+      end
+
       @doc false
       # Re-runs the query for the rows on screen.
       def __live_table_refresh__(socket) do
@@ -228,14 +270,14 @@ defmodule LiveTable.LiveViewHelpers do
 
       defp maybe_assign_infinite_scroll(socket, _table_options), do: socket
 
+      # The primary key goes in the options too, so the table can name rows without streams.
       defp fetch_resources(options, data_provider) do
-        case stream_resources(fields(), options, data_provider) do
-          {resources, nil, key} ->
-            {resources, options, key}
+        {resources, has_next_page, key} = stream_resources(fields(), options, data_provider)
+        options = Map.put(options, "primary_key", key)
 
-          {resources, has_next_page, key} ->
-            {resources, put_in(options["pagination"][:has_next_page], has_next_page), key}
-        end
+        if has_next_page == nil,
+          do: {resources, options, key},
+          else: {resources, put_in(options["pagination"][:has_next_page], has_next_page), key}
       end
     end
   end

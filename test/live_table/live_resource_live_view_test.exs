@@ -290,4 +290,118 @@ defmodule LiveTable.LiveResourceLiveViewTest do
       assert :sys.get_state(view.pid).socket.assigns.pinged
     end
   end
+
+  describe "bulk actions" do
+    setup do
+      products =
+        for {name, stock} <- [{"Alpha", 10}, {"Beta", 0}, {"Delta", 7}, {"Gamma", 5}],
+            into: %{},
+            do: {name, product_fixture(%{name: name, stock_quantity: stock})}
+
+      %{products: products}
+    end
+
+    defp price(product), do: LiveTable.Repo.reload!(product).price
+    defp row_id(product), do: "resource-#{product.id}"
+
+    # The selection lives in the browser; the .LiveTable hook puts it on the action button as
+    # phx-value-ids or phx-value-all. These tests click the button with those values.
+    defp act(view, values),
+      do: view |> element("#bulk-bar button", "Mark down") |> render_click(values)
+
+    test "render a checkbox per row and a hidden bar", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      assert view
+             |> element("input[data-live-table-select][value='#{row_id(products["Alpha"])}']")
+             |> has_element?()
+
+      assert view |> element("input[data-live-table-select-page]") |> has_element?()
+      assert view |> element("#bulk-bar[hidden]") |> has_element?()
+
+      assert view
+             |> element("#bulk-bar button[data-confirm='Mark down the selected products?']")
+             |> has_element?()
+    end
+
+    test "run on the chosen rows", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      act(view, %{"ids" => "#{row_id(products["Alpha"])},#{row_id(products["Delta"])}"})
+
+      assert price(products["Alpha"]) == Decimal.new("1.00")
+      assert price(products["Delta"]) == Decimal.new("1.00")
+      assert price(products["Beta"]) == Decimal.new("99.99")
+      assert_push_event(view, "live_table:bulk_done", %{})
+      assert render(view) =~ "1.00"
+    end
+
+    test "run on all rows matching the filters", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products?filters[in_stock]=in-stock")
+
+      act(view, %{"all" => "true"})
+
+      for name <- ["Alpha", "Delta", "Gamma"],
+          do: assert(price(products[name]) == Decimal.new("1.00"))
+
+      assert price(products["Beta"]) == Decimal.new("99.99")
+    end
+
+    test "ignore ids outside the table's query", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products?filters[in_stock]=in-stock")
+
+      act(view, %{"ids" => "#{row_id(products["Beta"])},resource-nope"})
+
+      assert price(products["Beta"]) == Decimal.new("99.99")
+    end
+
+    test "do nothing without a selection", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      act(view, %{"ids" => ""})
+
+      assert price(products["Alpha"]) == Decimal.new("99.99")
+      refute_push_event(view, "live_table:bulk_done", %{})
+    end
+
+    test "work without streams", %{conn: conn, products: products} do
+      {:ok, view, _html} = live(conn, "/products_no_streams")
+
+      assert view
+             |> element("input[data-live-table-select][value='#{row_id(products["Alpha"])}']")
+             |> has_element?()
+
+      act(view, %{"ids" => row_id(products["Alpha"])})
+
+      assert price(products["Alpha"]) == Decimal.new("1.00")
+      assert render(view) =~ "1.00"
+    end
+
+    test "cards draw their own checkbox; the bar selects the page", %{
+      conn: conn,
+      products: products
+    } do
+      {:ok, view, _html} = live(conn, "/products_infinite")
+
+      assert view
+             |> element("input[aria-label='Select Alpha'][value='#{row_id(products["Alpha"])}']")
+             |> has_element?()
+
+      assert view |> element("#bulk-bar button[data-live-table-select-page]") |> has_element?()
+    end
+
+    test "the table's view key changes with the query, which clears the selection", %{
+      conn: conn
+    } do
+      {:ok, view, html} = live(conn, "/products")
+      [before] = Regex.run(~r/data-view="(\d+)"/, html, capture: :all_but_first)
+
+      [later] =
+        Regex.run(~r/data-view="(\d+)"/, render_patch(view, "/products?search=a"),
+          capture: :all_but_first
+        )
+
+      assert before != later
+    end
+  end
 end

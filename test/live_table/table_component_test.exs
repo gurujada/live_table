@@ -109,7 +109,7 @@ defmodule LiveTable.TableComponentTest do
         |> List.flatten()
         |> Enum.filter(&(&1 =~ "LiveTable."))
 
-      assert Enum.any?(scripts, &(&1 =~ ~s(TestTableComponent.Download")))
+      assert Enum.any?(scripts, &(&1 =~ ~s(TestTableComponent.LiveTable")))
       assert Enum.any?(scripts, &(&1 =~ "SortableColumn"))
       assert Enum.all?(scripts, &(&1 =~ ~s(nonce="abc123")))
     end
