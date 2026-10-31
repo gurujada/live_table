@@ -271,9 +271,15 @@ defmodule LiveTable.TableComponentTest do
       custom = render_component(&TestTableComponent.live_table/1, id_assigns(%{id: "orders"}))
       default = render_component(&TestTableComponent.live_table/1, id_assigns(%{}))
 
-      assert "orders-name" in ids_of(custom)
-      refute "name" in ids_of(custom)
-      assert "name" in ids_of(default)
+      assert "orders-sort-name" in ids_of(custom)
+      refute "sort-name" in ids_of(custom)
+      assert "sort-name" in ids_of(default)
+    end
+
+    # A select filter's id is its key, so the header for a column of the same name must differ.
+    test "sort link ids don't collide with a filter on the same key" do
+      html = render_component(&TestTableComponent.live_table/1, id_assigns(%{}))
+      refute "name" in ids_of(html)
     end
   end
 

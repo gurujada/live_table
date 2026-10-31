@@ -36,7 +36,7 @@ defmodule LiveTable.SortHelpers do
     <div
       class="group inline-flex items-center cursor-pointer whitespace-nowrap align-middle"
       phx-click="sort"
-      id={dom_id(@table_id, @key)}
+      id={dom_id(@table_id, "sort-#{@key}")}
       phx-hook=".SortableColumn"
       phx-value-sort={
         JSON.encode!(%{

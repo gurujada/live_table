@@ -77,7 +77,7 @@ defmodule LiveTable.LiveResourceLiveViewTest do
       {:ok, view, _html} = live(conn, "/products")
 
       view
-      |> element("#name")
+      |> element("#sort-name")
       |> render_click()
 
       assert_patch(view, "/products?page=1&per_page=2&sort_params[name]=desc")

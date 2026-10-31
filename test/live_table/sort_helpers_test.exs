@@ -167,7 +167,7 @@ defmodule LiveTable.SortHelpersTest do
           sort_params: []
         })
 
-      assert html =~ ~s(id="price")
+      assert html =~ ~s(id="sort-price")
     end
   end
 
