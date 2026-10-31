@@ -5,7 +5,7 @@ All notable changes to LiveTable will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - Unreleased
 
 ### Added
 
@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The toolbar search box takes the full width on phones, so its placeholder isn't cut off.
 - LiveTable compiles without `:sutra_ui`. Without it and without a components module, compilation fails with instructions instead of an undefined-module error. ([#34](https://github.com/gurujada/live_table/issues/34))
 - Blank or non-numeric range filter bounds fall back to the range defaults instead of crashing the LiveView.
 - Export queries preserve pinned values and filters instead of being reconstructed from their printed representation.

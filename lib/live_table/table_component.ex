@@ -193,7 +193,7 @@ defmodule LiveTable.TableComponent do
                       _ -> false
                     end) && @table_options.search.enabled
                   }
-                  class="w-56"
+                  class="min-w-0 flex-1 sm:w-56 sm:flex-none"
                 >
                   {LiveTable.Components.impl().search(%{
                     id: dom_id(@id, "table-search"),
