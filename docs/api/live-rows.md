@@ -38,6 +38,11 @@ updates what changed:
 
 With infinite scroll, every page loaded so far is refreshed.
 
+Only what changed is sent to the browser: the rows whose ids you broadcast, a new row at its
+position, and the removal of a row that left. So a new row at the top of a feed costs one row,
+however far the user has scrolled. Only when rows swap places, say after an edit to the sorted
+column, is the whole page sent again. There is nothing to configure.
+
 Only ids are broadcast. Each table reads the rows through its own query, so a viewer never
 receives a row their filters or scoping exclude.
 

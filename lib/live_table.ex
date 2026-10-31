@@ -48,8 +48,8 @@ defmodule LiveTable do
     if Phoenix.LiveView.connected?(socket), do: Phoenix.PubSub.subscribe(pubsub, topic)
 
     Phoenix.LiveView.attach_hook(socket, :live_table, :handle_info, fn
-      {LiveTable, :changed, _ids}, socket ->
-        {:halt, socket.view.__live_table_refresh__(socket)}
+      {LiveTable, :changed, ids}, socket ->
+        {:halt, socket.view.__live_table_refresh__(socket, ids)}
 
       _message, socket ->
         {:cont, socket}

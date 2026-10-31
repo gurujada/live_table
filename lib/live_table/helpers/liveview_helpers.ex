@@ -178,6 +178,10 @@ defmodule LiveTable.LiveViewHelpers do
         socket =
           socket
           |> stream(:resources, resources, dom_id: &LiveTable.SortHelpers.row_dom_id(&1, key))
+          |> Phoenix.Component.update(
+            :live_table_page,
+            &(&1 ++ Enum.map(resources, fn row -> LiveTable.SortHelpers.row_dom_id(row, key) end))
+          )
           |> assign(:infinite_scroll_page, next_page)
           |> assign(:options, updated_options)
 
@@ -221,8 +225,9 @@ defmodule LiveTable.LiveViewHelpers do
       end
 
       @doc false
-      # Re-runs the query for the rows on screen.
-      def __live_table_refresh__(socket) do
+      # Re-runs the query for the rows on screen. `changed` is the primary keys of the rows that
+      # changed, from LiveTable.broadcast/3.
+      def __live_table_refresh__(socket, changed \\ []) do
         options = socket.assigns.options
         data_provider = socket.assigns[:data_provider] || unquote(opts[:data_provider])
 
@@ -232,12 +237,50 @@ defmodule LiveTable.LiveViewHelpers do
           |> fetch_resources(data_provider)
 
         socket
-        |> assign_to_socket(resources, key, unquote(opts[:table_options]))
+        |> refresh_rows(resources, key, changed)
         |> assign(
           :options,
           put_in(options["pagination"][:has_next_page], fetched["pagination"][:has_next_page])
         )
       end
+
+      # Streams keep no rows on the server, so a reset resends every row. When the rows that stayed
+      # on screen kept their order, only the rows that arrived, left or changed are sent instead.
+      defp refresh_rows(
+             %{assigns: %{live_table_page: page}} = socket,
+             resources,
+             key,
+             [_ | _] = changed
+           ) do
+        dom_id = &LiveTable.SortHelpers.row_dom_id(&1, key)
+        ids = Enum.map(resources, dom_id)
+        {before, now} = {MapSet.new(page), MapSet.new(ids)}
+
+        if Enum.filter(page, &(&1 in now)) == Enum.filter(ids, &(&1 in before)) do
+          changed = MapSet.new(changed, &dom_id.(Map.new(Enum.zip(key, List.wrap(&1)))))
+
+          socket =
+            page
+            |> Enum.reject(&(&1 in now))
+            |> Enum.reduce(socket, &stream_delete_by_dom_id(&2, :resources, &1))
+
+          resources
+          |> Enum.with_index()
+          |> Enum.reduce(socket, fn {row, at}, socket ->
+            cond do
+              dom_id.(row) not in before -> stream_insert(socket, :resources, row, at: at)
+              dom_id.(row) in changed -> stream_insert(socket, :resources, row, update_only: true)
+              true -> socket
+            end
+          end)
+          |> assign(:live_table_page, ids)
+        else
+          assign_to_socket(socket, resources, key, unquote(opts[:table_options]))
+        end
+      end
+
+      defp refresh_rows(socket, resources, key, _changed),
+        do: assign_to_socket(socket, resources, key, unquote(opts[:table_options]))
 
       # With infinite scroll, every page loaded so far is on screen.
       defp loaded_options(options, nil), do: options
@@ -252,10 +295,11 @@ defmodule LiveTable.LiveViewHelpers do
       end
 
       defp assign_to_socket(socket, resources, key, %{use_streams: true}) do
-        stream(socket, :resources, resources,
-          dom_id: &LiveTable.SortHelpers.row_dom_id(&1, key),
-          reset: true
-        )
+        dom_id = &LiveTable.SortHelpers.row_dom_id(&1, key)
+
+        socket
+        |> stream(:resources, resources, dom_id: dom_id, reset: true)
+        |> assign(:live_table_page, Enum.map(resources, dom_id))
       end
 
       defp assign_to_socket(socket, resources, _key, %{use_streams: false}) do

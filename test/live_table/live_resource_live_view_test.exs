@@ -268,17 +268,102 @@ defmodule LiveTable.LiveResourceLiveViewTest do
       assert view |> element("#resource-#{alpha.id}", "150.00") |> has_element?()
     end
 
-    test "infinite scroll keeps every loaded page", %{conn: conn, gamma: gamma} do
+    test "only the changed rows are sent again when the page keeps its rows", %{
+      conn: conn,
+      alpha: alpha,
+      beta: beta
+    } do
+      {:ok, view, _html} = live(conn, "/products")
+
+      # Alpha changes without a broadcast; if the whole page were resent, it would show.
+      LiveTable.Repo.update!(Ecto.Changeset.change(alpha, price: Decimal.new("111.00")))
+      LiveTable.Repo.update!(Ecto.Changeset.change(beta, price: Decimal.new("222.00")))
+      broadcast([beta.id])
+
+      assert view |> element("#resource-#{beta.id}", "222.00") |> has_element?()
+      assert view |> element("#resource-#{alpha.id}", "100.00") |> has_element?()
+    end
+
+    # The ids of the rows on screen, in order.
+    defp rows_on_screen(view) do
+      ~r/id="resource-(\d+)"/
+      |> Regex.scan(render(view), capture: :all_but_first)
+      |> Enum.map(fn [id] -> String.to_integer(id) end)
+    end
+
+    # Each test below also changes Alpha without a broadcast: it shows only if the whole page is
+    # sent again.
+    defp change_quietly(product),
+      do: LiveTable.Repo.update!(Ecto.Changeset.change(product, price: Decimal.new("111.00")))
+
+    test "a new row is sent alone, and the row it pushes off is removed", %{
+      conn: conn,
+      alpha: alpha
+    } do
+      {:ok, view, _html} = live(conn, "/products")
+
+      change_quietly(alpha)
+      new = product_fixture(%{name: "Aardvark"})
+      broadcast([new.id])
+
+      assert rows_on_screen(view) == [new.id, alpha.id]
+      assert view |> element("#resource-#{alpha.id}", "100.00") |> has_element?()
+    end
+
+    test "a deleted row is removed alone, and the next row moves up", %{
+      conn: conn,
+      alpha: alpha,
+      beta: beta,
+      gamma: gamma
+    } do
+      {:ok, view, _html} = live(conn, "/products")
+
+      change_quietly(beta)
+      LiveTable.Repo.delete!(alpha)
+      broadcast([alpha.id])
+
+      assert rows_on_screen(view) == [beta.id, gamma.id]
+      assert view |> element("#resource-#{beta.id}", "200.00") |> has_element?()
+    end
+
+    test "rows that swap places send the whole page", %{conn: conn, alpha: alpha, beta: beta} do
+      {:ok, view, _html} = live(conn, "/products")
+
+      change_quietly(alpha)
+      LiveTable.Repo.update!(Ecto.Changeset.change(beta, name: "Aaa"))
+      broadcast([beta.id])
+
+      assert rows_on_screen(view) == [beta.id, alpha.id]
+      assert view |> element("#resource-#{alpha.id}", "111.00") |> has_element?()
+    end
+
+    test "infinite scroll sends only the changed rows too", %{
+      conn: conn,
+      alpha: alpha,
+      gamma: gamma
+    } do
       {:ok, view, _html} = live(conn, "/products_infinite")
       view |> element("#infinite-scroll-container") |> render_hook("load_more", %{})
 
-      LiveTable.Repo.update!(Ecto.Changeset.change(gamma, price: Decimal.new("350.00")))
+      # Alpha is on the first page, Gamma on the second; only Gamma is broadcast.
+      LiveTable.Repo.update!(Ecto.Changeset.change(alpha, price: Decimal.new("111.00")))
+      LiveTable.Repo.update!(Ecto.Changeset.change(gamma, price: Decimal.new("333.00")))
       broadcast([gamma.id])
 
-      html = render(view)
-      assert html =~ "Alpha"
-      assert html =~ "Beta"
-      assert html =~ "350.00"
+      assert view |> element("#resource-#{gamma.id}", "333.00") |> has_element?()
+      assert view |> element("#resource-#{alpha.id}", "100.00") |> has_element?()
+    end
+
+    test "infinite scroll sends a new row alone", %{conn: conn, gamma: gamma} do
+      {:ok, view, _html} = live(conn, "/products_infinite")
+      view |> element("#infinite-scroll-container") |> render_hook("load_more", %{})
+
+      change_quietly(gamma)
+      new = product_fixture(%{name: "Aardvark"})
+      broadcast([new.id])
+
+      assert hd(rows_on_screen(view)) == new.id
+      assert view |> element("#resource-#{gamma.id}", "300.00") |> has_element?()
     end
 
     test "other messages still reach the LiveView", %{conn: conn} do

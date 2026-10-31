@@ -336,6 +336,16 @@ defmodule LiveTable.TableComponent do
                     phx-update={@table_options[:use_streams] && "stream"}
                     class="bg-background"
                   >
+                    <.render_row
+                      streams={@streams}
+                      fields={visible_fields(@fields)}
+                      table_options={@table_options}
+                      actions={@actions}
+                      row_assigns={@row_assigns}
+                      bulk={@bulk_actions != []}
+                      primary_key={@options["primary_key"]}
+                    />
+                    <%!-- After the rows, so stream positions count only rows. --%>
                     <tr
                       id={dom_id(@id, "empty-placeholder")}
                       class="only:table-row hidden hover:bg-transparent"
@@ -347,15 +357,6 @@ defmodule LiveTable.TableComponent do
                         <.render_empty_state table_options={@table_options} />
                       </td>
                     </tr>
-                    <.render_row
-                      streams={@streams}
-                      fields={visible_fields(@fields)}
-                      table_options={@table_options}
-                      actions={@actions}
-                      row_assigns={@row_assigns}
-                      bulk={@bulk_actions != []}
-                      primary_key={@options["primary_key"]}
-                    />
                   </tbody>
                 </table>
               </div>
@@ -377,11 +378,11 @@ defmodule LiveTable.TableComponent do
           phx-throttle="1000"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <div id={dom_id(@id, "empty-placeholder")} class="hidden only:block col-span-full">
-            <.render_empty_state table_options={@table_options} />
-          </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
             {@table_options.card_component.(Map.merge(@row_assigns, %{record: record, row_id: id}))}
+          </div>
+          <div id={dom_id(@id, "empty-placeholder")} class="hidden only:block col-span-full">
+            <.render_empty_state table_options={@table_options} />
           </div>
         </div>
 
@@ -443,11 +444,11 @@ defmodule LiveTable.TableComponent do
           phx-update="stream"
           class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <div id={dom_id(@id, "card-empty-placeholder")} class="hidden only:block col-span-full">
-            <.render_empty_state table_options={@table_options} />
-          </div>
           <div :for={{id, record} <- @streams.resources} id={id}>
             {@table_options.card_component.(Map.merge(@row_assigns, %{record: record, row_id: id}))}
+          </div>
+          <div id={dom_id(@id, "card-empty-placeholder")} class="hidden only:block col-span-full">
+            <.render_empty_state table_options={@table_options} />
           </div>
         </div>
         """
