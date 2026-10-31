@@ -30,78 +30,69 @@ defmodule LiveTable.PdfGenerator do
     dir
   end
 
-  defp typst_markup(query, header_keys, header_labels) do
-    typst_template = """
+  defp typst_markup(query, keys, labels) do
+    rows = fetch_rows(query)
+
+    # Numbers line up on the right; everything else reads from the left.
+    align =
+      case rows do
+        [first | _] ->
+          Enum.map_join(keys, ", ", &if(number?(first[&1]), do: "right", else: "left"))
+
+        [] ->
+          "left"
+      end
+
+    footer = "Exported #{Calendar.strftime(Date.utc_today(), "%-d %b %Y")}, #{count(rows)}"
+
+    # The table is marked as a PDF artifact: tagging every cell for accessibility makes a
+    # 10,000-row export about 30 times larger. CSV is the machine-readable export.
+    """
     #set page(
       paper: "a4",
-      margin: (x: 0.8cm, y: 0.8cm),
       flipped: true,
+      margin: (x: 1cm, top: 1cm, bottom: 1.5cm),
+      footer: context text(
+        size: 7pt,
+        fill: luma(120),
+        #{typst_string(footer)} + h(1fr) + counter(page).display("1 of 1", both: true),
+      ),
     )
 
     #set text(
       font: ("IBM Plex Sans", "IBM Plex Sans Devanagari", "Noto Sans Arabic", "Noto Serif Hebrew"),
       size: 8pt,
-      weight: "regular"
     )
 
-    #show table.cell: it => {
-      set text(size: 8pt)
-      set par(leading: 0.5em)
-      it
-    }
-
-    #table(
-      columns: (auto, ) * #{length(header_labels)},
-      inset: (x: 8pt, y: 6pt),
-      align: (col, row) => {
-        if row == 0 { center + horizon }
-        else { left + horizon }
-      },
-      stroke: (x, y) => {
-        if y == 0 {
-          (bottom: 1.5pt + rgb(45, 45, 45), rest: 0.75pt + rgb(160, 160, 160))
-        } else {
-          0.5pt + rgb(210, 210, 210)
-        }
-      },
-      fill: (col, row) => {
-        if row == 0 {
-          gradient.linear(rgb(235, 245, 255), rgb(220, 235, 250))
-        } else if calc.odd(row) {
-          rgb(248, 250, 252)
-        } else {
-          white
-        }
-      },
-
-      #{generate_table_header(header_labels)},
+    #pdf.artifact(table(
+      columns: #{length(labels)},
+      inset: (x: 6pt, y: 5pt),
+      align: (#{align},).map(a => a + horizon),
+      stroke: (_, y) => (bottom: if y == 0 { 0.8pt + luma(80) } else { 0.4pt + luma(225) }),
+      fill: (_, y) => if y == 0 { luma(243) },
+      table.header(#{Enum.map_join(labels, ", ", &"text(weight: \"bold\", #{typst_string(&1)})")}),
+    #{Enum.map(rows, fn row -> [Enum.map_join(keys, ", ", &typst_string(row[&1])), ",\n"] end)}))
     """
-
-    IO.iodata_to_binary([typst_template, rows(query, header_keys), "\n)"])
   end
 
-  defp generate_table_header(header_labels) do
-    header_labels
-    |> Enum.map(&"text(weight: \"bold\", #{typst_string(&1)})")
-    |> Enum.join(", ")
-  end
-
-  defp rows(query, header_keys) do
+  defp fetch_rows(query) do
     repo = Application.fetch_env!(:live_table, :repo)
 
     {:ok, rows} =
-      repo.transaction(
-        fn ->
-          query
-          |> repo.stream(max_rows: 500)
-          |> Enum.map(fn row ->
-            [Enum.map_join(header_keys, ", ", &typst_string(Map.get(row, &1))), ",\n"]
-          end)
-        end,
+      repo.transaction(fn -> query |> repo.stream(max_rows: 500) |> Enum.to_list() end,
         timeout: :infinity
       )
 
     rows
+  end
+
+  defp number?(value), do: is_number(value) or is_struct(value, Decimal)
+
+  defp count([_]), do: "1 row"
+
+  defp count(rows) do
+    digits = rows |> length() |> Integer.to_string()
+    "#{Regex.replace(~r/\B(?=(\d{3})+$)/, digits, ",")} rows"
   end
 
   # Cells are Typst string literals, so data is never read as markup or code.

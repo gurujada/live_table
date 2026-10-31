@@ -86,6 +86,9 @@ ID,Product Name,Price,Stock,Category
 
 PDF exports are limited to 10,000 rows. Above that, the user is asked to filter the table first.
 
+The PDF is an A4 landscape table with the header row repeated on every page, numbers aligned
+right, and a footer giving the export date, row count and page number.
+
 PDF export uses the [`typst`](https://hex.pm/packages/typst) package, an optional dependency
 that `mix live_table.install` adds. It ships precompiled, so there is nothing to install on the
 server. Without it, the PDF option isn't shown, even if `formats` lists `:pdf`:

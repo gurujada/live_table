@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove `"exports"` from `static_paths` and delete `priv/static/exports`.
   - Remove `app:` and `pubsub:` from `config :live_table`.
 - A PDF export shows "Preparing your PDF. The download will start shortly." while it is built.
+- PDF exports look cleaner and are far smaller: the header row repeats on every page, numbers are right-aligned, and a footer gives the export date, row count and page number. A 10,000-row export is about 1 MB instead of 30 MB, because the table is no longer tagged cell by cell for screen readers; CSV remains the machine-readable export.
 - **PDF exports use the [`typst`](https://hex.pm/packages/typst) package instead of the `typst` CLI.** It's an optional dependency that ships precompiled, so servers need nothing installed; `mix live_table.install` adds it. Without it the PDF option is hidden. `config :live_table, pdf_font_dirs: [...]` adds fonts for scripts the bundled fonts don't cover.
 - `:jason` is no longer a dependency (LiveTable uses Elixir's built-in `JSON`), and `:postgrex` and `:ecto_sql` are only used for LiveTable's own tests.
 - LiveTable no longer starts an application of its own or ships its test repo.
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Sortable column headers have ids prefixed with `sort-` (`sort-city`, or `orders-sort-city` with `id="orders"`). Before, a header and a select filter with the same key both got `id="city"`.
 - The toolbar search box takes the full width on phones, so its placeholder isn't cut off.
 - LiveTable compiles without `:sutra_ui`. Without it and without a components module, compilation fails with instructions instead of an undefined-module error. ([#34](https://github.com/gurujada/live_table/issues/34))
 - Blank or non-numeric range filter bounds fall back to the range defaults instead of crashing the LiveView.
