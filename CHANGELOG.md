@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bulk actions: define `bulk_actions/0` and pass `bulk_actions={bulk_actions()}` to select rows, or all rows matching the filters, and act on them. The selection lives in the browser; only the action sends the chosen ids to the server. In card mode, the card draws its own checkbox with `data-live-table-select` and `value={@row_id}`. Each handler gets an `Ecto.Query` for the chosen rows, ready for `Repo.update_all/3` or `Repo.delete_all/2`. See the Bulk Actions guide.
 - Live rows: `LiveTable.subscribe/3` in `mount` and `LiveTable.broadcast/3` where data changes keep open tables up to date. Each table re-runs its query, and only the rows that changed, arrived or left are sent to the browser. See the Live Rows guide.
 - `<.live_table>` accepts a `context` assign (default `%{}`). Card components, actions and field `component`s receive it as `@context`, along with `@nonce` and `@table_id`, so they can use page state such as the current user.
+- When filters are hidden behind the Show Filters toggle, the toggle shows how many are applied, so a table opened from a filtered link says it's filtered. A filter counts only when it narrows the rows: a range dragged back to its default span, an empty select or a blank transformer doesn't. Search isn't counted, since its box is always visible.
+- `custom_header` and `custom_controls` components receive `@active_filters`, the same count, to show on their own filter buttons.
+- `custom_controls` components receive `@context`, as cards, actions and custom headers already do.
+- `table_options.exports.formats` lists only formats that work: PDF is left out when `:typst` isn't installed, so custom export buttons match the built-in menu.
 - `<.live_table>` accepts an `id` assign (default `"live-table"`), so several tables can share a page. Every DOM id the table renders derives from it; the default id keeps today's ids.
 
 ### Changed
@@ -38,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- "Clear Filters" no longer appears when the only applied filter is a range at its default span, which has nothing to clear.
 - Sortable column headers have ids prefixed with `sort-` (`sort-city`, or `orders-sort-city` with `id="orders"`). Before, a header and a select filter with the same key both got `id="city"`.
 - The toolbar search box takes the full width on phones, so its placeholder isn't cut off.
 - LiveTable compiles without `:sutra_ui`. Without it and without a components module, compilation fails with instructions instead of an undefined-module error. ([#34](https://github.com/gurujada/live_table/issues/34))

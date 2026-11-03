@@ -212,7 +212,7 @@ max_filters: 999
 max_filters: 0
 ```
 
-When a table has more filters than `max_filters`, the filters are hidden by default and users can click "Show Filters" to reveal them. This helps keep the UI clean when you have many filter options.
+When a table has more filters than `max_filters`, the filters are hidden by default and users can click "Show Filters" to reveal them. This helps keep the UI clean when you have many filter options. The toggle shows how many filters are applied, so a filtered table says so even with its filters hidden. Search isn't counted, since its box is always visible, and neither is a filter that narrows nothing, such as a range at its default span.
 
 ### View Mode Options
 

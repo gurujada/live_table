@@ -458,4 +458,12 @@ defmodule LiveTable.TableConfigTest do
       assert TableConfig.get_search_mode(%{}) == :ilike
     end
   end
+
+  describe "export formats" do
+    test "an unknown format raises instead of rendering a button that can't work" do
+      assert_raise ArgumentError, ~r/unsupported export format/, fn ->
+        TableConfig.get_table_options(%{exports: %{enabled: true, formats: [:csv, :xlsx]}})
+      end
+    end
+  end
 end

@@ -389,4 +389,44 @@ defmodule LiveTable.ParseHelpersTest do
       end
     end
   end
+
+  describe "active_filter_count/1" do
+    defp range(options) do
+      Range.new(:price, "price", Map.merge(%{min: 0, max: 1000, step: 10}, options))
+    end
+
+    defp transformer(data), do: Transformer.new("t", %{applied_data: data})
+
+    test "counts filters that narrow the rows" do
+      applied = %{
+        :under_100 => Keyword.fetch!(filters(), :under_100),
+        :category => Keyword.fetch!(filters(), :category),
+        :price => range(%{current_min: 50, current_max: 1000}),
+        :high_value => transformer(%{"min_value" => "500"})
+      }
+
+      assert ParseHelpers.active_filter_count(applied) == 4
+    end
+
+    test "doesn't count search, an empty select, a range at its defaults or a blank transformer" do
+      applied = %{
+        "search" => "phone",
+        :category => Select.new({:category, :id}, "category", %{label: "Category"}),
+        :price => range(%{current_min: 0, current_max: 1000}),
+        :high_value => transformer(%{"min_value" => ""})
+      }
+
+      assert ParseHelpers.active_filter_count(applied) == 0
+    end
+
+    test "measures a range against its own defaults, not its bounds" do
+      assert ParseHelpers.active_filter_count(%{
+               price: range(%{default_min: 100, current_min: 100, current_max: 1000})
+             }) == 0
+
+      assert ParseHelpers.active_filter_count(%{
+               price: range(%{default_min: 100, current_min: 0, current_max: 1000})
+             }) == 1
+    end
+  end
 end

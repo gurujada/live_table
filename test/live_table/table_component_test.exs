@@ -60,7 +60,7 @@ defmodule LiveTable.TableComponentTest do
 
     def controls(assigns) do
       ~H"""
-      <div id="custom-controls">My Controls</div>
+      <div id="custom-controls">My Controls ({@active_filters} applied)</div>
       """
     end
   end
@@ -557,7 +557,7 @@ defmodule LiveTable.TableComponentTest do
         fields: [{:name, %{label: "Name", sortable: false}}],
         filters: [{:active, filter}],
         options: %{
-          "filters" => %{"search" => "", "active" => "true"},
+          "filters" => %{"search" => "", active: filter},
           "sort" => %{"sort_params" => []},
           "pagination" => %{"paginate?" => false}
         },
@@ -598,6 +598,38 @@ defmodule LiveTable.TableComponentTest do
       assert html =~ "Show Filters"
       # Filters should be hidden by default
       assert html =~ "hidden"
+    end
+
+    test "the filter toggle shows how many filters are applied while they're hidden" do
+      filters =
+        for i <- 1..4 do
+          {:"filter_#{i}",
+           %LiveTable.Boolean{
+             field: :"field_#{i}",
+             key: "filter_#{i}",
+             options: %{label: "Filter #{i}"}
+           }}
+        end
+
+      render = fn applied ->
+        render_component(&TestTableComponent.live_table/1, %{
+          fields: [{:name, %{label: "Name", sortable: false}}],
+          filters: filters,
+          options: %{
+            "filters" => Map.merge(%{"search" => "phone"}, applied),
+            "sort" => %{"sort_params" => []},
+            "pagination" => %{"paginate?" => false}
+          },
+          streams: []
+        })
+      end
+
+      html = render.(Map.new(Enum.take(filters, 2)))
+
+      assert html =~ ~r/id="active-filter-count"[^>]*>\s*2<span class="sr-only"> applied/
+
+      # Search has its own box in view, so it isn't counted.
+      refute render.(%{}) =~ "active-filter-count"
     end
 
     test "does not show filter toggle with 3 or fewer filters" do
@@ -2092,13 +2124,79 @@ defmodule LiveTable.TableComponentTest do
       refute html =~ "name=\"per_page\""
     end
 
+    test "custom controls get the number of applied filters" do
+      defmodule CountingControlsTable do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :table,
+            use_streams: false,
+            custom_controls: {LiveTable.TableComponentTest.CustomControls, :controls}
+          }
+      end
+
+      filter = %LiveTable.Boolean{field: :active, key: "active", options: %{label: "Active"}}
+
+      assigns = %{
+        fields: [],
+        filters: [active: filter],
+        options: %{
+          "filters" => %{"search" => "", active: filter},
+          "sort" => %{"sort_params" => []},
+          "pagination" => %{"paginate?" => false}
+        },
+        streams: []
+      }
+
+      html = render_component(&CountingControlsTable.live_table/1, assigns)
+
+      assert html =~ "My Controls (1 applied)"
+    end
+
+    test "custom controls get the table's context" do
+      defmodule ContextControls do
+        use Phoenix.Component
+
+        def controls(assigns) do
+          ~H"""
+          <button :if={@context.admin?}>New product</button>
+          """
+        end
+      end
+
+      defmodule ContextControlsTable do
+        use LiveTable.TableComponent,
+          table_options: %{
+            mode: :table,
+            use_streams: false,
+            custom_controls: {ContextControls, :controls}
+          }
+      end
+
+      render = fn context ->
+        render_component(&ContextControlsTable.live_table/1, %{
+          fields: [],
+          filters: [],
+          context: context,
+          options: %{
+            "filters" => %{"search" => ""},
+            "sort" => %{"sort_params" => []},
+            "pagination" => %{"paginate?" => false}
+          },
+          streams: []
+        })
+      end
+
+      assert render.(%{admin?: true}) =~ "New product"
+      refute render.(%{admin?: false}) =~ "New product"
+    end
+
     test "custom_header takes precedence over custom_controls" do
       defmodule CustomHeader2 do
         use Phoenix.Component
 
         def header(assigns) do
           ~H"""
-          <div id="custom-header">Header Only</div>
+          <div id="custom-header">Header Only ({@active_filters} applied)</div>
           """
         end
       end
@@ -2127,6 +2225,7 @@ defmodule LiveTable.TableComponentTest do
       html = render_component(&CustomHeaderWithControlsTable.live_table/1, assigns)
 
       assert html =~ "custom-header"
+      assert html =~ "Header Only (0 applied)"
       refute html =~ "custom-controls"
     end
   end

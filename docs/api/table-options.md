@@ -708,7 +708,7 @@ def table_options do
 end
 
 # A 1-arity function component that receives assigns
-# with :fields, :filters, :options, and :table_options
+# with :fields, :filters, :options, :table_options, :active_filters and :context
 # Wire search, per-page, and filters to LiveTable using phx-change="sort".
 # Use Phoenix.LiveView.JS for client-side toggles.
 defp my_controls(assigns) do
@@ -776,7 +776,12 @@ Notes:
 - Precedence: if `custom_header` is provided, it replaces the entire header and `custom_controls` is ignored.
 - Events: use `phx-change="sort"` for forms and `phx-click="sort"` with supported values such as `phx-value-clear_filters="true"` for LiveTable state changes.
 - UI-only toggles should use client-side JS commands such as `Phoenix.LiveView.JS.toggle/1`.
-- Assigns: you receive `:fields`, `:filters`, `:options`, and `:table_options` to build your controls.
+- Assigns: you receive `:fields`, `:filters`, `:options`, and `:table_options` to build your controls, plus:
+  - `:active_filters`, the number of applied filters that narrow the rows (search isn't counted). Show it on a button that opens hidden filters, so users can tell the table is filtered.
+  - `:context`, the map passed as `context={...}` to `<.live_table>`, for page state such as the current user.
+  - `:id` and `:nonce`, the table's id and CSP nonce.
+- Exports: `@table_options.exports.formats` lists only the formats that work, so PDF is missing when the `:typst` package isn't installed. Build export buttons from it.
+- Built-in pieces such as `<.filters>` are functions LiveTable adds to your LiveView, so they work when your controls are defined in the LiveView itself, as above, but not from another module. From another module, write your own inputs inside a `phx-change="sort"` form, named as LiveTable expects: `search`, `per_page`, `filters[key]` (`"true"`/`"false"`) for a boolean, `filters[key][id][]` for a select, `filters[key][min]` and `filters[key][max]` for a range, and `filters[key][field]` for a transformer.
 
 ## Performance Considerations
 

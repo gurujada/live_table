@@ -14,7 +14,7 @@ def table_options do
 end
 ```
 
-The function receives LiveTable assigns, including `@fields`, `@filters`, `@options`, and `@table_options`. It replaces the whole default header: search, per-page, filter bar and export menu. An export control sends `phx-click="export"` with `phx-value-format="csv"` or `"pdf"`.
+The function receives LiveTable assigns, including `@fields`, `@filters`, `@options`, `@table_options`, `@active_filters` (how many applied filters narrow the rows, search excluded; show it when filters are hidden) and `@context` (the `context` passed to `<.live_table>`). `@table_options.exports.formats` lists only formats that work: no PDF without `:typst`. It replaces the whole default header: search, per-page, filter bar and export menu. An export control sends `phx-click="export"` with `phx-value-format="csv"` or `"pdf"`.
 
 Controls should submit through LiveTable's `"sort"` event:
 

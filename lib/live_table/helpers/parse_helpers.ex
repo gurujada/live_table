@@ -120,6 +120,29 @@ defmodule LiveTable.ParseHelpers do
     Map.put(acc, String.to_existing_atom(key), updated_filter)
   end
 
+  # How many applied filters narrow the rows. Search isn't counted: its box is always in view.
+  def active_filter_count(applied_filters) do
+    Enum.count(applied_filters, fn {_key, filter} -> active_filter?(filter) end)
+  end
+
+  defp active_filter?(%LiveTable.Boolean{}), do: true
+  defp active_filter?(%LiveTable.Select{options: %{selected: selected}}), do: selected != []
+
+  # A range dragged back to its full span is in the URL but filters nothing.
+  defp active_filter?(%LiveTable.Range{options: options}) do
+    Map.get(options, :current_min, options.default_min) != options.default_min or
+      Map.get(options, :current_max, options.default_max) != options.default_max
+  end
+
+  defp active_filter?(%LiveTable.Transformer{options: options}) do
+    options
+    |> Map.get(:applied_data, %{})
+    |> Map.values()
+    |> Enum.any?(&(&1 not in [nil, "", [], %{}]))
+  end
+
+  defp active_filter?(_search), do: false
+
   def get_filter(key, filters) when is_binary(key) do
     Enum.find_value(filters, fn {name, filter} -> Atom.to_string(name) == key && filter end)
   end

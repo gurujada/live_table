@@ -46,6 +46,9 @@ defmodule LiveTable.TableConfig do
     @default_options
     |> deep_merge(app_defaults)
     |> deep_merge(table_options)
+    # Unknown formats raise; PDF is dropped without :typst. Custom controls read the
+    # formats from here, so they only offer exports that work.
+    |> update_in([:exports, :formats], &LiveTable.Export.validate_formats!/1)
   end
 
   @doc """

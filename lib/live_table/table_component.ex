@@ -127,8 +127,11 @@ defmodule LiveTable.TableComponent do
         """
       end
 
+      # Headers and controls, built in or custom, get @active_filters: how many applied filters
+      # narrow the rows, so a header can say the table is filtered while its filters are hidden.
       defp render_header(%{table_options: %{custom_header: {module, function}}} = assigns) do
-        apply(module, function, [assigns])
+        count = LiveTable.ParseHelpers.active_filter_count(assigns.options["filters"])
+        apply(module, function, [assign(assigns, :active_filters, count)])
       end
 
       defp render_header(var!(assigns)) do
@@ -136,10 +139,12 @@ defmodule LiveTable.TableComponent do
         <.header_section
           id={@id}
           nonce={@nonce}
+          context={@context}
           fields={@fields}
           filters={@filters}
           options={@options}
           table_options={@table_options}
+          active_filters={LiveTable.ParseHelpers.active_filter_count(@options["filters"])}
         />
         """
       end
@@ -175,6 +180,7 @@ defmodule LiveTable.TableComponent do
           filters={@filters}
           options={@options}
           table_options={@table_options}
+          active_filters={@active_filters}
         />
         """
       end
@@ -243,6 +249,13 @@ defmodule LiveTable.TableComponent do
                   </svg>
                   <span id={dom_id(@id, "filter-show-text")}>Show Filters</span>
                   <span id={dom_id(@id, "filter-hide-text")} class="hidden">Hide Filters</span>
+                  <span
+                    :if={@active_filters > 0}
+                    id={dom_id(@id, "active-filter-count")}
+                    class="rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground"
+                  >
+                    {@active_filters}<span class="sr-only"> applied</span>
+                  </span>
                 </button>
               </div>
 
@@ -260,7 +273,11 @@ defmodule LiveTable.TableComponent do
               id={dom_id(@id, "filters-container")}
               class={["", length(@filters) > (get_in(@table_options, [:max_filters]) || 3) && "hidden"]}
             >
-              <.filters filters={@filters} applied_filters={@options["filters"]} />
+              <.filters
+                filters={@filters}
+                applied_filters={@options["filters"]}
+                active_filters={@active_filters}
+              />
             </div>
           </div>
         </.form>
@@ -593,7 +610,7 @@ defmodule LiveTable.TableComponent do
             </div>
           </div>
           <div
-            :if={@applied_filters != %{"search" => ""} and @applied_filters != %{}}
+            :if={@active_filters > 0 or @applied_filters["search"] not in [nil, ""]}
             class="flex justify-end"
           >
             <button
@@ -664,10 +681,7 @@ defmodule LiveTable.TableComponent do
         """
       end
 
-      defp exports(assigns) do
-        formats = LiveTable.Export.validate_formats!(assigns.formats)
-        LiveTable.Components.impl().exports(%{assigns | formats: formats})
-      end
+      defp exports(assigns), do: LiveTable.Components.impl().exports(assigns)
 
       defp render_cell(value, field, _record, _row_assigns)
            when is_nil(value) and not is_nil(field.empty_text) do

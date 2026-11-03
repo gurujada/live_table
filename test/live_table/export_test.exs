@@ -84,20 +84,22 @@ defmodule LiveTable.ExportTest do
   describe "the export dropdown" do
     defmodule ExportProbe do
       use LiveTable.TableComponent,
-        table_options: %{
-          mode: :table,
-          use_streams: false,
-          exports: %{enabled: true, formats: [:csv, :pdf, :json]}
-        }
+        table_options:
+          LiveTable.TableConfig.get_table_options(%{
+            mode: :table,
+            use_streams: false,
+            exports: %{enabled: true, formats: [:csv, :pdf, :json]}
+          })
     end
 
     defmodule SupportedProbe do
       use LiveTable.TableComponent,
-        table_options: %{
-          mode: :table,
-          use_streams: false,
-          exports: %{enabled: true, formats: [:csv, :pdf]}
-        }
+        table_options:
+          LiveTable.TableConfig.get_table_options(%{
+            mode: :table,
+            use_streams: false,
+            exports: %{enabled: true, formats: [:csv, :pdf]}
+          })
     end
 
     test "each configured format dispatches by value, not by a distinct event name" do

@@ -108,7 +108,7 @@ use_streams: true
 max_filters: 3
 ```
 
-If the number of filters is greater than `max_filters`, the filter area starts hidden behind the Show Filters toggle.
+If the number of filters is greater than `max_filters`, the filter area starts hidden behind the Show Filters toggle. The toggle shows how many filters are applied (search excluded, and a range at its default span doesn't count).
 
 ## Empty State
 
